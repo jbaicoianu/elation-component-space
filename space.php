@@ -202,9 +202,11 @@ class Component_space extends Component {
     $vars["capacities"] = $data["thingtypes"];
     //$data = ComponentManager::fetch("space.things", array("datatype" => "tree"), "data");
     $vars["things"] = $data["things"];
+    $vars["highres"] = any($args["hq"], false);
 
     return $this->GetComponentResponse("./world.tpl", $vars);
   }
+/*
   function controller_test($args) {
     $datatype = any($args["datatype"], "tree");
     $things = ORMManager::from("Thing")->with("ThingType", "ThingProperty")->find();
@@ -226,10 +228,12 @@ class Component_space extends Component {
 
     return $this->GetComponentResponse(NULL, $vars);
   }
+*/
   function controller_viewport($args) {
     $vars["anchor"] = any($args["anchor"], "/");
     $data = ComponentManager::fetch("space.things", array("from" => $vars["anchor"], "datatype" => "tree"), "data");
     $vars = $data;
+    $vars["highres"] = any($args["highres"], false);
     return $this->GetComponentResponse("./viewport.tpl", $vars);
   }
 

@@ -7,6 +7,9 @@ elation.component.add("spacecraft.world", {
     this.args = args;
     this.contextmenu = elation.ui.contextmenu("spacecraft_clickmenu");
     this.contextmenu.setParent(this.container);
+console.log("ASDFASDF");
+
+    window.usehighres = this.args.highres || false;
 
     elation.events.add(this.container, "click", this);
     this.contextmenu = elation.ui.contextmenu("spacecraft_clickmenu");
@@ -37,7 +40,7 @@ elation.component.add("spacecraft.world", {
         self.render(self.timemultiplier * ((now - self.lastframetime) / 1000)); 
         self.lastframetime = now;
       }, self.frametime);
-      self.gfxloop = setInterval(function() { elation.spacecraft.planet(self.args.scene).loop(); }, self.frametime * (window.usewebgl ? 1 : 10));
+      //self.gfxloop = setInterval(function() { elation.spacecraft.planet(self.args.scene).loop(); }, self.frametime * (window.usewebgl ? 1 : 10));
     })(this);
   },
 
@@ -113,14 +116,16 @@ elation.component.add("spacecraft.thing", {
       }
       this.scale = (this.type == "planet" ? (this.parent.container.offsetHeight / (maxdist * 1.2)) / 2 : (this.parent ? this.parent.scale : 1)) || 1;
     console.log('scale for ' + this.name + ' is ', this.scale, this.parent.scale,  maxdist);
+if (this.name != "jupiter") {
       for (var k in this.args.things) {
         //console.log('add thing ' + k, this.args.things[k]);
         this.args.things[k].scene = this.args.scene;
         this.addthing(this.args.things[k].type, k, this.args.things[k]);
       }
+}
     } else {
-      this.scale = (this.type == "planet" ? (this.parent.container.offsetHeight / (elation.utils.arrayget(this, "properties.physical.radius", 1) * 20)) / 2 : (this.parent ? this.parent.scale : 1)) || 1;
     }
+      this.scale = (this.type == "planet" ? (this.parent.container.offsetHeight / (elation.utils.arrayget(this, "properties.physical.radius", 1) * .1)) * 4 : (this.parent ? this.parent.scale : 1)) || 1;
     this.containeroffset = (this.name == 'blahblah' ? [this.container.offsetWidth / 2, this.container.offsetHeight / 2] : [elation.utils.arrayget(this, "properties.physical.radius", 2) / 2 * this.scale, elation.utils.arrayget(this, "properties.physical.radius", 2) / 2 * this.scale]);
     if (this.type != 'sector') {
       var radius = elation.utils.arrayget(this, "properties.physical.radius", 1) * this.scale;
@@ -148,7 +153,7 @@ elation.component.add("spacecraft.thing", {
       }
     }
     if (elation.utils.arrayget(this, "properties.physical.angularvelocity")) {
-      dynamicsopts['angularvelocity'] = elation.utils.arrayget(this, "properties.physical.angularvelocity");
+      //dynamicsopts['angularvelocity'] = elation.utils.arrayget(this, "properties.physical.angularvelocity");
       (function(self) { dynamicsopts['onrotate'] = function(rot) { self.rotate(rot); }})(this);
     }
     
@@ -163,53 +168,41 @@ elation.component.add("spacecraft.thing", {
     //this.contextmenu = elation.ui.contextmenu("spacecraft_clickmenu");
   },
   createMesh: function() {
-    var scene = elation.spacecraft.planet(this.scene)
+    if (this.name == "blahblah") return;
+
+    var viewport = elation.spacecraft.viewport(this.scene)
     //var scale = 1 / 1e4;
-    var detail = 50;
-    if (this.name == "mars") {
-      var detail = 500;
-      var shader = ShaderUtils.lib[ "normal" ];
-      var uniforms = Uniforms.clone( shader.uniforms );
-      uniforms[ "enableAO" ].value = false;
-      uniforms[ "enableDiffuse" ].value = true;
-      uniforms[ "tDiffuse" ].texture = ImageUtils.loadTexture( "/elation/images/space/mars_8k_color.jpg" );
-      uniforms[ "tDisplacement" ].texture = ImageUtils.loadTexture( "/elation/images/space/mars_8k_topo.jpg" );
-      uniforms[ "tNormal" ].texture = ImageUtils.loadTexture( "/elation/images/space/mars_8k_normal.jpg" );
-      uniforms[ "uPointLightPos" ].value = scene.light.position;
-      uniforms[ "uPointLightColor" ].value = scene.light.color;
+    var meshpos = new THREE.Vector3(this.pos[0] * this.scale, this.pos[1] * this.scale, this.pos[2] * this.scale);
+    var planetargs = {
+      radius: elation.utils.arrayget(this, "properties.physical.radius", 1) * this.scale,
+      texture: elation.utils.arrayget(this.properties, "render.texture", false),
+      nighttexture: elation.utils.arrayget(this.properties, "render.nighttexture", false),
+      heightmap: elation.utils.arrayget(this.properties, "render.heightmap", false)
+    };
+    //texture = '/elation/images/space/earth_' + (window.usehighres == 1 ? '8k' : '1k') + '_color.jpg';
+if (0) {
+    var material = (window.usewebgl ? new THREE.MeshPhongMaterial(materialargs) : new THREE.MeshBasicMaterial(materialargs))
 
-      uniforms[ "uDiffuseColor" ].value.setHex( 0xffffff );
-/*
-      uniforms[ "uSpecularColor" ].value.setHex( 0xaa6600 );
-      uniforms[ "uAmbientColor" ].value.setHex( 0x050505 );
-*/
-      uniforms[ "uAmbientLightColor" ].value.setHex( 0x111111 );
-      uniforms[ "uShininess" ].value = 1;
-
-      
-
-      var parameters = { fragmentShader: shader.fragmentShader, vertexShader: shader.vertexShader, uniforms: uniforms };
-console.log(parameters);
-      var material = new THREE.MeshShaderMaterial( parameters );
-
-    } else {
-      var texture = elation.utils.arrayget(this.properties, "render.texture", false);
-      var materialargs = { color: 0xffffff };
-      if (texture) {
-        materialargs["map"] = ImageUtils.loadTexture(texture);
-      }
-      var material = (window.usewebgl ? new THREE.MeshPhongMaterial(materialargs) : new THREE.MeshBasicMaterial(materialargs))
-    }
-    var geometry = new Sphere(elation.utils.arrayget(this, "properties.physical.radius", 1) * this.scale, detail, detail);
+    var wireframematerial = new THREE.MeshBasicMaterial({color: 0x113311, wireframe: true, wireframeLinewidth: 1, shading: THREE.FlatShading, blending: THREE.AdditiveBlending, opacity: 1});
     geometry.computeTangents();
-console.log(material);
-    this.mesh = new THREE.Mesh(geometry, material);
-      this.mesh.position.x = this.pos[0] * this.scale;
-      this.mesh.position.y = this.pos[1] * this.scale;
-      this.mesh.position.z = this.pos[2] * this.scale;
 
-    //elation.spacecraft.world("spacecraft_world").addMeshToScene(this.mesh);
-    scene.addObject(this.mesh);
+    //if (elation.spacecraft.controls(0).getValue("wireframe")) {
+      //materials[0].push(wireframematerial);
+    //}
+    //materials[0][1].opacity = (elation.spacecraft.controls(0).getValue("wireframe") / 2);
+}
+
+    this.mesh = new elation.spacecraft.meshes.planet(planetargs);
+    this.mesh.position = meshpos;
+    viewport.addObject(this.mesh);
+
+    /* vertex display mode
+    var particlematerial = new THREE.ParticleBasicMaterial({size: 15, map: ImageUtils.loadTexture( "/~bai/three.js/examples/textures/sprites/ball.png"), blending: THREE.BillboardBlending, vertexColors: true });
+    var particles = new THREE.ParticleSystem(geometry, particlematerial);
+    particles.sortParticles = true;
+    particles.updateMatrix();
+    viewport.addObject(particles);
+    */
   },
   render: function(t) {
     if (this.dynamics) {
@@ -330,5 +323,73 @@ other = false; // FIXME - should be calculating gravity all the way up the heira
       this.mesh.rotation.y += rot[1];
       this.mesh.rotation.z += rot[2];
     }
+  },
+  thingsSetAttribute: function(name, value, root) {
+    if (root == undefined)
+      root = this.things;
+    for (var k in root) {
+      elation.utils.arrayset(root[k], name, value);
+      if (root[k].things) {
+        this.thingSetAttribute(name, value, root[k].things);
+      }
+    }
   }
+});
+elation.component.add("spacecraft.controls", {
+  init: function(name, container, args) {
+    this.name = name;
+    this.container = container;
+    this.args = args;
+
+    if (this.container.nodeName == 'FORM') {
+      for (var k in this.container.elements) {
+        console.log(k, this.container.elements[k]);
+      }
+    }
+    elation.events.add(this.container, "submit", this);
+  },
+  getValue: function(name) {
+    for (var k in this.container.elements) {
+      if (this.container.elements[k].name == name) {
+        return parseFloat(this.container.elements[k].value);
+      }
+    }
+    return undefined;
+  },
+  handleEvent: function(ev) {
+    if (typeof this[ev.type] == 'function') return this[ev.type](ev);
+  },
+  submit: function(ev) {
+try {
+    for (var k in this.container.elements) {
+      var el = this.container.elements[k];
+      switch (el.name) {
+        case 'movespeed':
+          elation.spacecraft.planet('spacecraft_planet_render').camera.movementSpeed = el.value;
+          break;
+        case 'wireframe':
+          if (el.value == 1 || el.value == 0) {
+            for (var k in elation.spacecraft.thing.obj) {
+              var obj = elation.spacecraft.thing(k);
+              if (obj.mesh && obj.mesh.materials[1]) {
+                obj.mesh.materials[1].opacity = (el.value == 1) / 2;
+          /*
+                for (var g in obj.mesh.geometry.geometryGroup) {
+                  obj.mesh.geometry.geometryGroup[g].__needsSmoothNormals = (el.value == 0);
+                }
+          */
+                obj.mesh.geometry.__dirtyNormals = true;
+              }
+            }
+          }
+          break;
+      }
+document.getElementById("spacecraft_dashboard").focus();
+    }
+} catch(e) {
+console.log(e);
+}
+    ev.preventDefault();
+  }
+  
 });

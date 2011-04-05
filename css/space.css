@@ -135,5 +135,14 @@
 #spacecraft_planet_render {
   width: 100%;
   height: 40em;
-  background: #fcc; /* url(/elation/images/space/galaxy_starfield.png); */
+  background: black; /* url(/elation/images/space/galaxy_starfield.png); */
 }
+#spacecraft_debug {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.spacecraft_controls p {
+  padding-right: 10em;
+}
+

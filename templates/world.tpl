@@ -4,8 +4,7 @@
 {dependency type="component" name="deepzoom.imagescale"}
 {dependency type="component" name="space"}
 
-{component name="space.viewport" anchor=$anchor}
-{printpre var=$anchor}
+{component name="space.viewport" anchor=$anchor highres=$highres}
 
 {*
 <script type="text/javascript">
