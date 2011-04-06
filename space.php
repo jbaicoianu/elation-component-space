@@ -260,7 +260,15 @@ class Component_space extends Component {
   function mergeProperties($thing, $props) {
     if (!empty($props)) {
       foreach ($props as $prop) {
-        $thing->properties[$prop->property][$prop->propertykey] = $this->castProperty($prop);
+        switch ($prop->propertykey) {
+          case 'texture':
+          case 'heightmap':
+            $value = DependencyManager::$locations['imageswww'] . $this->castProperty($prop);
+            break;
+          default:
+            $value = $this->castProperty($prop);
+        }
+        $thing->properties[$prop->property][$prop->propertykey] = $value;
       }
     }
     return $thing;
