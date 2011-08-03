@@ -16,13 +16,15 @@ elation.component.add("spacecraft.viewport", {
     this.scene.addLight(new THREE.AmbientLight( 0x444444, .25));
   
     this.meshes = {};
-    var startexture = ImageUtils.loadTexture( '/elation/images/space/galaxy_starfield.png' );
-    this.meshes['skybox'] = new THREE.Mesh(new Sphere(1e9, 100, 100), new THREE.MeshBasicMaterial({ map: startexture }));
-    this.meshes['skybox'].flipSided = true;
-    this.scene.addObject(this.meshes['skybox']);
+    var startexture = THREE.ImageUtils.loadTexture( '../images/space/galaxy_starfield.png' );
+    if (this.args.skybox) {
+      this.meshes['skybox'] = new THREE.Mesh(new THREE.Sphere(1e19, 100, 100), new THREE.MeshBasicMaterial({ map: startexture }));
+      this.meshes['skybox'].flipSided = true;
+      this.scene.addObject(this.meshes['skybox']);
+    }
 
     //this.camera = new THREE.QuatCamera({fov: 50, aspect: this.viewsize[0] / this.viewsize[1], movementSpeed: elation.spacecraft.controls(0).getValue("movespeed") || 12500, domElement: this.container, near: 1, far: 1e10, lookSpeed: .002});
-    this.camera = new THREE.FlyCamera({fov: 50, aspect: this.viewsize[0] / this.viewsize[1], movementSpeed: elation.spacecraft.controls(0).getValue("movespeed") || 0.2, domElement: this.container, near: 1, far: 1e10, rollSpeed: Math.PI / 6, dragToLook: true});
+    this.camera = new THREE.FlyCamera({fov: 50, aspect: this.viewsize[0] / this.viewsize[1], movementSpeed: elation.spacecraft.controls(0).getValue("movespeed") || 0.2, domElement: this.container, near: 1, far: 1e30, rollSpeed: Math.PI / 6, dragToLook: true});
 //this.camera.matrixAutoUpdate = false;
     this.camera.position.x = 27000;
     this.camera.position.y = 10000;
@@ -76,6 +78,12 @@ elation.component.add("spacecraft.viewport", {
     this.scene.addObject(obj);
   },
   setSpaceShader: function(shader) {
-    this.meshes['skybox'].materials[0] = new THREE.MeshShaderMaterial({uniforms: this.shaderuniforms, vertexShader: shader.vert, fragmentShader: shader.frag, blending: THREE.NormalBlending});
+    if (this.meshes['skybox']) {
+      if (shader instanceof THREE.MeshShaderMaterial) {
+        this.meshes['skybox'].materials[0] = shader;
+      } else {
+        this.meshes['skybox'].materials[0] = new THREE.MeshShaderMaterial({uniforms: this.shaderuniforms, vertexShader: shader.vert, fragmentShader: shader.frag, blending: THREE.NormalBlending});
+      }
+    }
   }
 });

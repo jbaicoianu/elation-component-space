@@ -2,9 +2,10 @@
 {dependency type="component" name="utils.sylvester"}
 {dependency type="component" name="utils.dynamics"}
 {dependency type="component" name="deepzoom.imagescale"}
+{dependency type="component" name="ui.contextmenu"}
 {dependency type="component" name="space"}
 
-{component name="space.viewport" anchor=$anchor highres=$highres}
+{component name="space.viewport" anchor=$anchor highres=$highres skybox=$skybox}
 
 {*
 <script type="text/javascript">

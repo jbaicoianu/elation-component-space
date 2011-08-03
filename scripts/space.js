@@ -6,14 +6,11 @@ elation.component.add("spacecraft.world", {
     this.container = container;
     this.args = args;
     this.contextmenu = elation.ui.contextmenu("spacecraft_clickmenu");
-    this.contextmenu.setParent(this.container);
-console.log("ASDFASDF");
+    //this.contextmenu.setParent(this.container);
 
     window.usehighres = this.args.highres || false;
 
     elation.events.add(this.container, "click", this);
-    this.contextmenu = elation.ui.contextmenu("spacecraft_clickmenu");
-    this.contextmenu.setParent(this.container);
     //this.initRenderer();
 
     this.blah = elation.html.create({tag:'div', classname:'spacecraft_thing spacecraft_thing_sector'});
@@ -21,6 +18,8 @@ console.log("ASDFASDF");
 
     var things = {};
     things[args.name] = args;
+if (things[args.name]['properties'] == null) delete things[args.name]['properties'];
+console.log(args, things[args.name]);
     elation.utils.arrayset(things[args.name], "properties.physical.position", [0, 0, 0]);
 
     this.thing = elation.spacecraft.thing("blahblah", this.blah, {type: "sector", scale: 1/1e4, parent: this, scene: this.args.scene, things: things}); //, parent: this.container});
@@ -115,17 +114,17 @@ elation.component.add("spacecraft.thing", {
         }
       }
       this.scale = (this.type == "planet" ? (this.parent.container.offsetHeight / (maxdist * 1.2)) / 2 : (this.parent ? this.parent.scale : 1)) || 1;
-    console.log('scale for ' + this.name + ' is ', this.scale, this.parent.scale,  maxdist);
-if (this.name != "jupiter") {
+    //console.log('scale for ' + this.name + ' is ', this.scale, this.parent.scale,  maxdist);
       for (var k in this.args.things) {
         //console.log('add thing ' + k, this.args.things[k]);
         this.args.things[k].scene = this.args.scene;
         this.addthing(this.args.things[k].type, k, this.args.things[k]);
       }
-}
     } else {
     }
       this.scale = (this.type == "planet" ? (this.parent.container.offsetHeight / (elation.utils.arrayget(this, "properties.physical.radius", 1) * .1)) * 4 : (this.parent ? this.parent.scale : 1)) || 1;
+      this.scale = (this.type == "planet" ? (this.parent.container.offsetHeight / (elation.utils.arrayget(this, "properties.physical.radius", 1) * .1)) * 4 : (this.parent ? this.parent.scale : 1)) || 1;
+      console.log('scale for ' + this.name + ' is ', this.scale);
     this.containeroffset = (this.name == 'blahblah' ? [this.container.offsetWidth / 2, this.container.offsetHeight / 2] : [elation.utils.arrayget(this, "properties.physical.radius", 2) / 2 * this.scale, elation.utils.arrayget(this, "properties.physical.radius", 2) / 2 * this.scale]);
     if (this.type != 'sector') {
       var radius = elation.utils.arrayget(this, "properties.physical.radius", 1) * this.scale;
@@ -133,6 +132,7 @@ if (this.name != "jupiter") {
         radius = 1;
       this.container.style.width = this.container.style.height = radius + 'px';
     }
+
     var behaviors = elation.utils.arrayget(this, "properties.behaviors");
     var dynamicsopts = {};
     if (behaviors) {
@@ -177,7 +177,8 @@ if (this.name != "jupiter") {
       radius: elation.utils.arrayget(this, "properties.physical.radius", 1) * this.scale,
       texture: elation.utils.arrayget(this.properties, "render.texture", false),
       nighttexture: elation.utils.arrayget(this.properties, "render.nighttexture", false),
-      heightmap: elation.utils.arrayget(this.properties, "render.heightmap", false)
+      heightmap: elation.utils.arrayget(this.properties, "render.heightmap", false),
+      //showsearches: (this.name == "earth")
     };
     //texture = '/elation/images/space/earth_' + (window.usehighres == 1 ? '8k' : '1k') + '_color.jpg';
 if (0) {
@@ -224,8 +225,10 @@ other = false; // FIXME - should be calculating gravity all the way up the heira
 
       this.dynamics.iterate(t);
     }
-    this.container.style.left = ((this.parent && this.parent.containeroffset ? this.parent.containeroffset[0] : 0) + (this.pos[0] * this.scale)) + 'px';
-    this.container.style.top = ((this.parent && this.parent.containeroffset ? this.parent.containeroffset[1] : 0) + (this.pos[2] * this.scale)) + 'px';
+    if (this.container) {
+      this.container.style.left = ((this.parent && this.parent.containeroffset ? this.parent.containeroffset[0] : 0) + (this.pos[0] * this.scale)) + 'px';
+      this.container.style.top = ((this.parent && this.parent.containeroffset ? this.parent.containeroffset[1] : 0) + (this.pos[2] * this.scale)) + 'px';
+    }
     for (var k in this.things) {
       this.things[k].render(t);
     }
@@ -288,7 +291,7 @@ other = false; // FIXME - should be calculating gravity all the way up the heira
     if (this.things[name]) {
       console.log('thing already exists: ' + name);
     } else {
-      this.things[name] = elation.spacecraft.thing(name, null, thingargs);
+      this.things[name] = elation.spacecraft.thing(name, elation.html.create({tag:'div'}), thingargs);
     }
     return this.things[name];  
   },
@@ -341,11 +344,13 @@ elation.component.add("spacecraft.controls", {
     this.container = container;
     this.args = args;
 
+/*
     if (this.container.nodeName == 'FORM') {
       for (var k in this.container.elements) {
         console.log(k, this.container.elements[k]);
       }
     }
+*/
     elation.events.add(this.container, "submit", this);
   },
   getValue: function(name) {
@@ -367,24 +372,24 @@ try {
         case 'movespeed':
           elation.spacecraft.planet('spacecraft_planet_render').camera.movementSpeed = el.value;
           break;
+        case 'highres':
+          for (var k in elation.spacecraft.thing.obj) {
+            var obj = elation.spacecraft.thing(k);
+            if (obj.mesh && obj.mesh.setHighres) {
+              obj.mesh.setHighres(el.checked);
+            }
+          }
+          break;
         case 'wireframe':
-          if (el.value == 1 || el.value == 0) {
-            for (var k in elation.spacecraft.thing.obj) {
-              var obj = elation.spacecraft.thing(k);
-              if (obj.mesh && obj.mesh.materials[1]) {
-                obj.mesh.materials[1].opacity = (el.value == 1) / 2;
-          /*
-                for (var g in obj.mesh.geometry.geometryGroup) {
-                  obj.mesh.geometry.geometryGroup[g].__needsSmoothNormals = (el.value == 0);
-                }
-          */
-                obj.mesh.geometry.__dirtyNormals = true;
-              }
+          for (var k in elation.spacecraft.thing.obj) {
+            var obj = elation.spacecraft.thing(k);
+            if (obj.mesh && obj.mesh.setWireframe) {
+              obj.mesh.setWireframe(el.checked);
             }
           }
           break;
       }
-document.getElementById("spacecraft_dashboard").focus();
+//document.getElementById("spacecraft_dashboard").focus();
     }
 } catch(e) {
 console.log(e);

@@ -199,6 +199,7 @@ class Component_space extends Component {
   function controller_world($args) {
     $data = ComponentManager::fetch("space.thingtypes", array("datatype" => "tree"), "data");
     $vars["anchor"] = any($args["anchor"], "/milky way/solar system/sol/earth");
+    $vars["skybox"] = !isset($args["skybox"]) || !empty($args["skybox"]);
     $vars["capacities"] = $data["thingtypes"];
     //$data = ComponentManager::fetch("space.things", array("datatype" => "tree"), "data");
     $vars["things"] = $data["things"];
@@ -233,6 +234,7 @@ class Component_space extends Component {
     $vars["anchor"] = any($args["anchor"], "/");
     $data = ComponentManager::fetch("space.things", array("from" => $vars["anchor"], "datatype" => "tree"), "data");
     $vars = $data;
+    $vars["skybox"] = !empty($args["skybox"]);
     $vars["highres"] = any($args["highres"], false);
     return $this->GetComponentResponse("./viewport.tpl", $vars);
   }
@@ -271,6 +273,5 @@ class Component_space extends Component {
         $thing->properties[$prop->property][$prop->propertykey] = $value;
       }
     }
-    return $thing;
   }
 }  

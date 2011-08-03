@@ -13,7 +13,7 @@
   </div>
 {/if}
 {if $show.things && !empty($item->things)}
-  {component name="utils.list" items=$item->things itemcomponent="space.thing" class="spacecraft_things_list"}
+  {component name="ui.list" items=$item->things itemcomponent="space.thing" class="spacecraft_things_list"}
 {/if}
 {if $show.links && !empty($item->links)}
   {printpre var=$item->links}

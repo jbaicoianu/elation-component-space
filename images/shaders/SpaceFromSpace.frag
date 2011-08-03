@@ -5,14 +5,17 @@
 //
 // Copyright (c) 2004 Sean O'Neil
 //
+// Ported for use with three.js/WebGL by James Baicoianu
 
-uniform sampler2D s2Test;
+uniform sampler2D tSkyboxDiffuse;
 
 varying vec3 c0;
+varying vec2 vUv;
 
 void main (void)
 {
 	//gl_FragColor = gl_SecondaryColor * texture2D(s2Test, gl_TexCoord[0].st);
 	//gl_FragColor = gl_SecondaryColor;
+  vec3 diffuseTex = texture2D( tSkyboxDiffuse, vUv ).xyz;
   gl_FragColor = vec4(c0, 1.0);
 }

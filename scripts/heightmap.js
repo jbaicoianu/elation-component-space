@@ -1,11 +1,9 @@
 elation.extend("spacecraft.heightmap", function(args) {
   this.init = function(args) {
-console.log('I am initializing a height map NOW!');
     this.args = args || {};
 
     this.variance = this.args.variance || 255;
     this.callback = this.args.callback || false;
-    this.scalefactor = 18;
 
     if (this.args.src) {
       var img = new Image();
@@ -15,13 +13,15 @@ console.log('I am initializing a height map NOW!');
       img.src = this.args.src;
     }
 
-    this.canvas = document.createElement("CANVAS");
+/*
     document.body.appendChild(this.canvas);
     elation.events.add(this.canvas, "mousemove", this);
+*/
   }
   this.loadImage = function(img) {
-    this.canvas.width = img.width;
-    this.canvas.height = img.height;
+    this.canvas = document.createElement("CANVAS");
+    this.width = this.canvas.width = img.width;
+    this.height = this.canvas.height = img.height;
     this.ctx = this.canvas.getContext('2d');
     this.ctx.drawImage(img, 0, 0);
     this.imgdata = this.ctx.getImageData(0,0,img.width,img.height);
@@ -41,6 +41,11 @@ console.log('I am initializing a height map NOW!');
     var x = ev.pageX - ev.target.offsetLeft,
         y = ev.pageY - ev.target.offsetTop;
     console.log([x, y], this.getHeight(x, y));
+  }
+  this.setImageData = function(dim, imgdata) {
+    this.width = dim[0];
+    this.height = dim[1];
+    this.imgdata = imgdata;
   }
   this.getHeight = function(x, y) {
     if (this.imgdata) {
@@ -100,10 +105,10 @@ if (isNaN(height)) height = 0;
       lat = lat[0];
     }
 
-    //console.log(this.getHeight(Math.floor(this.canvas.width * ((lon + 180) / 360)), Math.floor(this.canvas.height * ((lat + 90) / 180))) * 0.00000005320731022175221);
-//console.log('foo', this.getHeight(Math.floor(this.canvas.width * ((lon + 180) / 360)), Math.floor(this.canvas.height * ((lat + 90) / 180))));
-    //return this.getHeight(Math.floor(this.canvas.width * ((lon + 180) / 360)), Math.floor(this.canvas.height * ((lat + 90) / 180))) * 50;
-    return this.getHeight(this.canvas.width * ((lon + 180) / 360), this.canvas.height * ((lat + 90) / 180)) * this.scalefactor;
+    //console.log(this.getHeight(Math.floor(this.width * ((lon + 180) / 360)), Math.floor(this.height * ((lat + 90) / 180))) * 0.00000005320731022175221);
+//console.log('foo', this.getHeight(Math.floor(this.width * ((lon + 180) / 360)), Math.floor(this.height * ((lat + 90) / 180))));
+    //return this.getHeight(Math.floor(this.width * ((lon + 180) / 360)), Math.floor(this.height * ((lat + 90) / 180))) * 50;
+    return this.getHeight(this.width * ((lon + 180) / 360), this.height * ((lat + 90) / 180)) * this.variance;
   }
   this.init(args);
 });

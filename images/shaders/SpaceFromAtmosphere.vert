@@ -22,6 +22,7 @@ uniform float fKm4PI;			// Km * 4 * PI
 uniform float fScale;			// 1 / (fOuterRadius - fInnerRadius)
 uniform float fScaleDepth;		// The scale depth (i.e. the altitude at which the atmosphere's average density is found)
 uniform float fScaleOverScaleDepth;	// fScale / fScaleDepth
+uniform sampler2D tSkyboxDiffuse;
 
 varying vec3 v3Direction;
 varying vec3 c0;
@@ -48,10 +49,6 @@ void main(void)
 	float fDet = max(0.0, B*B - 4.0 * C);
 	fFar = 0.5 * (-B + sqrt(fDet));
 
-  // This should be done in the planet's update() function rather than executed per-vertex
-  float fCameraHeight = length(cameraPosition);
-  float fCameraHeight2 = fCameraHeight * fCameraHeight;
-
 	// Calculate attenuation from the camera to the top of the atmosphere toward the vertex
 	vec3 v3Start = cameraPosition;
 	float fHeight = length(v3Start);
@@ -60,5 +57,6 @@ void main(void)
 	float fScatter = fDepth*scale(fAngle);
 	c0 = exp(-fScatter * (v3InvWavelength * fKr4PI + fKm4PI));
   gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  vUv = uv;
 	//gl_TexCoord[0].st = gl_MultiTexCoord0.st;
 }

@@ -8,7 +8,7 @@
   <input name="addproperty[property]" /> :
   <input name="addproperty[propertykey]" /> = 
   <input name="addproperty[value]" />
-  {component name="utils.select" items="int;float;string;vector" selected=$prop->propertytype selectname="addproperty[propertytype]"}
+  {component name="ui.select" items="int;float;string;vector" selected=$prop->propertytype selectname="addproperty[propertytype]"}
   <input type="submit" />
 </form>
   {foreach from=$properties key=propname item=props}
@@ -19,7 +19,7 @@
         <li>
           <label for="spacecraft_thing_{$prop->property}_{$prop->propertykey}">{$prop->propertykey}</label>
           <input id="spacecraft_thing_{$prop->property}_{$prop->propertykey}" name="properties[{$prop->property}][{$prop->propertykey}]" value="{$prop->value}" />
-          {component name="utils.select" items="int;float;string;vector" selected=$prop->propertytype}
+          {component name="ui.select" items="int;float;string;vector" selected=$prop->propertytype}
         </li>
       {/foreach}
       </ul>
@@ -29,7 +29,7 @@
   {if !empty($thing->things)}
     <div class="">
       <h3>Things</h3>
-      {component name="utils.list" items=$thing->things itemcomponent="space.thing"}
+      {component name="ui.list" items=$thing->things itemcomponent="space.thing"}
     </div>
   {/if}
   {* component name="space.thing_create" item=$item error=$errors.thing parentname=$thing->parentname *}

@@ -23,6 +23,7 @@ uniform float fScale;			// 1 / (fOuterRadius - fInnerRadius)
 uniform float fScaleDepth;		// The scale depth (i.e. the altitude at which the atmosphere's average density is found)
 uniform float fScaleOverScaleDepth;	// fScale / fScaleDepth
 uniform sampler2D tDiffuse;
+uniform sampler2D tDisplacement;
 
 varying vec3 v3Direction;
 varying vec3 cFront;
@@ -80,6 +81,11 @@ void main(void)
 	// Calculate the attenuation factor for the ground
 	cSecondary = v3Attenuate;
 
+  vec3 displacement = texture2D( tDisplacement, uv ).xyz;
+  vec3 realpos = normalize(position) * (fInnerRadius + float(displacement.b) * 60.0);
+  //vec3 realpos = normalize(position) * (fInnerRadius);
+
+  //gl_Position = projectionMatrix * modelViewMatrix * vec4( realpos, 1.0 );
   gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 	//gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
 	//gl_TexCoord[1] = gl_TextureMatrix[1] * gl_MultiTexCoord1;
