@@ -159,8 +159,22 @@ class Component_space extends Component {
       $vars["thing"] = ORMManager::load("Thing", array($args["parentname"], $args["name"]));
       $types = $vars["thing"]->getThingTypes()->toArray();
       $properties = $vars["thing"]->getThingProperties()->toArray();
+      $updates = any($args["updateproperty"], array()); 
+      $updatetypes = any($args["updatetype"], array()); 
+      $didupdate = false;
       foreach ($properties as $prop) {
+        if (!empty($updates[$prop->property]) && !empty($updates[$prop->property][$prop->propertykey])) {
+          if ($prop->value != $updates[$prop->property][$prop->propertykey] || $prop->propertytype != $updatetypes[$prop->property][$prop->propertykey]) {
+            $prop->value = $updates[$prop->property][$prop->propertykey];
+            $prop->propertytype = $updatetypes[$prop->property][$prop->propertykey];
+            OrmManager::save($prop);
+            $didupdate = true;
+          }
+        }
         $vars["properties"][$prop->property][$prop->propertykey] = $prop;
+      }
+      if ($didupdate) {
+        //header("Location: " . $this->root->request["url"]);
       }
       $things = ComponentManager::fetch("space.things", array("from" => $args["parentname"] . "/" . $args["name"]), "data");
       $vars["thing"]->things = $things["things"];
