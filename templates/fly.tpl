@@ -1,6 +1,10 @@
 {component name="space.threejs"}
 {dependency type="component" name="utils.sylvester"}
 {dependency type="component" name="utils.dynamics"}
+{dependency name="space.sector"}
+{dependency name="space.road"}
+{dependency name="space.building"}
+{dependency name="space.drone"}
 {dependency name="space.fly"}
 
 <div elation:component="space.fly">
