@@ -32,6 +32,6 @@
       {component name="ui.list" items=$thing->things itemcomponent="space.thing"}
     </div>
   {/if}
-  {* component name="space.thing_create" item=$item error=$errors.thing parentname=$thing->parentname *}
+  {component name="space.thing_create" error=$errors.thing parentthing=$thing}
 </div>
 {dependency type="component" name="space"}
