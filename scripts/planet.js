@@ -76,12 +76,12 @@ console.log('displacement is now a uniform');
     var groundargs = {
       radius: this.radius,
       heightmap: this.heightmap,
-      maxvariance: 10
+      maxvariance: 15
     };
     console.log("groundargs:", groundargs);
     this.ground = {
       geometry: new ROAMSphere(groundargs),
-      //geometry: new THREE.Sphere(groundargs.radius, 50, 50),
+      //geometry: new THREE.SphereGeometry(groundargs.radius, 50, 50),
       //materials: [new THREE.MeshPhongMaterial({color: 0xd2b48c, map: this.shaderuniforms[ "tDiffuse" ].texture})]
       //materials: [new THREE.MeshFaceMaterial()]
       //materials: [new THREE.MeshFaceMaterial(), new THREE.MeshBasicMaterial({color: 0x00ff00, shading: THREE.SmoothShading, wireframe: true})]
@@ -97,7 +97,7 @@ console.log('displacement is now a uniform');
     //this.ground.mesh = new THREE.Mesh(this.ground.geometry, this.ground.materials);
 
     this.test = {
-      geometry: new THREE.Cube(this.radius, this.radius, this.radius, 1, 1, 1),
+      geometry: new THREE.CubeGeometry(this.radius, this.radius, this.radius, 1, 1, 1),
       materials: [new THREE.MeshFaceMaterial()]
     }
 this.test.geometry.boundingSphere = { radius: this.radius };
@@ -118,7 +118,7 @@ console.log(this.test);
     };
     this.sky = {
       //geometry: new ROAMSphere(skyargs),
-      geometry: new THREE.Sphere(skyargs.radius, 80, 80),
+      geometry: new THREE.SphereGeometry(skyargs.radius, 80, 80),
       materials: [new THREE.MeshPhongMaterial({color: 0x87ceeb, opacity: 0.5})]
     };
     this.sky.mesh = new THREE.Mesh(this.sky.geometry, this.sky.materials);
@@ -371,7 +371,6 @@ newpos.multiplyScalar(this.radius + surfaceoffset + altitude);
 
   this.create();
 });
-console.log(elation.spacecraft.meshes);
 elation.spacecraft.meshes.planet.prototype = new THREE.Mesh();
 elation.spacecraft.meshes.planet.prototype.constructor = elation.spacecraft.meshes.planet;
 

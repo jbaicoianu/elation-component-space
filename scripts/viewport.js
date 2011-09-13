@@ -18,7 +18,7 @@ elation.component.add("spacecraft.viewport", {
     this.meshes = {};
     var startexture = THREE.ImageUtils.loadTexture( '../images/space/galaxy_starfield.png' );
     if (this.args.skybox) {
-      this.meshes['skybox'] = new THREE.Mesh(new THREE.Sphere(1e19, 100, 100), new THREE.MeshBasicMaterial({ map: startexture }));
+      this.meshes['skybox'] = new THREE.Mesh(new THREE.SphereGeometry(1e19, 100, 100), new THREE.MeshBasicMaterial({ map: startexture }));
       this.meshes['skybox'].flipSided = true;
       this.scene.addObject(this.meshes['skybox']);
     }
