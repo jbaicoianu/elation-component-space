@@ -11,6 +11,10 @@
   {component name="ui.select" items="int;float;string;vector" selected=$prop->propertytype selectname="addproperty[propertytype]"}
   <input type="submit" />
 </form>
+<form method="post">
+  <input type="hidden" name="parentname" value="{$thing->parentname}" />
+  <input type="hidden" name="name" value="{$thing->name}" />
+
   {foreach from=$properties key=propname item=props}
     <div class="spacecraft_thing_propertygroup">
       <h4>{$propname}</h4>
@@ -18,13 +22,15 @@
       {foreach from=$props key=propkey item=prop}
         <li>
           <label for="spacecraft_thing_{$prop->property}_{$prop->propertykey}">{$prop->propertykey}</label>
-          <input id="spacecraft_thing_{$prop->property}_{$prop->propertykey}" name="properties[{$prop->property}][{$prop->propertykey}]" value="{$prop->value}" />
-          {component name="ui.select" items="int;float;string;vector" selected=$prop->propertytype}
+          <input id="spacecraft_thing_{$prop->property}_{$prop->propertykey}" name="updateproperty[{$prop->property}][{$prop->propertykey}]" value="{$prop->value}" />
+          {component name="ui.select" selectname="updatetype[`$prop->property`][`$prop->propertykey`]" items="int;float;string;vector" selected=$prop->propertytype}
         </li>
       {/foreach}
       </ul>
     </div>
   {/foreach}
+  <input type="submit" value="update" />
+</form>
 
   {if !empty($thing->things)}
     <div class="">
