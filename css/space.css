@@ -129,6 +129,9 @@
   padding: .5em;
   vertical-align: top;
 }
+.spacecraft_thing_propertygroup h4 {
+  margin-top: 0;
+}
 .spacecraft_thing_propertygroup label {
   display: inline-block;
   width: 8em;
