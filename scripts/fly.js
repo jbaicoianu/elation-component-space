@@ -203,7 +203,7 @@ currentobj.scale.z = 30;
         break;
       case 'drone':
         //console.log('cool, a drone', thing);
-        currentobj = new elation.space.drone(thing);
+        //currentobj = new elation.space.drone(thing);
         break;
       default:
         console.log("dunno wtf:", thing);
