@@ -24,8 +24,8 @@ void main (void)
 	//gl_FragColor = gl_Color + texture2D(s2Tex1, gl_TexCoord[0].st) * texture2D(s2Tex2, gl_TexCoord[1].st) * gl_SecondaryColor;
   vec3 diffuseTex = texture2D( tDiffuse, vUv ).xyz;
   float phong = dot(normalize(vNormal), normalize(v3LightPosition));
-  //gl_FragColor = vec4( cFront + (diffuseTex * phong) * cSecondary, 1.0 );
+  gl_FragColor = vec4( cFront + (diffuseTex * phong) * cSecondary, 1.0 );
   //gl_FragColor = vec4(cFront + (diffuseTex * phong * cSecondary), 1.0);
   //gl_FragColor = vec4( cFront, 1.0) + vec4(diffuseTex * phong, 1.0);
-  gl_FragColor = vec4(cFront + (diffuseTex * phong) + (0.05 * cSecondary), 1.0);
+  //gl_FragColor = vec4(cFront + (diffuseTex * phong) + (0.05 * cSecondary), 1.0);
 }
