@@ -29,7 +29,7 @@ elation.component.add("spacecraft.viewport", {
     this.camera.position.x = 27000;
     this.camera.position.y = 10000;
     this.camera.position.z = 17000;
-    this.renderer = (usewebgl ? new THREE.WebGLRenderer() : new THREE.CanvasRenderer());
+    this.renderer = (usewebgl ? new THREE.WebGLRenderer({ preserveDrawingBuffer: true }) : new THREE.CanvasRenderer());
     this.renderer.setSize(this.viewsize[0], this.viewsize[1]);
     if (this.container) {
       this.container.appendChild(this.renderer.domElement);
