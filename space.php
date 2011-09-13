@@ -22,7 +22,7 @@ class Component_space extends Component {
     return $this->GetComponentResponse("./space.tpl", $vars);
   }
   function controller_thingtypes($args) {
-    $datatype = any($args["datatype"], "list");
+    $datatype = any($args["datatype"], "tree");
     if (!empty($args["thingtype"])) {
       $add = ComponentManager::fetch("space.thingtype", array("create" => $args["thingtype"]), "data");
       $vars["errors"]["thingtype"] = $add["error"];
@@ -31,7 +31,10 @@ class Component_space extends Component {
     $thingtypes = $this->orm->select("ThingType", "ORDER BY type,property");
     if ($datatype == "tree") {
       foreach ($thingtypes as $k) {
-        $vars["thingtypes"][$k->type][$k->property][$k->propertykey] = $k->value;
+        if (!isset($vars["thingtypes"][$k->type]->type)) {
+          $vars["thingtypes"][$k->type]->type = $k->type;
+        }
+        $vars["thingtypes"][$k->type]->properties[$k->property][$k->propertykey] = $k->value;
       }
     } else {
       $vars["thingtypes"] = $thingtypes;
@@ -168,6 +171,9 @@ class Component_space extends Component {
   function controller_thing_create($args) {
     $vars["thing"] = $args["thing"];
     $vars["error"] = $args["error"];
+    if (!empty($args["parentthing"])) {
+      $vars["item"]->parentname = $args["parentthing"]->parentname . "/" . $args["parentthing"]->name;;
+    }
     return $this->GetComponentResponse("./thing_create.tpl", $vars);
   }
   function controller_thinglinks($args) {
@@ -237,6 +243,10 @@ class Component_space extends Component {
     $vars["skybox"] = !empty($args["skybox"]);
     $vars["highres"] = any($args["highres"], false);
     return $this->GetComponentResponse("./viewport.tpl", $vars);
+  }
+  function controller_fly($args) {
+    $vars["sector"] = ComponentManager::fetch("space.things", array("from" => "/milky way/solar system/sol/earth/north america/stupidtown"), "data");
+    return $this->GetComponentResponse("./fly.tpl", $vars);
   }
 
   function castProperty($prop) {
