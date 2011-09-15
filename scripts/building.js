@@ -33,6 +33,9 @@ elation.extend("space.meshes.building", function(args) {
       newobj.scale.y = this.args.render.scale[1];
       newobj.scale.z = this.args.render.scale[2];
     }
+    newobj.receiveShadow = true;
+    newobj.castShadow = true;
+    newobj.doubleSided = true;
     this.addChild(newobj);
   }
   this.init();
