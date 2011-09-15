@@ -14,17 +14,32 @@ elation.component.add('space.fly', {
     this.camera = new THREE.Camera( 50, this.viewsize[0] / this.viewsize[1], 1, 100000 );
 
     // TODO - light should just be a property of the sun...
-    this.lights['white'] = new THREE.PointLight( 0xffffff, 1, 200000);
-    this.lights['white'].position.x = 10000;
+    this.lights['white'] = new THREE.SpotLight( 0xfffffff, 1, 200000);
+    this.lights['white'].position.x = -10000;
     this.lights['white'].position.y = 10000;
-    this.lights['white'].position.z = 10000;
-
+    this.lights['white'].position.z = -10000;
+    this.lights['white'].castShadow = true;
     this.scene.addLight(this.lights['white']);
+
+    this.lights['ambient'] = new THREE.AmbientLight( 0x444444 );
+    this.scene.addLight(this.lights['ambient']);
 
     this.addObjects(this.args.sector, this.scene);
 
-    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer() : new THREE.CanvasRenderer());
+    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({maxShadows: 10}) : new THREE.CanvasRenderer());
     this.renderer.setSize(this.viewsize[0], this.viewsize[1]);
+
+    this.renderer.shadowCameraNear = 15;
+    this.renderer.shadowCameraFar = this.camera.far;
+    this.renderer.shadowCameraFov = 50;
+ 
+    //this.renderer.shadowMapBias = 0.0039;
+    //this.renderer.shadowMapDarkness = 0.5;
+    this.renderer.shadowMapWidth = 8192;
+    this.renderer.shadowMapHeight = 8192;
+ 
+    this.renderer.shadowMapEnabled = true;
+    this.renderer.shadowMapSoft = true;
 
     if (this.container) {
       this.container.appendChild(this.renderer.domElement);
