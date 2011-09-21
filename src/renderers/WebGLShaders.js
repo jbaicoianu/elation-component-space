@@ -150,7 +150,7 @@ THREE.ShaderChunk = {
 
 	map_pars_vertex: [
 
-	"#ifdef USE_MAP",
+	"#if defined(USE_MAP) || defined(USE_NORMALMAP)",
 
 		"varying vec2 vUv;",
 		"uniform vec4 offsetRepeat;",
@@ -161,9 +161,14 @@ THREE.ShaderChunk = {
 
 	map_pars_fragment: [
 
-	"#ifdef USE_MAP",
+	"#if defined(USE_MAP) || defined(USE_NORMALMAP)",
 
 		"varying vec2 vUv;",
+
+	"#endif",
+
+	"#ifdef USE_MAP",
+
 		"uniform sampler2D map;",
 
 	"#endif"
@@ -172,7 +177,7 @@ THREE.ShaderChunk = {
 
 	map_vertex: [
 
-	"#ifdef USE_MAP",
+	"#if defined(USE_MAP) || defined(USE_NORMALMAP)",
 
 		"vUv = uv * offsetRepeat.zw + offsetRepeat.xy;",
 
@@ -186,7 +191,7 @@ THREE.ShaderChunk = {
 
 		"gl_FragColor = gl_FragColor * texture2D( map, vUv );",
 
-	"#endif"
+	"#endif",
 
 	].join("\n"),
 
@@ -278,7 +283,7 @@ THREE.ShaderChunk = {
 		"for( int i = 0; i < MAX_DIR_LIGHTS; i ++ ) {",
 
 			"vec4 lDirection = viewMatrix * vec4( directionalLightDirection[ i ], 0.0 );",
-			"float directionalLightWeighting = max( dot( transformedNormal, normalize( lDirection.xyz ) ), 0.0 );",
+			"float directionalLightWeighting = max( dot( normal, normalize( lDirection.xyz ) ), 0.0 );",
 			"vLightWeighting += directionalLightColor[ i ] * directionalLightWeighting;",
 
 		"}",
@@ -300,7 +305,7 @@ THREE.ShaderChunk = {
 
 				"lVector = normalize( lVector );",
 
-				"float pointLightWeighting = max( dot( transformedNormal, lVector ), 0.0 );",
+				"float pointLightWeighting = max( dot( normal, lVector ), 0.0 );",
 				"vLightWeighting += pointLightColor[ i ] * pointLightWeighting * lDistance;",
 
 				"#ifdef PHONG",
@@ -326,13 +331,13 @@ THREE.ShaderChunk = {
 	"#endif",
 
 	"varying vec3 vViewPosition;",
-	"varying vec3 vNormal;"
+	"varying vec3 vNormal;",
+	"uniform vec3 ambientLightColor;",
 
 	].join("\n"),
 
 	lights_fragment: [
 
-	"vec3 normal = normalize( vNormal );",
 	"vec3 viewPosition = normalize( vViewPosition );",
 
 	"vec4 mColor = vec4( diffuse, opacity );",
@@ -391,7 +396,7 @@ THREE.ShaderChunk = {
 
 	"#endif",
 
-	"vec4 totalLight = vec4( ambient, opacity );",
+	"vec4 totalLight = vec4( ambient * ambientLightColor, opacity );",
 
 	"#if MAX_DIR_LIGHTS > 0",
 
@@ -668,6 +673,73 @@ THREE.ShaderChunk = {
 
 	"#endif"
 
+	].join("\n"),
+
+	normal_pars_vertex: [
+
+	"#ifdef USE_NORMALMAP",
+
+	  "varying vec3 vTangent;",
+	  "varying vec3 vBinormal;",
+	  "uniform sampler2D normalMap;",
+	  "attribute vec4 tangent;",
+
+	"#endif"
+
+	].join("\n"),
+
+	normal_vertex: [
+
+	  "#ifdef USE_NORMALMAP",
+
+	    "vec3 transformedNormal = normalize(normalMatrix * texture2D( normalMap, vUv ).rgb);",
+
+	    // tangent and binormal vectors
+
+	    "vTangent = normalize( normalMatrix * tangent.xyz );",
+
+	    "vBinormal = cross( transformedNormal, vTangent ) * tangent.w;",
+	    "vBinormal = normalize( vBinormal );",
+
+	  "#else",
+
+	    "vec3 transformedNormal = normalize( normalMatrix * normal );",
+
+	  "#endif",
+
+	  "vNormal = transformedNormal;",
+
+	].join("\n"),
+
+	normal_pars_fragment: [
+
+	"#ifdef USE_NORMALMAP",
+
+	  "varying vec3 vTangent;",
+	  "varying vec3 vBinormal;",
+	  "uniform sampler2D normalMap;",
+
+	"#endif",
+
+	].join("\n"),
+
+	normal_fragment: [
+
+	"#ifdef USE_NORMALMAP",
+	  "mat3 tsb = mat3( vTangent, vBinormal, vNormal );",
+	  "vec3 normalTex = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0;",
+	  "normalTex.xy *= 1.0;",
+		"vec3 normal = normalize(tsb * normalize(normalTex));",
+	"#else",
+		"vec3 normal = normalize( vNormal );",
+	"#endif",
+
+	].join("\n"),
+
+	phong_pars_fragment: [
+		"uniform vec3 ambient;",
+		"uniform vec3 specular;",
+		"uniform float shininess;",
 	].join("\n")
 
 };
@@ -801,7 +873,22 @@ THREE.UniformsLib = {
 		"shadowBias" : { type: "f", value: 0.0039 },
 		"shadowDarkness": { type: "f", value: 0.2 }
 
+	},
+
+	phong: {
+
+		"ambient"  : { type: "c", value: new THREE.Color( 0xff0505 ) },
+		"specular" : { type: "c", value: new THREE.Color( 0x111111 ) },
+		"shininess": { type: "f", value: 30 }
+
+	},
+
+	normalmap: {
+
+		"normalMap" : { type: "t", value: 4, texture: null },
+
 	}
+
 
 };
 
@@ -1161,16 +1248,49 @@ THREE.ShaderLib = {
 
 	'normal': {
 
-		uniforms: { "opacity" : { type: "f", value: 1.0 } },
+		uniforms: THREE.UniformsUtils.merge( [
+
+			THREE.UniformsLib[ "common" ],
+			THREE.UniformsLib[ "fog" ],
+			THREE.UniformsLib[ "lights" ],
+			THREE.UniformsLib[ "shadowmap" ],
+			THREE.UniformsLib[ "phong" ],
+			THREE.UniformsLib[ "normalmap" ],
+
+		] ),
 
 		fragmentShader: [
 
+			"uniform vec3 diffuse;",
 			"uniform float opacity;",
-			"varying vec3 vNormal;",
+
+			"varying vec3 vLightWeighting;",
+
+			THREE.ShaderChunk[ "color_pars_fragment" ],
+			THREE.ShaderChunk[ "map_pars_fragment" ],
+			THREE.ShaderChunk[ "lightmap_pars_fragment" ],
+			THREE.ShaderChunk[ "envmap_pars_fragment" ],
+			THREE.ShaderChunk[ "fog_pars_fragment" ],
+			THREE.ShaderChunk[ "lights_pars_fragment" ],
+			THREE.ShaderChunk[ "shadowmap_pars_fragment" ],
+			THREE.ShaderChunk[ "phong_pars_fragment" ],
+			THREE.ShaderChunk[ "normal_pars_fragment" ],
 
 			"void main() {",
 
-				"gl_FragColor = vec4( 0.5 * normalize( vNormal ) + 0.5, opacity );",
+				"gl_FragColor = vec4( vLightWeighting, 1.0 );",
+
+				THREE.ShaderChunk[ "map_fragment" ],
+				THREE.ShaderChunk[ "alphatest_fragment" ],
+
+				THREE.ShaderChunk[ "normal_fragment" ],
+				THREE.ShaderChunk[ "lights_fragment" ],
+
+				THREE.ShaderChunk[ "lightmap_fragment" ],
+				THREE.ShaderChunk[ "color_fragment" ],
+				THREE.ShaderChunk[ "envmap_fragment" ],
+				THREE.ShaderChunk[ "shadowmap_fragment" ],
+				THREE.ShaderChunk[ "fog_fragment" ],
 
 			"}"
 
@@ -1178,15 +1298,49 @@ THREE.ShaderLib = {
 
 		vertexShader: [
 
+			"#define PHONG",
+
+			"varying vec3 vLightWeighting;",
+			"varying vec3 vViewPosition;",
 			"varying vec3 vNormal;",
+
+			THREE.ShaderChunk[ "map_pars_vertex" ],
+			THREE.ShaderChunk[ "normal_pars_vertex" ],
+			THREE.ShaderChunk[ "lightmap_pars_vertex" ],
+			THREE.ShaderChunk[ "envmap_pars_vertex" ],
+			THREE.ShaderChunk[ "lights_pars_vertex" ],
+			THREE.ShaderChunk[ "color_pars_vertex" ],
+			THREE.ShaderChunk[ "skinning_pars_vertex" ],
+			THREE.ShaderChunk[ "morphtarget_pars_vertex" ],
+			THREE.ShaderChunk[ "shadowmap_pars_vertex" ],
+			THREE.ShaderChunk[ "phong_pars_vertex" ],
 
 			"void main() {",
 
 				"vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );",
-				"vNormal = normalize( normalMatrix * normal );",
+	      "gl_Position = projectionMatrix * mvPosition;",
 
-				"gl_Position = projectionMatrix * mvPosition;",
+				THREE.ShaderChunk[ "map_vertex" ],
+				THREE.ShaderChunk[ "normal_vertex" ],
 
+				THREE.ShaderChunk[ "lightmap_vertex" ],
+				THREE.ShaderChunk[ "envmap_vertex" ],
+				THREE.ShaderChunk[ "color_vertex" ],
+
+				"#ifndef USE_ENVMAP",
+
+					"vec4 mPosition = objectMatrix * vec4( position, 1.0 );",
+
+				"#endif",
+
+				"vViewPosition = -mvPosition.xyz;",
+
+				THREE.ShaderChunk[ "lights_vertex" ],
+				THREE.ShaderChunk[ "skinning_vertex" ],
+				THREE.ShaderChunk[ "morphtarget_vertex" ],
+				THREE.ShaderChunk[ "default_vertex" ],
+				THREE.ShaderChunk[ "shadowmap_vertex" ],
+	      
 			"}"
 
 		].join("\n")
@@ -1326,7 +1480,7 @@ THREE.ShaderLib = {
 				THREE.ShaderChunk[ "envmap_vertex" ],
 				THREE.ShaderChunk[ "color_vertex" ],
 
-				"vec3 transformedNormal = normalize( normalMatrix * normal );",
+				THREE.ShaderChunk[ "normal_vertex" ],
 
 				THREE.ShaderChunk[ "lights_vertex" ],
 				THREE.ShaderChunk[ "skinning_vertex" ],
@@ -1349,12 +1503,7 @@ THREE.ShaderLib = {
 			THREE.UniformsLib[ "fog" ],
 			THREE.UniformsLib[ "lights" ],
 			THREE.UniformsLib[ "shadowmap" ],
-
-			{
-				"ambient"  : { type: "c", value: new THREE.Color( 0x050505 ) },
-				"specular" : { type: "c", value: new THREE.Color( 0x111111 ) },
-				"shininess": { type: "f", value: 30 }
-			}
+			THREE.UniformsLib[ "phong" ]
 
 		] ),
 
@@ -1362,10 +1511,6 @@ THREE.ShaderLib = {
 
 			"uniform vec3 diffuse;",
 			"uniform float opacity;",
-
-			"uniform vec3 ambient;",
-			"uniform vec3 specular;",
-			"uniform float shininess;",
 
 			"varying vec3 vLightWeighting;",
 
@@ -1376,6 +1521,8 @@ THREE.ShaderLib = {
 			THREE.ShaderChunk[ "fog_pars_fragment" ],
 			THREE.ShaderChunk[ "lights_pars_fragment" ],
 			THREE.ShaderChunk[ "shadowmap_pars_fragment" ],
+			THREE.ShaderChunk[ "phong_pars_fragment" ],
+			THREE.ShaderChunk[ "normal_pars_fragment" ],
 
 			"void main() {",
 
@@ -1384,6 +1531,7 @@ THREE.ShaderLib = {
 				THREE.ShaderChunk[ "map_fragment" ],
 				THREE.ShaderChunk[ "alphatest_fragment" ],
 
+				THREE.ShaderChunk[ "normal_fragment" ],
 				THREE.ShaderChunk[ "lights_fragment" ],
 
 				THREE.ShaderChunk[ "lightmap_fragment" ],
@@ -1405,6 +1553,7 @@ THREE.ShaderLib = {
 			"varying vec3 vNormal;",
 
 			THREE.ShaderChunk[ "map_pars_vertex" ],
+			THREE.ShaderChunk[ "normal_pars_vertex" ],
 			THREE.ShaderChunk[ "lightmap_pars_vertex" ],
 			THREE.ShaderChunk[ "envmap_pars_vertex" ],
 			THREE.ShaderChunk[ "lights_pars_vertex" ],
@@ -1412,12 +1561,15 @@ THREE.ShaderLib = {
 			THREE.ShaderChunk[ "skinning_pars_vertex" ],
 			THREE.ShaderChunk[ "morphtarget_pars_vertex" ],
 			THREE.ShaderChunk[ "shadowmap_pars_vertex" ],
+			THREE.ShaderChunk[ "phong_pars_vertex" ],
 
 			"void main() {",
 
 				"vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );",
 
 				THREE.ShaderChunk[ "map_vertex" ],
+				THREE.ShaderChunk[ "normal_vertex" ],
+
 				THREE.ShaderChunk[ "lightmap_vertex" ],
 				THREE.ShaderChunk[ "envmap_vertex" ],
 				THREE.ShaderChunk[ "color_vertex" ],
@@ -1429,9 +1581,6 @@ THREE.ShaderLib = {
 				"#endif",
 
 				"vViewPosition = -mvPosition.xyz;",
-
-				"vec3 transformedNormal = normalize( normalMatrix * normal );",
-				"vNormal = transformedNormal;",
 
 				THREE.ShaderChunk[ "lights_vertex" ],
 				THREE.ShaderChunk[ "skinning_vertex" ],

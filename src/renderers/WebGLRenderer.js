@@ -2533,6 +2533,21 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	};
 
+	function refreshUniformsNormal( uniforms, material) {
+
+			uniforms.opacity.value = material.opacity;
+			uniforms.ambient.value = material.ambient;
+			uniforms.specular.value = material.specular;
+			uniforms.shininess.value = material.shininess;
+
+			if ( material.normalMap && uniforms.normalMap) {
+
+				uniforms.normalMap.texture = material.normalMap;
+
+			}
+
+	}
+
 	this.initMaterial = function ( material, lights, fog, object ) {
 
 		var u, a, identifiers, i, parameters, maxLightCount, maxBones, maxShadows, shaderID;
@@ -2584,7 +2599,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		parameters = {
 
-			map: !!material.map, envMap: !!material.envMap, lightMap: !!material.lightMap,
+			map: !!material.map, normalMap: !!material.normalMap, envMap: !!material.envMap, lightMap: !!material.lightMap,
 			vertexColors: material.vertexColors,
 			fog: fog, sizeAttenuation: material.sizeAttenuation,
 			skinning: material.skinning,
@@ -2697,6 +2712,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 			 material instanceof THREE.MeshBasicMaterial ||
 			 material instanceof THREE.MeshLambertMaterial ||
 			 material instanceof THREE.MeshPhongMaterial ||
+			 material instanceof THREE.MeshNormalMaterial ||
 			 material instanceof THREE.LineBasicMaterial ||
 			 material instanceof THREE.ParticleBasicMaterial ||
 			 material.fog )
@@ -2708,6 +2724,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		if ( material instanceof THREE.MeshPhongMaterial ||
 			 material instanceof THREE.MeshLambertMaterial ||
+			 material instanceof THREE.MeshNormalMaterial ||
 			 material.lights ) {
 
 			setupLights( program, lights );
@@ -2717,7 +2734,8 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		if ( material instanceof THREE.MeshBasicMaterial ||
 			 material instanceof THREE.MeshLambertMaterial ||
-			 material instanceof THREE.MeshPhongMaterial ) {
+			 material instanceof THREE.MeshPhongMaterial ||
+			 material instanceof THREE.MeshNormalMaterial ) {
 
 			refreshUniformsCommon( m_uniforms, material );
 
@@ -2745,7 +2763,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		} else if ( material instanceof THREE.MeshNormalMaterial ) {
 
-			m_uniforms.opacity.value = material.opacity;
+			refreshUniformsNormal( m_uniforms, material );
 
 		}
 
@@ -2765,6 +2783,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		if ( material instanceof THREE.MeshShaderMaterial ||
 			 material instanceof THREE.MeshPhongMaterial ||
+			 material instanceof THREE.MeshNormalMaterial ||
 			 material.envMap ) {
 
 			if( p_uniforms.cameraPosition !== null ) {
@@ -2789,6 +2808,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 		}
 
 		if ( material instanceof THREE.MeshPhongMaterial ||
+			 material instanceof THREE.MeshNormalMaterial ||
 			 material instanceof THREE.MeshLambertMaterial ||
 			 material instanceof THREE.MeshShaderMaterial ||
 			 material.skinning ) {
@@ -4597,6 +4617,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 			"#define MAX_BONES " + parameters.maxBones,
 
 			parameters.map ? "#define USE_MAP" : "",
+			parameters.normalMap ? "#define USE_NORMALMAP" : "",
 			parameters.envMap ? "#define USE_ENVMAP" : "",
 			parameters.lightMap ? "#define USE_LIGHTMAP" : "",
 			parameters.vertexColors ? "#define USE_COLOR" : "",
@@ -4671,6 +4692,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 			parameters.fog instanceof THREE.FogExp2 ? "#define FOG_EXP2" : "",
 
 			parameters.map ? "#define USE_MAP" : "",
+			parameters.normalMap ? "#define USE_NORMALMAP" : "",
 			parameters.envMap ? "#define USE_ENVMAP" : "",
 			parameters.lightMap ? "#define USE_LIGHTMAP" : "",
 			parameters.vertexColors ? "#define USE_COLOR" : "",
