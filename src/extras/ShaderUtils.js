@@ -126,7 +126,8 @@ THREE.ShaderUtils = {
 				"uSpecularColor": { type: "c", value: new THREE.Color( 0x111111 ) },
 				"uAmbientColor": { type: "c", value: new THREE.Color( 0x050505 ) },
 				"uShininess": { type: "f", value: 30 },
-				"uOpacity": { type: "f", value: 1 }
+				"uOpacity": { type: "f", value: 1 },
+				"offsetRepeat" : { type: "v4", value: new THREE.Vector4( 0, 0, 1, 1 ) }
 
 				}
 
@@ -139,6 +140,7 @@ THREE.ShaderUtils = {
 				"uniform vec3 uSpecularColor;",
 				"uniform float uShininess;",
 				"uniform float uOpacity;",
+				"uniform vec4 offsetRepeat;",
 
 				"uniform bool enableDiffuse;",
 				"uniform bool enableSpecular;",
@@ -282,6 +284,7 @@ THREE.ShaderUtils = {
 					"uniform float uDisplacementBias;",
 
 				"#endif",
+				"uniform vec4 offsetRepeat;",
 
 				"varying vec3 vTangent;",
 				"varying vec3 vBinormal;",
@@ -316,7 +319,7 @@ THREE.ShaderUtils = {
 					"vBinormal = cross( vNormal, vTangent ) * tangent.w;",
 					"vBinormal = normalize( vBinormal );",
 
-					"vUv = uv;",
+					"vUv = uv * offsetRepeat.zw + offsetRepeat.xy;",
 
 					// point lights
 
@@ -406,4 +409,4 @@ THREE.ShaderUtils = {
 
 };
 
-};
+}; 
