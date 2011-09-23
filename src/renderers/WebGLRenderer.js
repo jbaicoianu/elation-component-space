@@ -2444,6 +2444,14 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			uniforms.offsetRepeat.value.set( material.map.offset.x, material.map.offset.y, material.map.repeat.x, material.map.repeat.y );
 
+		} else if ( material.normalMap ) {
+
+			// TODO
+			// it would be nice to support different offset/repeat values for
+			// normal maps but would require an additional vec4 uniform...
+
+			uniforms.offsetRepeat.value.set( material.normalMap.offset.x, material.normalMap.offset.y, material.normalMap.repeat.x, material.normalMap.repeat.y );
+
 		}
 
 		uniforms.lightMap.texture = material.lightMap;
@@ -5545,7 +5553,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			m = materials[ i ];
 
-			if ( m.map || m.lightMap || m instanceof THREE.MeshShaderMaterial ) {
+			if ( m.map || m.normalMap || m.lightMap || m instanceof THREE.MeshShaderMaterial ) {
 
 				return true;
 
