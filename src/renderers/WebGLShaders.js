@@ -150,7 +150,7 @@ THREE.ShaderChunk = {
 
 	map_pars_vertex: [
 
-	"#if defined(USE_MAP) || defined(USE_NORMALMAP)",
+	"#ifdef USE_MAP",
 
 		"varying vec2 vUv;",
 		"uniform vec4 offsetRepeat;",
@@ -161,15 +161,10 @@ THREE.ShaderChunk = {
 
 	map_pars_fragment: [
 
-	"#if defined(USE_MAP) || defined(USE_NORMALMAP)",
-
-		"varying vec2 vUv;",
-
-	"#endif",
-
 	"#ifdef USE_MAP",
 
 		"uniform sampler2D map;",
+		"varying vec2 vUv;",
 
 	"#endif"
 
@@ -177,7 +172,7 @@ THREE.ShaderChunk = {
 
 	map_vertex: [
 
-	"#if defined(USE_MAP) || defined(USE_NORMALMAP)",
+	"#ifdef USE_MAP",
 
 		"vUv = uv * offsetRepeat.zw + offsetRepeat.xy;",
 
@@ -679,11 +674,13 @@ THREE.ShaderChunk = {
 
 	"#ifdef USE_NORMALMAP",
 
-	  "varying vec3 vTangent;",
-	  "varying vec3 vBinormal;",
-	  "uniform sampler2D normalMap;",
-	  "uniform float normalScale;",
-	  "attribute vec4 tangent;",
+		"varying vec3 vTangent;",
+		"varying vec3 vBinormal;",
+		"uniform sampler2D normalMap;",
+		"uniform float normalScale;",
+		"attribute vec4 tangent;",
+		"uniform vec4 offsetRepeatNormal;",
+		"varying vec2 vUvNormal;",
 
 	"#endif"
 
@@ -691,21 +688,22 @@ THREE.ShaderChunk = {
 
 	normal_vertex: [
 
-	  "#ifdef USE_NORMALMAP",
+	"#ifdef USE_NORMALMAP",
 
-	    "vec3 transformedNormal = normalize( normalMatrix * normal );",
+		"vec3 transformedNormal = normalize( normalMatrix * normal );",
 
-	    // tangent and binormal vectors
-	    "vTangent = normalize( normalMatrix * tangent.xyz );",
-	    "vBinormal = normalize(cross( transformedNormal, vTangent ) * tangent.w);",
+		// tangent and binormal vectors
+		"vTangent = normalize( normalMatrix * tangent.xyz );",
+		"vBinormal = normalize(cross( transformedNormal, vTangent ) * tangent.w);",
 
-	  "#else",
+		"vUvNormal = uv * offsetRepeatNormal.zw + offsetRepeatNormal.xy;",
+	"#else",
 
-	    "vec3 transformedNormal = normalize( normalMatrix * normal );",
+		"vec3 transformedNormal = normalize( normalMatrix * normal );",
 
-	  "#endif",
+	"#endif",
 
-	  "vNormal = transformedNormal;",
+		"vNormal = transformedNormal;",
 
 	].join("\n"),
 
@@ -713,10 +711,11 @@ THREE.ShaderChunk = {
 
 	"#ifdef USE_NORMALMAP",
 
-	  "varying vec3 vTangent;",
-	  "varying vec3 vBinormal;",
-	  "uniform sampler2D normalMap;",
-	  "uniform float normalScale;",
+		"varying vec3 vTangent;",
+		"varying vec3 vBinormal;",
+		"uniform sampler2D normalMap;",
+		"uniform float normalScale;",
+		"varying vec2 vUvNormal;",
 
 	"#endif",
 
@@ -725,12 +724,12 @@ THREE.ShaderChunk = {
 	normal_fragment: [
 
 	"#ifdef USE_NORMALMAP",
-	  "mat3 tsb = mat3( vTangent, vBinormal, vNormal );",
-	  "vec3 normalTex = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0;",
-	  "normalTex.xy *= normalScale;",
-	  "normalTex = normalize(normalTex);",
+		"mat3 tsb = mat3( vTangent, vBinormal, vNormal );",
+		"vec3 normalTex = texture2D( normalMap, vUvNormal ).xyz * 2.0 - 1.0;",
+		"normalTex.xy *= normalScale;",
+		"normalTex = normalize(normalTex);",
 
-	  "vec3 normal = normalize(tsb * normalTex);",
+		"vec3 normal = normalize(tsb * normalTex);",
 	"#else",
 		"vec3 normal = normalize( vNormal );",
 	"#endif",
@@ -740,7 +739,7 @@ THREE.ShaderChunk = {
 	phong_pars_fragment: [
 		"uniform vec3 ambient;",
 		"uniform vec3 specular;",
-		"uniform float shininess;",
+		"uniform float shininess;"
 	].join("\n")
 
 };
@@ -887,7 +886,8 @@ THREE.UniformsLib = {
 	normalmap: {
 
 		"normalMap" : { type: "t", value: 4, texture: null },
-		"normalScale" : { type: "f", value: 1.0 }
+		"normalScale" : { type: "f", value: 1.0 },
+		"offsetRepeatNormal" : { type: "v4", value: new THREE.Vector4( 0, 0, 1, 1 ) }
 
 	}
 
