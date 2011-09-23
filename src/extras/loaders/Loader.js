@@ -198,6 +198,7 @@ THREE.Loader.prototype = {
 
 			if ( m.shading == "Phong" ) mtype = "MeshPhongMaterial";
 			else if ( m.shading == "Basic" ) mtype = "MeshBasicMaterial";
+			else if ( m.shading == "Normal" ) mtype = "MeshNormalMaterial";
 
 		}
 
@@ -300,8 +301,9 @@ THREE.Loader.prototype = {
 		}
 
 		// special case for normal mapped material
+		// disabled in a temporary fashion, while transitioning to the ShaderChunk based MeshNormalMaterial
 
-		if ( m.mapNormal ) {
+		if ( false && m.mapNormal ) {
 
 			var shader = THREE.ShaderUtils.lib[ "normal" ];
 			var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
