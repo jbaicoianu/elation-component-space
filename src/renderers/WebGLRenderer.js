@@ -2444,13 +2444,10 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			uniforms.offsetRepeat.value.set( material.map.offset.x, material.map.offset.y, material.map.repeat.x, material.map.repeat.y );
 
-		} else if ( material.normalMap ) {
+		} 
+		if ( material.normalMap ) {
 
-			// TODO
-			// it would be nice to support different offset/repeat values for
-			// normal maps but would require an additional vec4 uniform...
-
-			uniforms.offsetRepeat.value.set( material.normalMap.offset.x, material.normalMap.offset.y, material.normalMap.repeat.x, material.normalMap.repeat.y );
+			uniforms.offsetRepeatNormal.value.set( material.normalMap.offset.x, material.normalMap.offset.y, material.normalMap.repeat.x, material.normalMap.repeat.y );
 
 		}
 
