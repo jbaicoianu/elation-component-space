@@ -30,10 +30,11 @@ THREE.MeshNormalMaterial = function ( parameters ) {
 	this.combine = parameters.combine !== undefined ? parameters.combine : THREE.MultiplyOperation;
 	this.reflectivity = parameters.reflectivity !== undefined ? parameters.reflectivity : 1;
 	this.refractionRatio = parameters.refractionRatio !== undefined ? parameters.refractionRatio : 0.98;
+	this.normalScale = parameters.normalScale !== undefined ? parameters.normalScale : 1;
 
 	this.map = parameters.map !== undefined ? parameters.map : null;
 	this.normalMap = parameters.normalMap !== undefined ? parameters.normalMap : null;
-	this.shading = parameters.shading ? parameters.shading : THREE.SmoothShading;
+	this.shading = parameters.shading ? parameters.shading : THREE.FlatShading;
 
 	this.wireframe = parameters.wireframe ? parameters.wireframe : false;
 	this.wireframeLinewidth = parameters.wireframeLinewidth ? parameters.wireframeLinewidth : 1;
