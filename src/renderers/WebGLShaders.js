@@ -283,7 +283,7 @@ THREE.ShaderChunk = {
 		"for( int i = 0; i < MAX_DIR_LIGHTS; i ++ ) {",
 
 			"vec4 lDirection = viewMatrix * vec4( directionalLightDirection[ i ], 0.0 );",
-			"float directionalLightWeighting = max( dot( normal, normalize( lDirection.xyz ) ), 0.0 );",
+			"float directionalLightWeighting = max( dot( transformedNormal, normalize( lDirection.xyz ) ), 0.0 );",
 			"vLightWeighting += directionalLightColor[ i ] * directionalLightWeighting;",
 
 		"}",
@@ -305,7 +305,7 @@ THREE.ShaderChunk = {
 
 				"lVector = normalize( lVector );",
 
-				"float pointLightWeighting = max( dot( normal, lVector ), 0.0 );",
+				"float pointLightWeighting = max( dot( transformedNormal, lVector ), 0.0 );",
 				"vLightWeighting += pointLightColor[ i ] * pointLightWeighting * lDistance;",
 
 				"#ifdef PHONG",
@@ -682,6 +682,7 @@ THREE.ShaderChunk = {
 	  "varying vec3 vTangent;",
 	  "varying vec3 vBinormal;",
 	  "uniform sampler2D normalMap;",
+	  "uniform float normalScale;",
 	  "attribute vec4 tangent;",
 
 	"#endif"
@@ -692,14 +693,11 @@ THREE.ShaderChunk = {
 
 	  "#ifdef USE_NORMALMAP",
 
-	    "vec3 transformedNormal = normalize(normalMatrix * texture2D( normalMap, vUv ).rgb);",
+	    "vec3 transformedNormal = normalize( normalMatrix * normal );",
 
 	    // tangent and binormal vectors
-
 	    "vTangent = normalize( normalMatrix * tangent.xyz );",
-
-	    "vBinormal = cross( transformedNormal, vTangent ) * tangent.w;",
-	    "vBinormal = normalize( vBinormal );",
+	    "vBinormal = normalize(cross( transformedNormal, vTangent ) * tangent.w);",
 
 	  "#else",
 
@@ -718,6 +716,7 @@ THREE.ShaderChunk = {
 	  "varying vec3 vTangent;",
 	  "varying vec3 vBinormal;",
 	  "uniform sampler2D normalMap;",
+	  "uniform float normalScale;",
 
 	"#endif",
 
@@ -728,8 +727,10 @@ THREE.ShaderChunk = {
 	"#ifdef USE_NORMALMAP",
 	  "mat3 tsb = mat3( vTangent, vBinormal, vNormal );",
 	  "vec3 normalTex = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0;",
-	  "normalTex.xy *= 1.0;",
-		"vec3 normal = normalize(tsb * normalize(normalTex));",
+	  "normalTex.xy *= normalScale;",
+	  "normalTex = normalize(normalTex);",
+
+	  "vec3 normal = normalize(tsb * normalTex);",
 	"#else",
 		"vec3 normal = normalize( vNormal );",
 	"#endif",
@@ -886,6 +887,7 @@ THREE.UniformsLib = {
 	normalmap: {
 
 		"normalMap" : { type: "t", value: 4, texture: null },
+		"normalScale" : { type: "f", value: 1.0 }
 
 	}
 
