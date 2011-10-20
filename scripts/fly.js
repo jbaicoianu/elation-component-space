@@ -97,6 +97,9 @@ elation.component.add('space.fly', {
     if (elation.utils.physics) {
       setTimeout(function() { elation.utils.physics.system.start(); }, 5000);
     }
+    
+    elation.ui.hud.init();
+
   },
   getsize: function() {
     if (this.container) {
