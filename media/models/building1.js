@@ -41,7 +41,7 @@ var model = {
 	"colorAmbient" : [0.0, 0.0, 0.0],
 	"colorDiffuse" : [0.36670563767411757, 0.36670563767411757, 0.36670563767411757],
 	"colorSpecular" : [0.2673913836479187, 0.2673913836479187, 0.2673913836479187],
-	"mapDiffuse" : "bordillo_sensenom.tga",
+	"mapDiffuse" : "bordillo_sensenom.png",
 	"mapDiffuseWrap" : ["repeat", "repeat"],
 	"mapNormalFactor" : 0.4999999701976776,
 	"shading" : "Lambert",
