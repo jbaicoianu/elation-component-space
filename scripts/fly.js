@@ -16,6 +16,7 @@ elation.component.add('space.fly', {
     //this.camera = new THREE.OrthographicCamera(this.viewsize[0] / -2, this.viewsize[0] / 2, this.viewsize[1] / -2, this.viewsize[1] / 2, 0, 5000);
     this.camera.position.z = 500;
 
+    this.controlsenabled = true;
     this.controls = new THREE.TrackballControls( this.camera );
     this.controls.rotateSpeed = -1.0;
     this.controls.zoomSpeed = 4;
@@ -112,7 +113,7 @@ elation.component.add('space.fly', {
     var newsize = this.getsize();
     var ts = new Date().getTime();
 
-    if (this.controls) {
+    if (this.controls && this.controlsenabled) {
       this.controls.update();
     }
     if (this.camera) {
@@ -162,6 +163,7 @@ elation.component.add('space.fly', {
   },
   attachCameraToObject: function(thing) {
     //this.camera = this.followcamera;
+    this.controlsenabled = false;
     this.camera.position = thing.position;
     this.camera.rotation = thing.rotation;
     this.camera.quaternion = thing.quaternion;
