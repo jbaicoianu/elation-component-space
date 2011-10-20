@@ -1,10 +1,13 @@
 {component name="space.threejs"}
+{dependency type="javascript" url="/~bai/three.js/examples/fonts/helvetiker_regular.typeface.js"}
 {dependency type="component" name="utils.sylvester"}
 {dependency type="component" name="utils.dynamics"}
-{dependency name="space.sector"}
-{dependency name="space.road"}
-{dependency name="space.building"}
-{dependency name="space.drone"}
+{dependency name="utils.phy"}
+{dependency name="space.thing"}
+{dependency name="space.meshparts"}
+{foreach from=$types key=type item=typecount}
+  {dependency name="space.`$type`"}
+{/foreach}
 {dependency name="space.fly"}
 
 <div elation:component="space.fly">

@@ -155,7 +155,7 @@ class Component_space extends Component {
     }
     if (!empty($args["thing"])) {
       $vars["thing"] = $args["item"];
-    } else if (!empty($args["parentname"]) && !empty($args["name"])) {
+    } else if (!empty($args["name"])) {
       $vars["thing"] = ORMManager::load("Thing", array($args["parentname"], $args["name"]));
       $types = $vars["thing"]->getThingTypes()->toArray();
       $properties = $vars["thing"]->getThingProperties()->toArray();
@@ -259,10 +259,31 @@ class Component_space extends Component {
     return $this->GetComponentResponse("./viewport.tpl", $vars);
   }
   function controller_fly($args) {
-    $vars["sector"] = ComponentManager::fetch("space.things", array("from" => "/milky way/solar system/sol/earth/north america/stupidtown"), "data");
+    $root = any($args["root"], "/milky way/solar system/sol/earth/north america/stupidtown");
+    $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $root), "data");
+    $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
     return $this->GetComponentResponse("./fly.tpl", $vars);
   }
 
+  function getUniqueThingTypes($thing) {
+    $types = array();
+    if (is_array($thing)) {
+      $types[$thing["type"]] = 1;
+      $subthings = $thing["things"];
+    } else {
+      $types[$thing->type] = 1;
+      $subthings = $thing->things;
+    }
+    if (!empty($subthings)) {
+      foreach ($subthings as $subthing) {
+        $subtypes = $this->getUniqueThingTypes($subthing);
+        foreach ($subtypes as $subkey=>$subval) {
+          $types[$subkey] += $subval;
+        }
+      }
+    }
+    return $types;
+  }
   function castProperty($prop) {
     switch($prop->propertytype) {
       case 'float':
@@ -277,6 +298,9 @@ class Component_space extends Component {
         for ($i = 0; $i < count($val); $i++) {
           $val[$i] = (float) $val[$i];
         }
+        break;
+      case 'json':
+        $val = json_decode($prop->value);
         break;
       default:
         $val = $prop->value;
