@@ -8,7 +8,7 @@
   <input name="addproperty[property]" /> :
   <input name="addproperty[propertykey]" /> = 
   <input name="addproperty[value]" />
-  {component name="ui.select" items="int;float;string;vector" selected=$prop->propertytype selectname="addproperty[propertytype]"}
+  {component name="ui.select" items="int;float;string;vector;json" selected=$prop->propertytype selectname="addproperty[propertytype]"}
   <input type="submit" />
 </form>
 <form method="post">
@@ -23,7 +23,7 @@
         <li>
           <label for="spacecraft_thing_{$prop->property}_{$prop->propertykey}">{$prop->propertykey}</label>
           <input id="spacecraft_thing_{$prop->property}_{$prop->propertykey}" name="updateproperty[{$prop->property}][{$prop->propertykey}]" value="{$prop->value}" />
-          {component name="ui.select" selectname="updatetype[`$prop->property`][`$prop->propertykey`]" items="int;float;string;vector" selected=$prop->propertytype}
+          {component name="ui.select" selectname="updatetype[`$prop->property`][`$prop->propertykey`]" items="int;float;string;vector;json" selected=$prop->propertytype}
         </li>
       {/foreach}
       </ul>
