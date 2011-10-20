@@ -32,8 +32,8 @@ elation.extend("space.meshes.drone", function(args) {
     this.light.position = this.position;
     this.add(this.light);
 
-    this.dynamics = new elation.utils.physics.object({position: this.position, restitution: .5, radius: 10});
-    elation.events.add([this.dynamics], "rotate", this);
+    this.dynamics = new elation.utils.physics.object({position: this.position, restitution: .5, radius: this.minheight, drag: 0.1});
+    elation.events.add([this.dynamics], "dynamicsupdate,rotate", this);
     elation.utils.physics.system.add(this.dynamics);
     this.dynamics.addForce("gravity", [0,-9800,0]);
 /*
@@ -233,6 +233,22 @@ elation.extend("space.meshes.drone", function(args) {
     this.rotationVector.z = ( -this.moveState.rollRight + this.moveState.rollLeft );
 
     this.dynamics.setAngularVelocity([this.rotationVector.x, this.rotationVector.y, this.rotationVector.z]);
+  }
+  this.dynamicsupdate = function(ev) {
+    if (this.position.y < this.minheight) {
+      if (this.dynamics.vel.y <= 0) {
+        this.position.y = this.minheight;
+        this.dynamics.setVelocityY(this.dynamics.vel.y * -this.dynamics.restitution);
+        //this.dynamics.removeForce('gravity');
+        //this.dynamics.setVelocityY(0);
+        this.dynamics.setFriction(250);
+      } else {
+        //this.dynamics.addForce('gravity', [0, -9800 * 2, 0]);
+        //this.position.y = this.minheight + 1;
+      }
+    } else {
+      this.dynamics.setFriction(0);
+    }
   }
   this.rotate = function(ev) {
     this.rotateRel(ev.data);
