@@ -62,6 +62,7 @@ elation.extend("spacecraft.meshes.planet", function(args) {
 */
 
     this.setHighres(window.usehighres);
+    this.dynamic = true;
 
 console.log(this.args);
 /*
