@@ -151,7 +151,7 @@ elation.component.add('space.fly', {
       currentobj = new elation.space.meshes[thing.type](thing.properties);
       root.add(currentobj);
 
-      console.log("Added new " + thing.type + " '" + thing.name + "'", currentobj);
+      console.log("Added new " + thing.type + ": " + thing.parentname + '/' + thing.name, currentobj);
       if (thing.things) {
         for (var k in thing.things) {
           this.addObjects(thing.things[k], currentobj);
