@@ -9,10 +9,12 @@ elation.extend("space.meshes.drone", function(args) {
   this.moveVector = new THREE.Vector3(0,0,0);
   this.rotationVector = new THREE.Vector3(0,0,0);
   this.tmpQuaternion = new THREE.Quaternion();
-  this.minheight = 100;
+  this.minheight = 50;
 
   this.init = function() {
     this.useQuaternion = true;
+
+    if (this.position.y < this.minheight) this.position.y = this.minheight;
 
     if (this.args.render && this.args.render.mesh) {
       this.materials = [new THREE.MeshFaceMaterial({color: 0xffffff})];
@@ -26,6 +28,15 @@ elation.extend("space.meshes.drone", function(args) {
 
     elation.space.fly(0).attachCameraToObject(this);
 
+    this.light = new THREE.PointLight(0xff0000, .5, 1000);
+    this.light.position = this.position;
+    this.add(this.light);
+
+    this.dynamics = new elation.utils.physics.object({position: this.position, restitution: .5, radius: 10});
+    elation.events.add([this.dynamics], "rotate", this);
+    elation.utils.physics.system.add(this.dynamics);
+    this.dynamics.addForce("gravity", [0,-9800,0]);
+/*
     (function(self) {
       self.dynamics = new elation.utils.dynamics(self, {
         onmove: function(a) { self.respond(); },
@@ -34,6 +45,7 @@ elation.extend("space.meshes.drone", function(args) {
       });
     })(this);
     this.lastupdate = new Date().getTime();
+*/
     this.nextblink = 0;
     elation.events.add(document, 'keydown,keyup,mousedown,mousemove,mouseup', this);
   }
@@ -48,11 +60,7 @@ elation.extend("space.meshes.drone", function(args) {
     mesh.position.y = -1.25;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    this.addChild(mesh);
-
-    this.light = new THREE.PointLight(0xff0000, .5, 1000);
-    this.light.position = this.position;
-    elation.space.fly(0).scene.addLight(this.light);
+    this.add(mesh);
   }
 
   this.setPosition = function(pos) {
@@ -61,6 +69,7 @@ elation.extend("space.meshes.drone", function(args) {
     this.position.z = pos[2];
     this.dynamics.setPosition(pos);
   }
+/*
   this.update = function(parentMatrixWorld, forceUpdate, camera) {
     this.supr.update.call( this, parentMatrixWorld, forceUpdate, camera );
     var ts = new Date().getTime();
@@ -79,28 +88,30 @@ elation.extend("space.meshes.drone", function(args) {
       }
     }
     this.lastupdate = ts;
-    if (this.position.y < 10) {
-        this.position.y = 10;
+    if (this.position.y < this.minheight) {
       if (this.dynamics.vel.e(2) <= 0) {
-        //this.dynamics.removeForce('gravity');
+        this.position.y = this.minheight;
+        this.dynamics.removeForce('gravity');
         this.dynamics.setVelocityY(0);
         this.dynamics.setFriction(250);
       } else {
         this.dynamics.addForce('gravity', [0, -9800 * 2, 0]);
+        this.position.y = this.minheight + 1;
       }
     } else {
       this.dynamics.setFriction(0);
     }
   }
+*/
   this.respond = function() {
     this.position.x = this.dynamics.pos.e(1);
     this.position.y = this.dynamics.pos.e(2);
     this.position.z = this.dynamics.pos.e(3);
   }
   this.rotateRel = function(rot) {
-    var rel = new THREE.Vector3(rot.e(1), rot.e(2), rot.e(3));
+    var rel = rot;//new THREE.Vector3(rot.e(1), rot.e(2), rot.e(3));
     var rotMult = .5;
-		this.tmpQuaternion.set( rot.e(1) * rotMult, rot.e(2) * rotMult, rot.e(3) * rotMult, 1 ).normalize();
+		this.tmpQuaternion.set( rot.x * rotMult, rot.y * rotMult, rot.z * rotMult, 1 ).normalize();
 		this.quaternion.multiplySelf( this.tmpQuaternion );
 		this.matrix.setRotationFromQuaternion( this.quaternion );
 		this.matrixWorldNeedsUpdate = true;
@@ -222,6 +233,9 @@ elation.extend("space.meshes.drone", function(args) {
     this.rotationVector.z = ( -this.moveState.rollRight + this.moveState.rollLeft );
 
     this.dynamics.setAngularVelocity([this.rotationVector.x, this.rotationVector.y, this.rotationVector.z]);
+  }
+  this.rotate = function(ev) {
+    this.rotateRel(ev.data);
   }
   this.init();
 });
