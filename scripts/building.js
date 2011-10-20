@@ -105,8 +105,8 @@ elation.extend("space.meshes.building", function(args) {
       geometry.computeFaceNormals();
       geometry.computeTangents();
     //}
-    this.add(newobj, this.lodlevels[lodlevel], true);
-    console.log(this, 'Added LOD mesh', lodlevel, this.lodlevels[lodlevel], newobj);
+    this.addLevel(newobj, this.lodlevels[lodlevel], true);
+    console.log(this, 'Added LOD mesh!!!!!!!', lodlevel, this.lodlevels[lodlevel], newobj);
 
     if (lodlevel == "low") {
       var mc = THREE.CollisionUtils.MeshColliderWBox(newobj);
