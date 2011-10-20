@@ -35,7 +35,7 @@ elation.extend("space.meshes.drone", function(args) {
     this.dynamics = new elation.utils.physics.object({position: this.position, restitution: .5, radius: this.minheight, drag: 0.1});
     elation.events.add([this.dynamics], "dynamicsupdate,rotate", this);
     elation.utils.physics.system.add(this.dynamics);
-    this.dynamics.addForce("gravity", [0,-9800,0]);
+    this.dynamics.addForce("gravity", [0,-9800 * 2,0]);
 /*
     (function(self) {
       self.dynamics = new elation.utils.dynamics(self, {
