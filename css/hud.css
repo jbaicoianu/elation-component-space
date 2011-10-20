@@ -1,0 +1,35 @@
+canvas {
+  position: fixed;
+}
+.hud_rotacol {
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: .3em .6em;
+  background: #252525;
+  opacity: .7;
+  color: #0f0;
+  border-radius: .5em;
+}
+.hud_altimeter {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  width: 40px;
+  height: 200px;
+  border-radius: .5em;
+}
+.hud_altimeter_canvas {
+  border-radius: .5em;
+}
+.hud_radar {
+  position: fixed;
+  bottom: 10px;
+  left: 70px;
+  width: 200px;
+  height: 200px;
+  border-radius: 7em;
+}
+.hud_radar_canvas {
+  border-radius: 7em;
+}

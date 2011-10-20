@@ -9,6 +9,7 @@
   {dependency name="space.`$type`"}
 {/foreach}
 {dependency name="space.fly"}
+{dependency name="space.hud"}
 
 <div elation:component="space.fly">
  <elation:args>{ldelim}"sector":{jsonencode var=$sector}{rdelim}</elation:args>
