@@ -40,6 +40,7 @@ elation.extend('ui.widgets.radar', function(hud) {
   this.range = 8400;
   this.width = 200;
   this.height = 200;
+  this.contacts = [];
   
   this.init = function() {
     this.camera = elation.space.fly.obj[0].camera;
@@ -134,6 +135,10 @@ elation.extend('ui.widgets.radar', function(hud) {
     //var degrees = heading > 0 ? heading : 180 + (180 - Math.abs(heading));
     
     return heading;
+  }
+  this.addContact = function(contact) {
+    this.contacts.push(contact);
+    console.log('Radar added contact', contact);
   }
   
   this.init();
