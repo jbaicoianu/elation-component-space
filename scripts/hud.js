@@ -29,7 +29,7 @@ elation.extend('ui.hud', new function() {
     for (var i=0; i<this.widgets.length; i++) {
       var widget = this.widgets[i];
       
-      if (this.ticks % this.timings[widget] == 0)
+      if (this.ticks % (this.timings[widget] || 2) == 0)
         this[widget].render();
     }
   }
@@ -37,7 +37,7 @@ elation.extend('ui.hud', new function() {
 
 elation.extend('ui.widgets.radar', function(hud) {
   this.hud = hud;
-  this.range = 5000;
+  this.range = 8400;
   this.width = 200;
   this.height = 200;
   
@@ -64,7 +64,7 @@ elation.extend('ui.widgets.radar', function(hud) {
   }
   
   this.rotate = function(X, Y, angle) {
-    var range = 5000,
+    var range = this.range,
         cx = this.center.x, 
         cy = this.center.y,
         x = X * Math.cos(angle) - Y * Math.sin(angle),
@@ -101,7 +101,7 @@ elation.extend('ui.widgets.radar', function(hud) {
     ctx.fill();
     
     ctx.beginPath();  
-    ctx.arc(cx,cy,56,0,Math.PI * 2,true); 
+    ctx.arc(cx,cy,56,0,Math.PI*2,true); 
     ctx.stroke();  
     ctx.beginPath();  
     ctx.moveTo(0,0);
