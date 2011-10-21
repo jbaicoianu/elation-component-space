@@ -37,6 +37,21 @@ elation.extend("space.meshes.building", function(args) {
           this.loadMesh(this.args.render.meshlow, 'medium');
         }
       }
+
+      // Add contact to radar, if available
+      if (elation.ui.hud && elation.ui.hud.radar) {
+        var radarcontact = {
+          position: this.position,
+          rotation: this.rotation,
+          thing: this
+        };
+        if (this.args.building && this.args.building.outline) {
+          radarcontact.outline = this.args.building.outline;
+        } else if (this.args.render && this.args.render.outline) {
+          radarcontact.outline = this.args.render.outline
+        }
+        elation.ui.hud.radar.addContact(radarcontact);
+      }
     }
   }
   this.createBox = function() {
@@ -106,7 +121,7 @@ elation.extend("space.meshes.building", function(args) {
       geometry.computeTangents();
     //}
     this.addLevel(newobj, this.lodlevels[lodlevel], true);
-    console.log(this, 'Added LOD mesh!!!!!!!', lodlevel, this.lodlevels[lodlevel], newobj);
+    console.log(this, 'Added LOD mesh', lodlevel, this.lodlevels[lodlevel], newobj);
 
     if (lodlevel == "low") {
       var mc = THREE.CollisionUtils.MeshColliderWBox(newobj);
