@@ -2,7 +2,7 @@ elation.extend("space.meshes.label", function(args) {
   elation.space.thing.call( this, args);
 
   this.createGeometry = function() {
-    var geometry = new THREE.TextGeometry( this.args.content.text, {
+    var geometry = new THREE.TextGeometry( this.properties.content.text, {
       size: 50,
       height: 5,
       curveSegments: 6,
