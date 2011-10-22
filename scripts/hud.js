@@ -106,19 +106,29 @@ elation.extend('ui.widgets.radar', function(hud) {
     ctx.arc(cx,cy,100,0,Math.PI*2,true);
     ctx.fill();
     ctx.beginPath();  
-    ctx.fillStyle = "rgba(128, 128, 128, .25)";  
+    ctx.fillStyle = "rgba(128, 128, 128, .1)";  
     ctx.arc(cx,cy,56,0,Math.PI*2,true);
     ctx.fill();
     
     this.draw(ctx, cx, cy);
     
     ctx.beginPath();  
+    ctx.strokeStyle = "rgba(128, 128, 128, .5)";
     ctx.arc(cx,cy,56,0,Math.PI*2,true); 
+    ctx.arc(cx,cy,100,0,Math.PI*2,true);
     ctx.stroke();  
-    ctx.beginPath();  
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(128, 128, 128, .1)";
     ctx.moveTo(0,0);
     ctx.lineTo(100,101);
+    ctx.lineTo(200,0);  
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.strokeStyle = "rgba(128, 128, 128, .5)";
+    ctx.lineTo(100,101);
     ctx.moveTo(200,0);
+    ctx.strokeStyle = "rgba(128, 128, 128, .5)";
     ctx.lineTo(100,101);  
     ctx.stroke();  
   }
@@ -255,6 +265,7 @@ elation.extend('ui.widgets.altimeter_lame', function(hud) {
   
   this.init();
 });
+
 elation.extend('ui.widgets.rotacol', function(hud) {
   this.hud = hud;
   
@@ -328,32 +339,6 @@ elation.extend('ui.widgets.altimeter', function(hud) {
     ctx.fillStyle = "rgba(0, 255, 0, .25)";  
     ctx.rect(0,y,50,h);  
     ctx.fill();
-
-    /*
-    ctx.beginPath();  
-    ctx.fillStyle = "rgba(32, 32, 32, .7)";  
-    ctx.arc(cx,cy,100,0,Math.PI*2,true);
-    ctx.fill();
-    ctx.beginPath();  
-    ctx.fillStyle = "rgba(128, 128, 128, .25)";  
-    ctx.arc(cx,cy,56,0,Math.PI*2,true);
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.fillStyle = "rgba(0, 255, 0, .9)";  
-    ctx.arc(x,y,2,0,Math.PI*2,true);
-    ctx.fill();
-    
-    ctx.beginPath();  
-    ctx.arc(cx,cy,56,0,Math.PI * 2,true); 
-    ctx.stroke();  
-    ctx.beginPath();  
-    ctx.moveTo(0,0);
-    ctx.lineTo(100,101);
-    ctx.moveTo(200,0);
-    ctx.lineTo(100,101);  
-    ctx.stroke();  
-    */
   }
   
   this.init();
