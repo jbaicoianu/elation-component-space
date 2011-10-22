@@ -3,6 +3,7 @@ elation.extend("space.meshes.building", function(args) {
 	THREE.LOD.call( this );
 
   this.args = args || {};
+  this.properties = args.properties || {};
   this.lodlevels = {
     'high': 0,
     'medium': 5000,
@@ -11,55 +12,42 @@ elation.extend("space.meshes.building", function(args) {
   this.materials = {};
 
   this.init = function() {
-    if (this.args.physical) {
-      if (this.args.physical.exists === 0) 
+    this.type = 'building';
+    if (this.properties.physical) {
+      if (this.properties.physical.exists === 0) 
         return;
-      if (this.args.physical.position) {
-        this.position.x = this.args.physical.position[0];
-        this.position.y = this.args.physical.position[1];
-        this.position.z = this.args.physical.position[2];
+      if (this.properties.physical.position) {
+        this.position.x = this.properties.physical.position[0];
+        this.position.y = this.properties.physical.position[1];
+        this.position.z = this.properties.physical.position[2];
       }
-      if (this.args.physical.rotation) {
-        this.rotation.x = this.args.physical.rotation[0] * (Math.PI / 180);
-        this.rotation.y = this.args.physical.rotation[1] * (Math.PI / 180);
-        this.rotation.z = this.args.physical.rotation[2] * (Math.PI / 180);
+      if (this.properties.physical.rotation) {
+        this.rotation.x = this.properties.physical.rotation[0] * (Math.PI / 180);
+        this.rotation.y = this.properties.physical.rotation[1] * (Math.PI / 180);
+        this.rotation.z = this.properties.physical.rotation[2] * (Math.PI / 180);
       }
-      this.size = this.args.physical.size || [4, 4, 4];
+      this.size = this.properties.physical.size || [4, 4, 4];
       this.createMaterials('low');
       this.createBox();
-      if (this.args.render) {
-        if (this.args.render.mesh) {
+      if (this.properties.render) {
+        if (this.properties.render.mesh) {
           this.createMaterials('high');
-          this.loadMesh(this.args.render.mesh, 'high');
+          this.loadMesh(this.properties.render.mesh, 'high');
         }
-        if (this.args.render.meshlow) { // FIXME - not well named...
+        if (this.properties.render.meshlow) { // FIXME - not well named...
           this.createMaterials('medium');
-          this.loadMesh(this.args.render.meshlow, 'medium');
+          this.loadMesh(this.properties.render.meshlow, 'medium');
         }
       }
-
-      // Add contact to radar, if available
-      if (elation.ui.hud && elation.ui.hud.radar) {
-        var radarcontact = {
-          position: this.position,
-          rotation: this.rotation,
-          thing: this,
-          type: 'building'
-        };
-        if (this.args.building && this.args.building.outline) {
-          radarcontact.outline = this.args.building.outline;
-        } else if (this.args.render && this.args.render.outline) {
-          radarcontact.outline = this.args.render.outline
-        }
-        elation.ui.hud.radar.addContact(radarcontact);
-      }
+      // FIXME - hack until building is a space.thing
+      elation.space.thing.prototype.createRadarContact.apply(this);
     }
   }
   this.createBox = function() {
     var rotation = false;
     var offset = false;
-    if (this.args.render && this.args.render.outline) {
-      var verts = this.args.render.outline || [];
+    if (this.properties.render && this.properties.render.outline) {
+      var verts = this.properties.render.outline || [];
       var vertmult = 1;
 
       var shape = [];
@@ -103,8 +91,8 @@ elation.extend("space.meshes.building", function(args) {
     var newobj = new THREE.Mesh(geometry, this.materials[lodlevel]);
 
 //newobj.rotation.y = Math.random() * Math.PI;
-    if (this.args.render && this.args.render.scale) {
-      newobj.scale.set(this.args.render.scale[0], this.args.render.scale[1], this.args.render.scale[2]);
+    if (this.properties.render && this.properties.render.scale) {
+      newobj.scale.set(this.properties.render.scale[0], this.properties.render.scale[1], this.properties.render.scale[2]);
     }
     if (offset) {
       newobj.position.set(offset[0], offset[1], offset[2]);

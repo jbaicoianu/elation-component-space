@@ -189,10 +189,11 @@ elation.extend('ui.widgets.radar', function(hud) {
           ctx.beginPath();
           ctx.fillStyle = "rgba("+outlineColor[0]+", "+outlineColor[1]+", "+outlineColor[2]+", .3)";
           
+          var scale = 500;
           for (var a=0; a<outline.length; a++) {
             var line = outline[a],
                 rpos = this.rotateNoScale(line[0], line[1], contact.rotation.y),
-                tpos = this.rotate((rpos.x * 500) + x, (rpos.y * 500) + y, angle),
+                tpos = this.rotate((rpos.x * scale) + x, (rpos.y * scale) + y, angle),
                 tx = Math.round(tpos.x),
                 ty = Math.round(tpos.y);
             

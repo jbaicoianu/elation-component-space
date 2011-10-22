@@ -40,14 +40,6 @@ elation.component.add('space.fly', {
     this.lights['white'].position.z = 10000;
     this.lights['white'].castShadow = true;
     this.scene.add(this.lights['white']);
-/*
-    this.lights['white2'] = new THREE.PointLight( 0xaaaaaa, 1, 500000);
-    this.lights['white2'].position.x = 10000;
-    this.lights['white2'].position.y = 10000;
-    this.lights['white2'].position.z = 10000;
-    this.lights['white2'].castShadow = true;
-    this.scene.add(this.lights['white2']);
-*/
 
     this.sky = new THREE.Mesh(new THREE.SphereGeometry(30000, 10), new THREE.MeshBasicMaterial({ color: 0xB0E2FF}));
     this.sky.flipSided = true;
@@ -152,7 +144,7 @@ elation.component.add('space.fly', {
   addObjects: function(thing, root) {
     var currentobj = false;
     if (typeof elation.space.meshes[thing.type] == 'function') {
-      currentobj = new elation.space.meshes[thing.type](thing.properties);
+      currentobj = new elation.space.meshes[thing.type](thing);
       root.add(currentobj);
 
       console.log("Added new " + thing.type + ": " + thing.parentname + '/' + thing.name, currentobj);

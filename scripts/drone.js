@@ -1,6 +1,7 @@
 elation.extend("space.meshes.drone", function(args) {
 	THREE.Object3D.call( this );
   this.args = args || {};
+  this.properties = args.properties || {};
 
   this.dragToLook = true;
   this.mouseStatus = 0;
@@ -16,12 +17,12 @@ elation.extend("space.meshes.drone", function(args) {
 
     if (this.position.y < this.minheight) this.position.y = this.minheight;
 
-    if (this.args.render && this.args.render.mesh) {
+    if (this.properties.render && this.properties.render.mesh) {
       this.materials = [new THREE.MeshFaceMaterial({color: 0xffffff})];
       (function(self, mesh) {
         var loader = new THREE.JSONLoader();
         loader.load( { model: mesh, callback: function(geometry) { self.loadMesh(geometry); } });
-      })(this, this.args.render.mesh);
+      })(this, this.properties.render.mesh);
     } else {
       this.createPlaceholder();
     }

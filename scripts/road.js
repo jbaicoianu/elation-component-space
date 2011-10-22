@@ -2,22 +2,23 @@ elation.extend("space.meshes.road", function(args) {
 	THREE.Object3D.call( this );
 
   this.args = args || {};
+  this.properties = this.args.properties || {};
 
   this.init = function() {
-    if (this.args.path) {
+    if (this.properties.path) {
       this.geometry = new THREE.Geometry();
-      var width = this.args.physical.width || 10;
+      var width = this.properties.physical.width || 10;
 
       //this.createMaterial();
 
       var segments = [];
       var segpoints = [];
-      for (var k in this.args.path) {
+      for (var k in this.properties.path) {
         segments.push(k) - 1;
       }
       segments.sort();
       for (var i = 0; i < segments.length; i++) {
-        segpoints[i] = new THREE.Vector3(this.args.path[segments[i]][0],this.args.path[segments[i]][1],this.args.path[segments[i]][2]);
+        segpoints[i] = new THREE.Vector3(this.properties.path[segments[i]][0],this.properties.path[segments[i]][1],this.properties.path[segments[i]][2]);
       }
 
       var anglebefore = angleafter = 0;

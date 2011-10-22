@@ -1,12 +1,25 @@
 elation.extend("space.meshes.sector", function(args) {
-	THREE.Object3D.call( this );
+	elation.space.thing.call( this, args );
 
-  this.args = args || {};
-
+/*
   this.init = function() {
     this.createMaterial();
     this.createMesh();
   }
+*/
+  this.postinit = function() {
+    // FIXME - gross, stupid, ugly hack
+    this.children[0].rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
+    this.rotation.set(0,0,0);
+  }
+  this.createGeometry = function() {
+    var geometry = new THREE.PlaneGeometry( 50000, 50000, 200, 200 );
+    geometry.computeFaceNormals();
+    geometry.computeVertexNormals();
+    geometry.computeTangents();
+    this.createMesh(geometry, this.materials);
+  }
+/*
   this.createMesh = function() {
     this.geometry = new THREE.PlaneGeometry( 50000, 50000, 200, 200 );
 
@@ -37,6 +50,7 @@ elation.extend("space.meshes.sector", function(args) {
     THREE.Collisions.colliders.push( mc );
 
   }
+*/
   this.createMaterial = function() {
     this.materials = [];
 
@@ -50,7 +64,7 @@ elation.extend("space.meshes.sector", function(args) {
     normaltex.wrapT = THREE.RepeatWrapping;
     normaltex.repeat.set(200,200);
 
-    if (true) {
+    if (false) {
       var shader = THREE.ShaderUtils.lib[ "normal" ];
       var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
       uniforms[ "enableAO" ].value = false;
@@ -85,6 +99,6 @@ elation.extend("space.meshes.sector", function(args) {
   }
   this.init();
 });
-elation.space.meshes.sector.prototype = new THREE.Object3D();
+elation.space.meshes.sector.prototype = new elation.space.thing()
 elation.space.meshes.sector.prototype.constructor = elation.space.meshes.sector;
 
