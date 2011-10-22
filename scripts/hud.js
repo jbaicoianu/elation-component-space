@@ -1,5 +1,5 @@
 elation.extend('ui.hud', new function() {
-  this.widgets = [ 'rotacol', 'radar', 'altimeter' ];
+  this.widgets = [ 'rotacol', 'radar' ];
   this.ticks = 0;
   
   // there is one clock, but this controls which widgets get fired at what intervals
@@ -75,7 +75,7 @@ elation.extend('ui.widgets.radar', function(hud) {
   }
   
   this.rotate = function(X, Y, angle) {
-    var range = this.range,
+    var range = (this.range/2) + ((this.range/2) * (this.camera.position.y / (this.range/4))),
         cx = this.center.x, 
         cy = this.center.y,
         rot = this.rotateNoScale(X, Y, angle),
@@ -97,7 +97,8 @@ elation.extend('ui.widgets.radar', function(hud) {
   this.render = function() {
     var ctx = this.ctx,
         cx = this.center.x, 
-        cy = this.center.y; 
+        cy = this.center.y,
+        altitude = (this.width/2) - ((this.width/4) * (this.camera.position.y / (this.range/4))) || 1; 
     
     this.canvas.width = this.canvas.width;
     
@@ -107,14 +108,30 @@ elation.extend('ui.widgets.radar', function(hud) {
     ctx.fill();
     ctx.beginPath();  
     ctx.fillStyle = "rgba(128, 128, 128, .1)";  
-    ctx.arc(cx,cy,56,0,Math.PI*2,true);
+    ctx.arc(cx,cy,altitude,0,Math.PI*2,true);
     ctx.fill();
     
-    this.draw(ctx, cx, cy);
+    var r = 1.57079633,
+        angle = this.draw(ctx, cx, cy);
+    
+    /*for (var i=0; i<a.length; i++) {
+      var rot = this.rotateNoScale(100,0,angle[1])
+      var rot2 = this.rotateNoScale(200,100,angle[1])
+      console.log(rot.x, rot.y, altitude);
+      ctx.beginPath();  
+      ctx.strokeStyle = "rgba(128, 128, 128, .5)";
+      ctx.moveTo(cx,cy);
+      ctx.lineTo(cx-rot.x,cy-rot.y); 
+      ctx.moveTo(cx,cy);
+      ctx.lineTo(cx-rot2.x,cy-rot2.y); 
+      ctx.stroke();  
+   }*/
     
     ctx.beginPath();  
     ctx.strokeStyle = "rgba(128, 128, 128, .5)";
-    ctx.arc(cx,cy,56,0,Math.PI*2,true); 
+    ctx.arc(cx,cy,altitude,0,Math.PI*2,true); 
+    ctx.stroke();  
+    ctx.beginPath();  
     ctx.arc(cx,cy,100,0,Math.PI*2,true);
     ctx.stroke();  
     ctx.beginPath();
@@ -137,29 +154,23 @@ elation.extend('ui.widgets.radar', function(hud) {
     var q = this.camera.quaternion,
         y = q.y,
         degrees = (y * 180),
-        element = this.container,
-        test = q.x * q.y + q.z * q.w;
+        element = this.container;
     
     var sqx = q.x * q.x,
         sqy = q.y * q.y,
         sqz = q.z * q.z,
-        heading = Math.atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * sqy - 2 * sqz);//  * 180 / Math.PI;
-    
-    if (test > 0.499) { // singularity at north pole
-      heading = 2 * Math.atan2(q.x, q.w);
-    }
-    
-    if (test < -0.499) { // singularity at south pole
-      heading = -2 * Math.atan2(q.x, q.w);
-    }
+        heading = Math.atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * sqy - 2 * sqz), //  * 180 / Math.PI;
+        bank    = Math.atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * sqx - 2 * sqz);
     
     //var degrees = heading > 0 ? heading : 180 + (180 - Math.abs(heading));
     
-    return heading;
+    return [ heading, bank ];
   }
   
   this.draw = function(ctx, cx, cy) {
     var angle = this.getAngle(),
+        heading = angle[0],
+        bank = angle[1],
         pos = this.camera.position,
         contacts = this.contacts,
         contact, type,
@@ -193,7 +204,7 @@ elation.extend('ui.widgets.radar', function(hud) {
           for (var a=0; a<outline.length; a++) {
             var line = outline[a],
                 rpos = this.rotateNoScale(line[0], line[1], contact.rotation.y),
-                tpos = this.rotate((rpos.x * scale) + x, (rpos.y * scale) + y, angle),
+                tpos = this.rotate((rpos.x * scale) + x, (rpos.y * scale) + y, heading),
                 tx = Math.round(tpos.x),
                 ty = Math.round(tpos.y);
             
@@ -211,12 +222,14 @@ elation.extend('ui.widgets.radar', function(hud) {
           var cpos = contact.position,
               x = cpos.x - pos.x,
               y = cpos.z - pos.z,
-              rot = this.rotate(x, y, angle);
+              rot = this.rotate(x, y, heading);
           
           drawBlip(rot.x, rot.y)
           break;
       }
     }
+    
+    return angle;
   }
   
   this.addContact = function(contact) {
@@ -272,7 +285,6 @@ elation.extend('ui.widgets.rotacol', function(hud) {
   
   this.init = function() {
     this.camera = elation.space.fly.obj[0].camera;
-    this.pos = this.camera.position;
     this.container = elation.html.create({
       tag: 'div',
       classname: 'hud_rotacol',
@@ -288,7 +300,8 @@ elation.extend('ui.widgets.rotacol', function(hud) {
   }
   
   this.render = function() {
-    this.container.innerHTML = 'x:' + this.format(this.pos.x) + ' y:' + this.format(this.pos.y) + ' z:' + this.format(this.pos.z);
+    var pos = this.camera.position;
+    this.container.innerHTML = 'x:' + this.format(pos.x) + ' y:' + this.format(pos.y) + ' z:' + this.format(pos.z);
   }
   
   this.init();
@@ -302,7 +315,6 @@ elation.extend('ui.widgets.altimeter', function(hud) {
   
   this.init = function() {
     this.camera = elation.space.fly.obj[0].camera;
-    this.pos = this.camera.position;
     
     this.container = elation.html.create({
       tag: 'div',
@@ -324,10 +336,13 @@ elation.extend('ui.widgets.altimeter', function(hud) {
   }
   
   this.render = function() {
+    if (!elation.utils.arrayget(this, 'camera.position.y'))
+      return;
+    
     var ctx = this.ctx,
         cx = this.center.x, 
         cy = this.center.y,
-        y = 200 - Math.round(this.height * (this.pos.y / this.range)),
+        y = 200 - Math.round(this.height * (this.camera.position.y / this.range)),
         h = 200 - y; 
     
     this.canvas.width = this.canvas.width;

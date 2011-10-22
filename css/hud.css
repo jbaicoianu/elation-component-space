@@ -25,7 +25,7 @@ canvas {
 .hud_radar {
   position: fixed;
   bottom: 10px;
-  left: 70px;
+  left: 10px;
   width: 200px;
   height: 200px;
   border-radius: 7em;
