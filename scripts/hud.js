@@ -41,6 +41,15 @@ elation.extend('ui.widgets.radar', function(hud) {
   this.width = 200;
   this.height = 200;
   this.contacts = [];
+  this.colors = {
+    blip: '#ffeedd',
+    outline: '#ddeeff'
+  };
+  this.types = {
+    drone: 'blip',
+    building: 'outline',
+    road: 'outline'
+  };
   
   this.init = function() {
     this.camera = elation.space.fly.obj[0].camera;
@@ -61,6 +70,7 @@ elation.extend('ui.widgets.radar', function(hud) {
     this.canvas.setAttribute('width', this.width);
     this.canvas.setAttribute('height', this.height);
     this.center = { x: (this.width / 2), y: (this.height / 2) },
+    this.addContact({ position: { x: 0, z: 0 }, type: 'blip' });
     this.render();
   }
   
@@ -68,22 +78,26 @@ elation.extend('ui.widgets.radar', function(hud) {
     var range = this.range,
         cx = this.center.x, 
         cy = this.center.y,
-        x = X * Math.cos(angle) - Y * Math.sin(angle),
-        y = X * Math.sin(angle) + Y * Math.cos(angle),
+        rot = this.rotateNoScale(X, Y, angle),
+        x = rot.x,
+        y = rot.y,
         x = cx + (cx * (x / range)),
         y = cy + (cy * (y / range));
     
     return { x: x, y: y };
   }
   
+  this.rotateNoScale = function(X, Y, angle) {
+    var x = X * Math.cos(angle) - Y * Math.sin(angle),
+        y = X * Math.sin(angle) + Y * Math.cos(angle);
+    
+    return { x: x, y: y };
+  }
+  
   this.render = function() {
-    var angle = this.getAngle(),
-        ctx = this.ctx,
+    var ctx = this.ctx,
         cx = this.center.x, 
-        cy = this.center.y,
-        rot = this.rotate(-this.pos.x, -this.pos.z, angle),
-        x = rot.x,
-        y = rot.y; 
+        cy = this.center.y; 
     
     this.canvas.width = this.canvas.width;
     
@@ -96,10 +110,7 @@ elation.extend('ui.widgets.radar', function(hud) {
     ctx.arc(cx,cy,56,0,Math.PI*2,true);
     ctx.fill();
     
-    ctx.beginPath();
-    ctx.fillStyle = "rgba(0, 255, 0, .9)";  
-    ctx.arc(x,y,2,0,Math.PI*2,true);
-    ctx.fill();
+    this.draw(ctx, cx, cy);
     
     ctx.beginPath();  
     ctx.arc(cx,cy,56,0,Math.PI*2,true); 
@@ -122,7 +133,7 @@ elation.extend('ui.widgets.radar', function(hud) {
     var sqx = q.x * q.x,
         sqy = q.y * q.y,
         sqz = q.z * q.z,
-        heading = Math.atan2(2 * q.y * q.w - 2 * q.x * q.z , 1 - 2 * sqy - 2 * sqz);//  * 180 / Math.PI;
+        heading = Math.atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * sqy - 2 * sqz);//  * 180 / Math.PI;
     
     if (test > 0.499) { // singularity at north pole
       heading = 2 * Math.atan2(q.x, q.w);
@@ -136,6 +147,67 @@ elation.extend('ui.widgets.radar', function(hud) {
     
     return heading;
   }
+  
+  this.draw = function(ctx, cx, cy) {
+    var angle = this.getAngle(),
+        pos = this.camera.position,
+        contacts = this.contacts,
+        contact, type,
+        outlineColor = hex2rgb(this.colors['outline']),
+        blipColor = hex2rgb(this.colors['blip']),
+        drawBlip = function(x, y) {
+          ctx.beginPath();
+          ctx.fillStyle = "rgba("+blipColor[0]+", "+blipColor[1]+", "+blipColor[2]+", .9)";  
+          ctx.arc(x,y,2,0,Math.PI*2,true);
+          ctx.fill();   
+        }; 
+    
+    for (var i=0; i<contacts.length; i++) {
+      contact = contacts[i];
+      type = this.types[contact.type] || 'blip';
+      
+      switch(type) {
+        case "outline":
+          var cpos = contact.position,
+              x = cpos.x - pos.x,
+              y = cpos.z - pos.z,
+              //rot = this.rotate(x, y, angle),
+              outline = typeof contact.outline != 'undefined'
+                      ? contact.outline
+                      : [ [-.6,-.6], [.6,-.6], [.6,.6], [-.6,.6] ];
+          
+          ctx.beginPath();
+          ctx.fillStyle = "rgba("+outlineColor[0]+", "+outlineColor[1]+", "+outlineColor[2]+", .3)";
+          
+          for (var a=0; a<outline.length; a++) {
+            var line = outline[a],
+                rpos = this.rotateNoScale(line[0], line[1], contact.rotation.y),
+                tpos = this.rotate((rpos.x * 500) + x, (rpos.y * 500) + y, angle),
+                tx = Math.round(tpos.x),
+                ty = Math.round(tpos.y);
+            
+            if (a==0)
+              ctx.moveTo(tx, ty);
+            
+            ctx.lineTo(tx, ty);
+          }
+          
+          ctx.fill();   
+          
+          break;
+        
+        default:
+          var cpos = contact.position,
+              x = cpos.x - pos.x,
+              y = cpos.z - pos.z,
+              rot = this.rotate(x, y, angle);
+          
+          drawBlip(rot.x, rot.y)
+          break;
+      }
+    }
+  }
+  
   this.addContact = function(contact) {
     this.contacts.push(contact);
     console.log('Radar added contact', contact);
@@ -286,3 +358,12 @@ elation.extend('ui.widgets.altimeter', function(hud) {
   
   this.init();
 });
+
+function hex2rgb(color) {
+  var rgb = [128, 128, 128];
+  if (color.charAt(0) == "#") color = color.substring(1, 7); // ignore #, if applicable
+  if (color.match(/^[0-9a-f]{6}$/i))
+  for (var i = 0; i < 3; i ++)
+  rgb[i] = parseInt(color.substring(i*2, (i+1)*2), 16);
+  return rgb;
+} 

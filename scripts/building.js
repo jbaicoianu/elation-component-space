@@ -43,7 +43,8 @@ elation.extend("space.meshes.building", function(args) {
         var radarcontact = {
           position: this.position,
           rotation: this.rotation,
-          thing: this
+          thing: this,
+          type: 'building'
         };
         if (this.args.building && this.args.building.outline) {
           radarcontact.outline = this.args.building.outline;
