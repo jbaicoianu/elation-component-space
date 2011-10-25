@@ -513,20 +513,16 @@ elation.extend('ui.widgets.targeting', function(hud) {
     this.render();
     
     ctx.beginPath();
-    ctx.strokeStyle = 'lime';
-    
+    ctx.strokeStyle = 'red';
     ctx.moveTo(coords.x-tbr, coords.y-tbd);
     ctx.lineTo(coords.x-tbr, coords.y-tbr);
     ctx.lineTo(coords.x-tbd, coords.y-tbr);
-    
     ctx.moveTo(coords.x+tbd, coords.y-tbr);
     ctx.lineTo(coords.x+tbr, coords.y-tbr);
     ctx.lineTo(coords.x+tbr, coords.y-tbd);
-    
     ctx.moveTo(coords.x+tbr, coords.y+tbd);
     ctx.lineTo(coords.x+tbr, coords.y+tbr);
     ctx.lineTo(coords.x+tbd, coords.y+tbr);
-    
     ctx.moveTo(coords.x-tbd, coords.y+tbr);
     ctx.lineTo(coords.x-tbr, coords.y+tbr);
     ctx.lineTo(coords.x-tbr, coords.y+tbd);
