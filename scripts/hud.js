@@ -500,14 +500,20 @@ elation.extend('ui.widgets.targeting', function(hud) {
           x: cx * s.x,
           y: cy * s.y,
           z: s.z
-        }, an, rot2;
+        }, 
+        x = (cx+q.x),
+        y = (cy-q.y),
+        an, rot2;
     
-    var coords = { x:(cx+q.x), y:(cy-q.y) };
+    var coords = { 
+      x:x < tbr ? tbr : x > this.width-tbr ? this.width-tbr : x, 
+      y:y < tbr ? tbr : y > this.height-tbr ? this.height-tbr : y
+    };
     
     if (Math.pow((q.x), 2) + Math.pow((q.y), 2) > Math.pow(r,2)) {
       an = Math.atan2(q.x, q.y),
       rot = elation.transform.rotate(0, r, an);
-      rot2 = elation.transform.rotate(0, r-20, an);
+      rot2 = elation.transform.rotate(0, r-tbr, an);
     }
     
     this.render();
