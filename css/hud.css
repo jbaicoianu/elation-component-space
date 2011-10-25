@@ -11,6 +11,47 @@ canvas {
   color: #0f0;
   border-radius: .5em;
 }
+.hud_console_display li {
+  margin: -0.2em .4em;
+}
+.hud_console_display {
+  padding: 0;
+  border-radius: .3em;
+  height: 5.9em;
+  background: #000;
+  overflow: auto;
+  margin: 0;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: .8em;
+}
+.hud_console_bottom {
+  margin: 0;
+}
+.hud_console_input {
+  border-top: 1px solid #252525;
+  padding: 0;
+  background: black;
+  border-radius: .3em;
+  display: block;
+  height: 1.5em;
+  border: none;
+  width: 100%;
+  margin-top: .2em;
+}
+.hud_console {
+  position: fixed;
+  bottom: 10px;
+  left: 225px;
+  height: 6em;
+  width: 50%;
+  padding: .3em;
+  background: #252525;
+  opacity: .7;
+  color: #def;
+  border-radius: .5em;
+  border: 2px solid #555;
+}
 .hud_altimeter {
   position: fixed;
   bottom: 10px;
@@ -19,6 +60,16 @@ canvas {
   height: 200px;
   border-radius: .5em;
 }
+/*
+00:50 <+aw2284> let L be screen left, U be screen up, F be forward, and V the
+                vector from cam position to the object... take the vector
+                (L.V, U.V) and normalize it, and draw the arrow on the screen
+                from (0,0) to that point (or move it whereever)... the amount
+                you have to rotate is the angle between F and V
+00:50 <+i_c-Y> you should fourier transform the integral part
+00:51 <+aw2284> (assuming L and U are orthonormal)
+
+*/
 .hud_altimeter_canvas {
   border-radius: .5em;
 }
@@ -32,4 +83,19 @@ canvas {
 }
 .hud_radar_canvas {
   border-radius: 7em;
+}
+.hud_targeting {
+  position: fixed;
+ /* width: 300px;
+  height: 300px;*/
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 10em;
+}
+.hud_targeting_canvas {
+  border-radius: 10em;
+  width: 100%;
+  height: 100%;
 }

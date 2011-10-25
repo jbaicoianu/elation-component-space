@@ -89,10 +89,13 @@ elation.component.add('space.fly', {
     this.lastupdate = new Date().getTime();
     this.loop();
     if (elation.utils.physics) {
-      setTimeout(function() { elation.utils.physics.system.start(); }, 6000);
+      setTimeout(function() { 
+        elation.utils.physics.system.start();
+        elation.ui.hud.console.log('manual flight controls unlocked.');
+      }, 5000);
     }
     
-
+    elation.ui.hud.console.log('flight controls at stationkeeping.');
   },
   getsize: function() {
     if (this.container) {
