@@ -110,7 +110,16 @@ elation.space.thing.prototype.createRadarContact = function() {
       if (this.properties.building && this.properties.building.outline) {
         radarcontact.outline = this.properties.building.outline;
       } else if (this.properties.render && this.properties.render.outline) {
-        radarcontact.outline = this.properties.render.outline
+        radarcontact.outline = this.properties.render.outline;
+      } else if (this.properties.physical && this.properties.physical.size) {
+        var halfsize = [this.properties.physical.size[0] / 2, this.properties.physical.size[1] / 2, this.properties.physical.size[2] / 2]; 
+        radarcontact.outline = [
+          [-halfsize[0], -halfsize[2]],
+          [-halfsize[0], halfsize[2]],
+          [halfsize[0], halfsize[2]],
+          [halfsize[0], -halfsize[2]],
+          [-halfsize[0], -halfsize[2]]
+        ];
       }
       if (this.properties.render && this.properties.render.scale) {
         radarcontact.scale = this.properties.render.scale;
