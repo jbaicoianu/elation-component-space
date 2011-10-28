@@ -113,6 +113,7 @@ elation.extend("space.meshes.road", function(args) {
     mesh.rotation.y = Math.acos(diff.dot(new THREE.Vector3(-1,0,0)) / length);
     //mesh.rotation.y = (Math.random() * 180) * (Math.PI / 180)
     mesh.position.add(start, diff.divideScalar(2));
+    mesh.castShadow = false;
     mesh.receiveShadow = true;
     this.add(mesh);
     //console.log(start, end, diff, mesh.rotation.y);

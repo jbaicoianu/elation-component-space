@@ -7,13 +7,15 @@ elation.extend("space.meshes.shinybox", function(args) {
       color: 0xffffff,
       map: THREE.ImageUtils.loadTexture('/media/space/textures/brick.png'),
       normalMap: THREE.ImageUtils.loadTexture('/media/space/textures/brick-normal.png'),
-      shading: THREE.FlatShading,
+      shading: THREE.SmoothShading,
       specular: 0x808080,
       shininess: 50,
     };
 
-    if (false) { //false && this.args.render && this.args.render.normalmethod == "old") {
+    if (this.properties.render && this.properties.render.normalmethod == "old") {
+console.log('make it old');
       var shader = THREE.ShaderUtils.lib[ "normal" ];
+
       var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
       uniforms[ "enableAO" ].value = false;
       uniforms[ "enableSpecular" ].value = 0;
@@ -32,11 +34,11 @@ elation.extend("space.meshes.shinybox", function(args) {
     }
   }
   this.createGeometry = function() {
-    if (false && this.args.render.mesh) {
+    if (false && this.properties.render.mesh) {
       (function(self, modelurl, materials) {
         var loader = new THREE.JSONLoader();
         loader.load( { model: modelurl, callback: function(geometry) { self.createMesh(geometry, materials); } });
-      })(this, this.args.render.mesh, this.materials);
+      })(this, this.properties.render.mesh, this.materials);
     } else {
       var geometry = new THREE.CubeGeometry(15, 15, 15, 10, 10, 10, this.materials);
       geometry.computeVertexNormals();
@@ -51,7 +53,7 @@ elation.extend("space.meshes.shinybox", function(args) {
       geometry.computeTangents();
       var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial());
 
-      if (this.args.render.normalmethod == 'old') {
+      if (this.properties.render.normalmethod == 'old') {
         for (var i = 0; i < geometry.faces.length; i++) {
           geometry.faces[i].materials[0] = this.materials;
         }
@@ -59,8 +61,8 @@ elation.extend("space.meshes.shinybox", function(args) {
 
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      if (this.args.render && this.args.render.scale) {
-        mesh.scale.set(this.args.render.scale[0], this.args.render.scale[1], this.args.render.scale[2]);
+      if (this.properties.render && this.properties.render.scale) {
+        mesh.scale.set(this.properties.render.scale[0], this.properties.render.scale[1], this.properties.render.scale[2]);
       }
       this.addChild(mesh);
     } else {

@@ -173,16 +173,18 @@ elation.extend('ui.widgets.radar', function(hud) {
               //rot = this.rotate(x, y, angle),
               outline = typeof contact.outline != 'undefined'
                       ? contact.outline
-                      : [ [-.6,-.6], [.6,-.6], [.6,.6], [-.6,.6] ];
+                      : [ [-.6,-.6], [.6,-.6], [.6,.6], [-.6,.6] ],
+              scale = typeof contact.scale != 'undefined'
+                      ? contact.scale
+                      : [1, 1, 1];
           
           ctx.beginPath();
           ctx.fillStyle = "rgba("+outlineColor[0]+", "+outlineColor[1]+", "+outlineColor[2]+", .3)";
           
-          var scale = 500;
           for (var a=0; a<outline.length; a++) {
             var line = outline[a],
                 rpos = elation.transform.rotate(line[0], line[1], contact.rotation.y),
-                tpos = this.rotate((rpos.x * scale) + x, (rpos.y * scale) + y, heading),
+                tpos = this.rotate((rpos.x * scale[0]) + x, (rpos.y * scale[2]) + y, angle),
                 tx = Math.round(tpos.x),
                 ty = Math.round(tpos.y);
             
