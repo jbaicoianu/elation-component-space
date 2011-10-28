@@ -9,6 +9,8 @@ elation.extend("space.meshes.sector", function(args) {
 */
   this.postinit = function() {
     // FIXME - gross, stupid, ugly hack
+    this.children[0].position.set(this.position.x, this.position.y, this.position.z);
+    this.position.set(0,0,0);
     this.children[0].rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
     this.rotation.set(0,0,0);
   }
@@ -29,6 +31,7 @@ elation.extend("space.meshes.sector", function(args) {
     this.geometry.computeTangents();
 
     var mesh = new THREE.Mesh( this.geometry, this.materials);
+    mesh.castShadow = false;
     mesh.receiveShadow = true;
 
     if (this.args.physical) {
