@@ -15,12 +15,9 @@ elation.extend("space.thing", function(args) {
       this.preinit();
     }
 
-    if (this.autocreategeometry) {
-      this.createMaterial();
-      this.createGeometry();
-    }
-
     if (this.properties.physical) {
+      if (this.properties.physical.exists === 0) 
+        return;
       if (this.properties.physical.position) {
         this.position.x = this.properties.physical.position[0];
         this.position.y = this.properties.physical.position[1];
@@ -31,9 +28,13 @@ elation.extend("space.thing", function(args) {
         this.rotation.y = this.properties.physical.rotation[1] * (Math.PI / 180);
         this.rotation.z = this.properties.physical.rotation[2] * (Math.PI / 180);
       }
+      if (this.autocreategeometry) {
+        this.createMaterial();
+        this.createGeometry();
+      }
+      this.createDynamics();
+      this.createRadarContact();
     }
-    this.createDynamics();
-    this.createRadarContact();
 
 /*
 console.log('I got things', this.args.things);
@@ -66,15 +67,23 @@ console.log('I got things', this.args.things);
 
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      mesh.doubleSided = true;
+      mesh.doubleSided = false;
       if (this.properties.render && this.properties.render.scale) {
         mesh.scale.set(this.properties.render.scale[0], this.properties.render.scale[1], this.properties.render.scale[2]);
       }
       //console.log('created new mesh', mesh);
       this.add(mesh);
+
+      /*
+      if (!this.trident) {
+        this.trident = new THREE.Axes();
+        this.add(this.trident);
+      }
+      */
     } else {
       console.log('Invalid geometry passed to createMesh');
     }
+    return mesh;
   }
   this.createDynamics = function() {
   }
