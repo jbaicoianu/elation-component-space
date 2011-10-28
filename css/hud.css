@@ -73,6 +73,16 @@ canvas {
 .hud_altimeter_canvas {
   border-radius: .5em;
 }
+.hud_debug {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: .3em .6em;
+  background: #252525;
+  opacity: .7;
+  color: #0f0;
+  border-radius: .5em;
+}
 .hud_radar {
   position: fixed;
   bottom: 10px;

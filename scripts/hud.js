@@ -1,5 +1,11 @@
 elation.extend('ui.hud', new function() {
-  this.widgets = [ 'console', 'rotacol', 'radar', 'targeting' ];
+  this.widgets = [ 
+    'console', 
+    'debug', 
+    'rotacol', 
+    'radar', 
+    'targeting' 
+  ];
   this.ticks = 0;
   
   // there is one clock, but this controls which widgets get fired at what intervals
@@ -8,7 +14,8 @@ elation.extend('ui.hud', new function() {
     radar: 1,
     altimeter: 4,
     console: 0,
-    targeting: 0
+    targeting: 0,
+    debug: 0,
   };
   
   this.init = function() {
@@ -218,65 +225,6 @@ elation.extend('ui.widgets.radar', function(hud) {
   }
   
   this.init();
-});
-
-elation.extend('transform.translate', function(x, y, tx, ty) {
-  return { x: x+tx, y: y+ty };
-});
-
-elation.extend('transform.rotate', function(X, Y, angle, tx, ty) {
-  var x, y;
-  
-  switch (typeof X) {
-    case "number":
-      break;
-    case "object":
-      if (typeof X.length == 'number') {
-        ty = tx ? tx : X.length > 4 ? X[4] : 0;
-        tx = ty ? ty : X.length > 3 ? X[3] : 0;
-        angle = Y ? Y : X.length > 2 ? X[2] : 0;
-        Y = X[1];
-        X = X[0];
-      } else {
-        var get = elation.utils.arrayget,
-            a = function(o, k, b) { 
-              return b ? b : get(o, k) ? get(o, k) : 0; 
-            };
-        
-        ty = a(X, 'ty', ty);
-        tx = a(X, 'tx', tx);
-        angle = a(X, 'angle', Y);
-        Y = get(X, 'y');
-        X = get(X, 'x');
-      }
-      
-      break;
-    default:
-      return null;
-  }
-  
-  x = X * Math.cos(angle) - Y * Math.sin(angle);
-  y = X * Math.sin(angle) + Y * Math.cos(angle);
-  
-  if (tx && ty)
-    var translate = elation.transform.translate(x, y, tx, ty),
-        x = translate.x,
-        y = translate.y;
-  
-  return { x: x, y: y, X: X, Y: Y, angle: angle };
-});
-
-elation.extend('transform.rotateOj', function(obj, angle) {
-  var rotated = [];
-  
-  for (var i=0; i<obj.length; i++) {
-    var point = obj[i],
-        tmp = elation.point.rotate(point, angle);
-    
-    rotated.push(tmp);
-  }
-  
-  return rotated;
 });
 
 elation.extend('ui.widgets.rotacol', function(hud) {
@@ -490,8 +438,8 @@ elation.extend('ui.widgets.targeting', function(hud) {
         data = data.data,
         bpos = data.obj.position,
         r = 150,
-        tbr = 12,
-        tbd = 6,
+        tbr = 15,
+        tbd = 8,
         cx = this.center.x, 
         cy = this.center.y,
         p = new THREE.Projector(),
@@ -499,7 +447,8 @@ elation.extend('ui.widgets.targeting', function(hud) {
         q = {
           x: cx * s.x,
           y: cy * s.y,
-          z: s.z
+          z: s.z,
+          a: data.heading
         }, 
         x = (cx+q.x),
         y = (cy-q.y),
@@ -517,9 +466,13 @@ elation.extend('ui.widgets.targeting', function(hud) {
     }
     
     this.render();
+    //console.log(data);
+    this.hud.debug.log(q);
     
     ctx.beginPath();
     ctx.strokeStyle = 'red';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'butt';
     ctx.moveTo(coords.x-tbr, coords.y-tbd);
     ctx.lineTo(coords.x-tbr, coords.y-tbr);
     ctx.lineTo(coords.x-tbd, coords.y-tbr);
@@ -546,6 +499,37 @@ elation.extend('ui.widgets.targeting', function(hud) {
       ctx.stroke();
     }
   };
+  
+  this.init();
+});
+
+elation.extend('ui.widgets.debug', function(hud) {
+  this.hud = hud;
+  
+  this.init = function() {
+    this.camera = elation.space.fly.obj[0].camera;
+    this.container = elation.html.create({
+      tag: 'div',
+      classname: 'hud_debug',
+      append: document.body
+    });
+    
+    this.hud.console.log('debug initialized.');
+  }
+  
+  this.format = function(pos) {
+    return typeof pos.toFixed == 'function' ? pos.toFixed(3) : pos;
+  }
+  
+  this.log = function(data) {
+    this.container.innerHTML = '';
+    for (var key in data)
+      if (typeof data[key] != 'function')
+      this.container.innerHTML += (this.container.innerHTML == ''
+        ? ''
+        : ', ') +
+        key + ':' + this.format(data[key]);
+  }
   
   this.init();
 });
@@ -578,6 +562,65 @@ elation.extend('css3.transform', function(el, transition, transform) {
       el.style.webkitTransform = transform ? transform : '';
       break;
   }
+});
+
+elation.extend('transform.translate', function(x, y, tx, ty) {
+  return { x: x+tx, y: y+ty };
+});
+
+elation.extend('transform.rotate', function(X, Y, angle, tx, ty) {
+  var x, y;
+  
+  switch (typeof X) {
+    case "number":
+      break;
+    case "object":
+      if (typeof X.length == 'number') {
+        ty = tx ? tx : X.length > 4 ? X[4] : 0;
+        tx = ty ? ty : X.length > 3 ? X[3] : 0;
+        angle = Y ? Y : X.length > 2 ? X[2] : 0;
+        Y = X[1];
+        X = X[0];
+      } else {
+        var get = elation.utils.arrayget,
+            a = function(o, k, b) { 
+              return b ? b : get(o, k) ? get(o, k) : 0; 
+            };
+        
+        ty = a(X, 'ty', ty);
+        tx = a(X, 'tx', tx);
+        angle = a(X, 'angle', Y);
+        Y = get(X, 'y');
+        X = get(X, 'x');
+      }
+      
+      break;
+    default:
+      return null;
+  }
+  
+  x = X * Math.cos(angle) - Y * Math.sin(angle);
+  y = X * Math.sin(angle) + Y * Math.cos(angle);
+  
+  if (tx && ty)
+    var translate = elation.transform.translate(x, y, tx, ty),
+        x = translate.x,
+        y = translate.y;
+  
+  return { x: x, y: y, X: X, Y: Y, angle: angle };
+});
+
+elation.extend('transform.rotateOj', function(obj, angle) {
+  var rotated = [];
+  
+  for (var i=0; i<obj.length; i++) {
+    var point = obj[i],
+        tmp = elation.point.rotate(point, angle);
+    
+    rotated.push(tmp);
+  }
+  
+  return rotated;
 });
 
 function hex2rgb(color) {
