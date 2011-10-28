@@ -112,6 +112,9 @@ elation.space.thing.prototype.createRadarContact = function() {
       } else if (this.properties.render && this.properties.render.outline) {
         radarcontact.outline = this.properties.render.outline
       }
+      if (this.properties.render && this.properties.render.scale) {
+        radarcontact.scale = this.properties.render.scale;
+      }
       elation.ui.hud.radar.addContact(radarcontact);
     }
   }
