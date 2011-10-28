@@ -15,7 +15,7 @@ elation.extend("space.meshes.label", function(args) {
       bevelSize: 1,
       bevelEnabled: true
     });                                                
-    this.createMesh(geometry, new THREE.MeshPhongMaterial({color: 0x666666}));
+    this.createMesh(geometry, new THREE.MeshPhongMaterial({color: 0xcccccc}));
   }
   this.init();
 });
