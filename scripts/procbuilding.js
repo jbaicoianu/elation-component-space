@@ -45,6 +45,7 @@ elation.extend("space.meshes.procbuilding", function(args) {
   this.geometries = {};
   this.meshes = {};
   this._tmpmesh = new THREE.Mesh();
+  this.buildtime = new Date().getTime();
 
   this.materials = {
     //girder: new THREE.MeshPhongMaterial({color: 0xff0000}),
@@ -61,7 +62,7 @@ elation.extend("space.meshes.procbuilding", function(args) {
     //this.properties.building.stories = 6;
     elation.space.meshparts.loadParts({'window': '/media/space/models/procbuilding/window01.js'});
     if (this.properties.meshparts) {
-      console.log('meshparts to load', this.properties.meshparts);
+      //console.log('meshparts to load', this.properties.meshparts);
       elation.space.meshparts.loadParts(this.properties.meshparts);
     }
   }
@@ -70,22 +71,31 @@ elation.extend("space.meshes.procbuilding", function(args) {
   }
   this.createHighres = function() {
     if (this.properties.building) {
+      console.log("Start worker (t=" + this.age() + ")");
       this.worker = new Worker('/scripts/space/procbuilding-worker.js');
       elation.events.add([this.worker], 'message', this);
-      this.worker.postMessage({action: 'generate', buildargs: this.properties.building});
+      this.worker.postMessage(JSON.stringify({action: 'generate', buildargs: this.properties.building, buildtime: this.buildtime}));
     }
   } 
   this.createLowres = function() {
     var shape = [];
-    var verts = this.properties.building.outline || [];
-    var vertmult = 1;
-    for (var i = 0; i < verts.length; i++) {
-      shape.push(new THREE.Vector2(verts[i][1] * vertmult, verts[i][0] * vertmult)); 
+    if (this.properties.building) {
+      var verts = this.properties.building.outline || [];
+      var vertmult = 1;
+      for (var i = 0; i < verts.length; i++) {
+        shape.push(new THREE.Vector2(verts[i][1] * vertmult, verts[i][0] * vertmult)); 
+      }
+      this.geometries['lowres'] = new THREE.ExtrudeGeometry(new THREE.Shape(shape), {amount: this.properties.building.stories * 100, bevelEnabled: false});
+      this.meshes['lowres'] = this.createMesh(this.geometries['lowres'], this.materials.wall);
+      this.meshes['lowres'].rotation.set(Math.PI/2, Math.PI, Math.PI/2);
+
+      var mc = THREE.CollisionUtils.MeshColliderWBox(this.meshes['lowres']);
+      mc.entity = this;
+      THREE.Collisions.colliders.push( mc );
+      //console.log(this.name + ' added collider', mc);
+
+      this.createHighres();
     }
-    this.geometries['lowres'] = new THREE.ExtrudeGeometry(new THREE.Shape(shape), {amount: this.properties.building.stories * 100, bevelEnabled: false});
-    this.meshes['lowres'] = this.createMesh(this.geometries['lowres'], this.materials.wall);
-    this.meshes['lowres'].rotation.set(Math.PI/2, Math.PI, Math.PI/2);
-    this.createHighres();
   }
 
   this.fadeMaterial = function(material, time, steps) {
@@ -93,6 +103,8 @@ elation.extend("space.meshes.procbuilding", function(args) {
     material.opacity -= (1 / steps);
     if (!material.transparent) material.transparent = true;
     if (material.opacity > 0) {
+      this.meshes['lowres'].castShadow = false;
+      this.meshes['lowres'].receiveShadow = false;
       (function(self, material, time, steps) {
         setTimeout(function() {
           self.fadeMaterial(material, time, steps);
@@ -101,6 +113,7 @@ elation.extend("space.meshes.procbuilding", function(args) {
     } else {
       material.opacity = 0;
       this.remove(this.meshes['lowres']);
+      this.meshes['lowres'].visible = false;
     }
   }
 
@@ -154,46 +167,42 @@ elation.extend("space.meshes.procbuilding", function(args) {
   }
   this.message = function(ev) {
     var logprefix = "Worker("+this.name+"):";
-/*
-var sh = JSON.stringify(ev.data).length;
-console.log(logprefix, 'Received message, action ' + ev.data.action + ', length ' + sh);
-if (sh > 1000000) {
-console.log('fuck man', ev.data);
-}
-*/
-    if (typeof ev.data == 'object') {
-      switch (ev.data.action) {
+    var msg = (typeof ev.data == 'object' ? ev.data : JSON.parse(ev.data));
+    if (msg) {
+      switch (msg.action) {
         case 'log':
-          console.log(logprefix, ev.data.msg);
+          console.log(logprefix, msg.msg, "(t=" + this.age() + ")");
           break; 
         case 'requestsegment':
-          //console.log('request the segment', ev.data.segment);
+          //console.log('request the segment', msg.segment);
           (function(self, seginfo) {
             if (typeof elation.space.meshparts[seginfo[0]] == 'function') {
               elation.space.meshparts[seginfo[0]](seginfo[1], seginfo[2], function(newgeom) {
                 self.processSegment(seginfo[3], newgeom);
               });
             }
-          })(this, ev.data.segment);
+          })(this, msg.segment);
           break; 
         case 'finished':
-var t = new Date().getTime();
-console.log("finished (t=0)");
-          this.geometries['highres'] = elation.space.procbuilding.helper.makeRealGeom(ev.data.geometry);
-console.log("generated (t=" + (new Date().getTime() - t) + "): " + this.geometries['highres'].vertices.length + " vertices, " + this.geometries['highres'].faces.length + ' faces');
+          console.log("worker thread finished (t=" + this.age() + ")");
+          this.geometries['highres'] = elation.space.procbuilding.helper.makeRealGeom(msg.geometry);
+          console.log("generated (t=" + this.age() + "): " + this.geometries['highres'].vertices.length + " vertices, " + this.geometries['highres'].faces.length + ' faces');
           this.meshes['highres'] = this.createMesh(this.geometries['highres'], this.materials['face']);
-console.log("added (t=" + (new Date().getTime() - t) + ")");
+          console.log("added (t=" + this.age() + ")");
           this.fadeMaterial(this.materials['wall'], 150);
           break;
         default:
-          console.log(logprefix, "Unknown message:", ev.data);
+          console.log(logprefix, "Unknown message:", msg);
       }
     }
   }
   this.processSegment = function(segments, geom) {
     //console.log('got back a segment', geom, segments);
     var fakegeom = elation.space.procbuilding.helper.makeFakeGeom(geom);
-    this.worker.postMessage({action: 'process', geometry: fakegeom, segments: segments});
+    this.worker.postMessage(JSON.stringify({action: 'process', geometry: fakegeom, segments: segments}));
+  }
+  this.age = function() {
+    return new Date().getTime() - this.buildtime;
   }
   this.init();
 });
@@ -207,6 +216,7 @@ elation.extend("space.procbuilding.worker", function(args) {
   this._tmpgeom = new THREE.Geometry();
   this._tmpmesh = new THREE.Mesh(this._tmpgeom, new THREE.MeshFaceMaterial());
   this.buildargs = { outline: [], stories: 1, storyheight: 100 };
+
   this.materials = {
     floor: new THREE.MeshPhongMaterial({color: 0xccffff}),
     ceiling: new THREE.MeshPhongMaterial({color: 0xcccccc}),
@@ -215,22 +225,24 @@ elation.extend("space.procbuilding.worker", function(args) {
   }
 
   this.message = function(ev) {
-    if (typeof ev.data == 'object') {
-      switch (ev.data.action) {
+    var msg = (typeof ev.data == 'object' ? ev.data : JSON.parse(ev.data));
+    if (msg) {
+      switch (msg.action) {
         case 'generate':
-          for (var k in ev.data.buildargs) {
-            this.buildargs[k] = ev.data.buildargs[k];
+          console.log('generation begins');
+          for (var k in msg.buildargs) {
+            this.buildargs[k] = msg.buildargs[k];
           }
           this.assembleStory(this.buildargs);
           break;
         case 'process':
-          this.processSegment(ev.data.segments, ev.data.geometry);
+          this.processSegment(msg.segments, msg.geometry);
           break;
         default:
-          console.log('Unknown message:', ev.data);
+          console.log('Unknown message:', msg);
       }
     } else {
-      console.log('Unknown message:', ev.data);
+      console.log('Unknown message:', msg);
     }
   }
   this.assembleStory = function(buildargs) {
@@ -251,7 +263,7 @@ elation.extend("space.procbuilding.worker", function(args) {
   this.requestSegment = function(part, length, segments) {
     this.loading++;
     //console.log('make segment request', part, length);
-    self.postMessage({action: 'requestsegment', segment: ["fillx", part, [length, this.buildargs.storyheight], segments] });
+    self.postMessage(JSON.stringify({action: 'requestsegment', segment: ["fillx", part, [length, this.buildargs.storyheight], segments] }));
   }
   this.processSegment = function(segments, fakegeom) {
     // Merge segments as we get them
@@ -323,7 +335,8 @@ elation.extend("space.procbuilding.worker", function(args) {
     //this.meshes['highres'] = this.createMesh(this.geometries['highres'], this.materials['face']);
     //this.fadeMaterial(this.materials['wall'], 150);
     var fakegeom = elation.space.procbuilding.helper.makeFakeGeom(this.geometries['highres']);
-    self.postMessage({action: 'finished', geometry: fakegeom});
+    console.log('finished assembling stories');
+    self.postMessage(JSON.stringify({action: 'finished', geometry: fakegeom}));
   }
 });
 
@@ -364,7 +377,8 @@ elation.extend("space.procbuilding.helper", new function() {
             }
           }
           if (m == this.materials.length) {
-            console.log('not found, push it', this.textureCube);
+            //console.log('not found, push it', this.textureCube);
+// FIXME - hack for skymap
 if (face.materials[k].opacity < 1) {
   if (!this.textureCube && elation.space && elation.space.fly) {
     this.textureCube = elation.space.fly(0).textureCube;
@@ -374,7 +388,7 @@ if (face.materials[k].opacity < 1) {
     face.materials[k].envMap = this.textureCube;
     face.materials[k].flipEnvMap = 1;
     //face.materials[k].opacity = 1;
-    if (!face.materials[k].transparent) face.materials[k].transparent = true;
+    //if (!face.materials[k].transparent) face.materials[k].transparent = true;
   }
 }
             this.materials.push(face.materials[k]);
