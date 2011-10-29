@@ -1,8 +1,7 @@
-elation.extend("spacecraft.meshes.planet", function(args) {
-	THREE.Object3D.call( this );
+elation.extend("space.meshes.planet", function(args) {
+	elation.space.thing.call( this, args );
 
-  this.args = args || {};
-  this.radius = this.args.radius || 1000;
+  this.radius = this.properties.physical.radius || 1000;
   this.groundtexture = this.args.texture || false;
   this.nighttexture = this.args.nighttexture || false;
   this.heightmap = this.args.heightmap || false;
@@ -52,10 +51,12 @@ elation.extend("spacecraft.meshes.planet", function(args) {
 
 
   this.create = function() {
+/*
     this.shaderLoad("GroundFromSpace");
     this.shaderLoad("GroundFromAtmosphere");
     this.shaderLoad("SkyFromSpace");
-    this.shaderLoad("SkyFromAtmosphere");
+    this.shaderLoad("SkyFromAtmosphere")/;
+*/
 /*
     this.shaderLoad("SpaceFromSpace");
     this.shaderLoad("SpaceFromAtmosphere");
@@ -95,7 +96,7 @@ console.log('displacement is now a uniform');
         new THREE.MeshBasicMaterial({color: 0x00ff00, shading: THREE.SmoothShading, wireframe: true, blending: THREE.AdditiveBlending, opacity: 0})
       ]
     };
-    //this.ground.mesh = new THREE.Mesh(this.ground.geometry, this.ground.materials);
+    this.ground.mesh = new THREE.Mesh(this.ground.geometry, this.ground.materials);
 
     this.test = {
       geometry: new THREE.CubeGeometry(this.radius, this.radius, this.radius, 1, 1, 1),
@@ -125,31 +126,35 @@ console.log(this.test);
     this.sky.mesh = new THREE.Mesh(this.sky.geometry, this.sky.materials);
     this.sky.mesh.flipSided = true;
 
-    this.space = { mesh: elation.spacecraft.viewport('spacecraft_planet_render').meshes['skybox'] };
+/*
+    this.space = { mesh: elation.space.viewport('spacecraft_planet_render').meshes['skybox'] };
     if (this.space.mesh) {
       this.space.materials = this.space.mesh.materials;
     }
+*/
 
 //this.dynamicGeometry = {chunksize: 1024, chunks: 1 };
     this.geometry = this.ground.geometry;
     this.materials = this.ground.materials && this.ground.materials.length ? this.ground.materials : [ this.ground.materials ];
     //this.geometry = this.test.geometry;
     //this.materials = this.test.materials && this.test.materials.length ? this.test.materials : [ this.test.materials ];
-    this.addChild(this.sky.mesh);
+    //this.add(this.sky.mesh);
 
 /*
     this.particles = new THREE.Geometry();
     this.particlesystem = new THREE.ParticleSystem(this.particles, new THREE.ParticleBasicMaterial( { size: 1, sizeAttenuation: false, blending: THREE.NormalBlending, transparent: true, depthTest: true}));
 */
     if (this.args.showsearches) {
-      this.particles = new elation.spacecraft.meshes.planet.particlevis();
+      this.particles = new elation.space.meshes.planet.particlevis();
 console.log(this.particles);
-      this.addChild(this.particles);
+      this.add(this.particles);
     }
 
     if (this.args.showsearches) {
       this.getSearches();
     }
+this.add(this.ground.mesh);
+console.log('fuck yeah', this);
     elation.events.add(document, "keypress", this);
   }
 	this.update = function ( parentMatrixWorld, forceUpdate, camera ) {
@@ -183,14 +188,14 @@ console.log(this.particles);
           this.sky.materials[0] = this.shaders['SkyFromSpace'].material;
           //this.space.materials[1] = this.shaders['SpaceFromSpace'].material;
           if (this.shaders['SpaceFromSpace']) {
-            elation.spacecraft.viewport('spacecraft_planet_render').setSpaceShader(this.shaders['SpaceFromSpace'].material);
+            elation.space.viewport('spacecraft_planet_render').setSpaceShader(this.shaders['SpaceFromSpace'].material);
           }
         } else {
           this.ground.materials[0] = this.shaders['GroundFromAtmosphere'].material;
           this.sky.materials[0] = this.shaders['SkyFromAtmosphere'].material;
           //this.space.materials[1] = this.shaders['SpaceFromAtmosphere'].material;
           if (this.shaders['SpaceFromAtmosphere']) {
-            elation.spacecraft.viewport('spacecraft_planet_render').setSpaceShader(this.shaders['SpaceFromAtmosphere'].material);
+            elation.space.viewport('spacecraft_planet_render').setSpaceShader(this.shaders['SpaceFromAtmosphere'].material);
           }
         }
       }
@@ -198,11 +203,11 @@ console.log(this.particles);
       var surfaceoffset = 0;
       camera.matrixWorld.rotateAxis( rot );
       if (this.geometry instanceof ROAMSphere) {
-        this.geometry.updateROAMMesh(pos, rot, elation.spacecraft.controls(0).getValue("maxerror"));
+        this.geometry.updateROAMMesh(pos, rot, elation.space.controls(0).getValue("maxerror"));
         var surfaceoffset = this.geometry.getHeightmapOffset(pos);
       }
       if (this.sky.geometry instanceof ROAMSphere) {
-        this.sky.geometry.updateROAMMesh(pos.multiplyScalar(-1), rot.multiplyScalar(-1), elation.spacecraft.controls(0).getValue("maxerror"));
+        this.sky.geometry.updateROAMMesh(pos.multiplyScalar(-1), rot.multiplyScalar(-1), elation.space.controls(0).getValue("maxerror"));
       }
 
 /*
@@ -370,12 +375,13 @@ newpos.multiplyScalar(this.radius + surfaceoffset + altitude);
     this.geometry.__dirtyNormals = true;
   }
 
+  this.init();
   this.create();
 });
-elation.spacecraft.meshes.planet.prototype = new THREE.Mesh();
-elation.spacecraft.meshes.planet.prototype.constructor = elation.spacecraft.meshes.planet;
+elation.space.meshes.planet.prototype = new elation.space.thing();
+elation.space.meshes.planet.prototype.constructor = elation.space.meshes.planet;
 
-elation.extend("spacecraft.meshes.planet.particlevis", function() {
+elation.extend("space.meshes.planet.particlevis", function() {
 	THREE.Object3D.call( this );
 
   this.movespeed = 10;
@@ -400,11 +406,11 @@ elation.extend("spacecraft.meshes.planet.particlevis", function() {
     }
   }
 
-  this.init = function() {
+  this.postinit = function() {
     this.pgeometry = new THREE.Geometry();
     this.line = new THREE.Line(this.pgeometry, new THREE.LineBasicMaterial( { color: 0xff0000, opacity: 0.1, linewidth: 5, blending: THREE.AdditiveAlphaBlending }), THREE.LinePieces );
 this.line.transparent = true;
-    this.addChild(this.line);
+    this.add(this.line);
   }
   this.addParticles = function(data) {
 console.log('go now', data);
@@ -421,7 +427,7 @@ console.log('go now', data);
 */
 //console.log(this.particles[ppos]);
 //this.particles[ppos].updateMatrix();
-//        this.addChild(this.particles[ppos]);
+//        this.add(this.particles[ppos]);
       }
     }
 //console.log(this.particles);
@@ -454,7 +460,7 @@ console.log('go now', data);
     if (this.freeparticles.length > 0) {
       p = this.freeparticles.pop();
     } else {
-      p = new elation.spacecraft.meshes.planet.particlevis.search();
+      p = new elation.space.meshes.planet.particlevis.search();
     }
     p.init(pos);
     return p;
@@ -511,10 +517,10 @@ console.log(removes);
   }
   this.init();
 });
-elation.spacecraft.meshes.planet.particlevis.prototype = new THREE.Object3D();
-elation.spacecraft.meshes.planet.particlevis.prototype.constructor = elation.spacecraft.meshes.planet.particlevis;
+elation.space.meshes.planet.particlevis.prototype = new THREE.Object3D();
+elation.space.meshes.planet.particlevis.prototype.constructor = elation.space.meshes.planet.particlevis;
 
-elation.extend("spacecraft.meshes.planet.particlevis.search", function() {
+elation.extend("space.meshes.planet.particlevis.search", function() {
   this.mass = 1;
 this.speed = 10;
 
@@ -591,6 +597,6 @@ this.speed = 10;
 
   }
 });
-elation.spacecraft.meshes.planet.particlevis.search.prototype = new THREE.Line();
-elation.spacecraft.meshes.planet.particlevis.search.prototype.constructor = elation.spacecraft.meshes.planet.particlevis.search;
+elation.space.meshes.planet.particlevis.search.prototype = new THREE.Line();
+elation.space.meshes.planet.particlevis.search.prototype.constructor = elation.space.meshes.planet.particlevis.search;
 

@@ -13,7 +13,7 @@ elation.extend("space.meshparts", new function() {
     (function(self, loader, parts) {
       for (var k in parts) {
         if (typeof self.parts[k] == 'undefined') {
-          console.log('Loading meshpart: ' + k + ' (' + parts[k] + ')');
+          //console.log('Loading meshpart: ' + k + ' (' + parts[k] + ')');
           self.parts[k] = false; // prevent others from kicking off the same load again
           loader.load( parts[k], function(geometry) {
               //elation.events.fire({type: "meshpartload", element: self, fn: self, data: geometry});
@@ -58,7 +58,7 @@ elation.extend("space.meshparts", new function() {
     geom.dynamic = true;
 
     (function(self, part, geom, callback) {
-      setTimeout(function() {
+      //setTimeout(function() {
         if (typeof part == "string") {
           part = self.parts[part];
         }
@@ -83,7 +83,7 @@ elation.extend("space.meshparts", new function() {
         if (typeof callback == 'function') {
           callback(geom);
         }
-      }, 0)
+      //}, 0)
     })(this, part, geom, callback);
     return geom;
   }

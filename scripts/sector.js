@@ -9,10 +9,16 @@ elation.extend("space.meshes.sector", function(args) {
 */
   this.postinit = function() {
     // FIXME - gross, stupid, ugly hack
-    this.children[0].position.set(this.position.x, this.position.y, this.position.z);
-    this.position.set(0,0,0);
-    this.children[0].rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
-    this.rotation.set(0,0,0);
+    if (this.children[0]) {
+      if (this.position) {
+        this.children[0].position.set(this.position.x, this.position.y, this.position.z);
+        this.position.set(0,0,0);
+      }
+      if (this.rotation) {
+        this.children[0].rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
+        this.rotation.set(0,0,0);
+      }
+    }
   }
   this.createGeometry = function() {
     var geometry = new THREE.PlaneGeometry( 50000, 50000, 200, 200 );
