@@ -25,14 +25,15 @@ elation.extend('ui.hud', new function() {
       this[widget] = new elation.ui.widgets[widget](this);
     }
     
-    (function(self) {
-      setInterval(function() {
-        self.render();
-      }, 25);
-    })(this);
+    elation.events.add(null, 'renderframe_end', this);
+  }
+     
+  this.handleEvent = function(event) {
+    if (typeof this[event.type] == 'function')
+      this[event.type](event);
   }
   
-  this.render = function() {
+  this.renderframe_end = function() {
     this.ticks++;
     
     for (var i=0; i<this.widgets.length; i++) {
@@ -438,6 +439,7 @@ elation.extend('ui.widgets.targeting', function(hud) {
         blipColor = hex2rgb(this.colors['blip']),
         data = data.data,
         bpos = data.obj.position,
+        cpos = this.camera.position,
         r = 150,
         tbr = 15,
         tbd = 8,
@@ -450,7 +452,13 @@ elation.extend('ui.widgets.targeting', function(hud) {
           y: cy * s.y,
           z: s.z,
           a: data.heading
-        }, 
+        },
+        v = {
+          x: bpos.x - cpos.x,
+          y: bpos.y - cpos.y,
+          z: bpos.z - cpos.z
+        },
+        dist = Math.round(Math.sqrt(Math.pow(v.x,2) + Math.pow(v.y,2) + Math.pow(v.z,2))),
         x = (cx+q.x),
         y = (cy-q.y),
         an, rot2;
@@ -461,13 +469,13 @@ elation.extend('ui.widgets.targeting', function(hud) {
     };
     
     if (Math.pow((q.x), 2) + Math.pow((q.y), 2) > Math.pow(r,2)) {
-      an = Math.atan2(q.x, q.y),
+      an = Math.atan2(q.x, q.y);
       rot = elation.transform.rotate(0, r, an);
       rot2 = elation.transform.rotate(0, r-tbr, an);
     }
     
     this.render();
-    //console.log(data);
+    
     this.hud.debug.log(q);
     
     ctx.beginPath();
@@ -487,6 +495,15 @@ elation.extend('ui.widgets.targeting', function(hud) {
     ctx.lineTo(coords.x-tbr, coords.y+tbr);
     ctx.lineTo(coords.x-tbr, coords.y+tbd);
     ctx.stroke();
+    
+    var dist = 'D:' + dist,
+        metrics = ctx.measureText(dist);
+    
+    //console.log(metrics);
+    ctx.fillStyle = '#aaa';
+    ctx.font = 'sans-serif bold 10px sans-serif';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(dist, coords.x-(metrics.width/2), coords.y+tbr+15);
     
     if (an) {
       ctx.beginPath();

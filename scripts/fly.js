@@ -108,10 +108,14 @@ elation.component.add('space.fly', {
     (function(self) {
       requestAnimationFrame( function() { self.loop(); } );
     })(this);
-
+  
     var newsize = this.getsize();
     var ts = new Date().getTime();
-
+    
+    this.lastupdatedelta = (ts - this.lastupdate) / 1000;
+    
+    elation.events.fire('renderframe_start', this);
+    
     if (this.controls && this.controlsenabled) {
       this.controls.update();
     }
@@ -138,7 +142,7 @@ elation.component.add('space.fly', {
       }
 */
       if (elation.utils.physics) {
-        elation.utils.physics.system.iterate((ts - this.lastupdate) / 1000);
+        elation.utils.physics.system.iterate(this.lastupdatedelta);
       }
 
       this.renderer.clear();
@@ -150,7 +154,7 @@ elation.component.add('space.fly', {
         this.skycamera.lookAt(this.skytarget);
 */
         //this.sky.position = this.camera.position;
-        //this.skycamera.rotation.x += Math.PI / 8 * ((ts - this.lastupdate) / 1000);
+        //this.skycamera.rotation.x += Math.PI / 8 * this.lastupdatedelta);
         this.skycamera.rotation = this.camera.rotation;
         this.skycamera.quaternion = this.camera.quaternion;
         this.skycamera.useQuaternion = this.camera.useQuaternion;
@@ -161,6 +165,9 @@ elation.component.add('space.fly', {
       this.renderer.render(this.scene, this.camera);
       this.lastupdate = ts;
     }
+    
+    elation.events.fire('renderframe_end', this);
+
     this.stats.update();
   },
   addObjects: function(thing, root) {

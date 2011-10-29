@@ -89,9 +89,11 @@ canvas {
   left: 10px;
   width: 200px;
   height: 200px;
+  overflow: hidden;
   border-radius: 7em;
 }
 .hud_radar_canvas {
+  overflow: hidden;
   border-radius: 7em;
 }
 .hud_targeting {
