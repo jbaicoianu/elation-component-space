@@ -14,6 +14,5 @@
 <div elation:component="space.fly">
  <elation:args>{ldelim}"sector":{jsonencode var=$sector}{rdelim}</elation:args>
 </div>
-<div elation:component="space.flycontrols">
-</div>
+{* <div elation:component="space.flycontrols"></div> *}
 {set var="page.title"}Physics Flight Demo{/set}
