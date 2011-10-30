@@ -11,13 +11,14 @@ elation.extend("space.meshparts", new function() {
     var loader = new THREE.JSONLoader();
     //elation.events.add([this], "meshpartload,meshpartsloaded", this);
     (function(self, loader, parts) {
+      var ts = new Date().getTime();
       for (var k in parts) {
         if (typeof self.parts[k] == 'undefined') {
           //console.log('Loading meshpart: ' + k + ' (' + parts[k] + ')');
           self.parts[k] = false; // prevent others from kicking off the same load again
           loader.load( parts[k], function(geometry) {
               //elation.events.fire({type: "meshpartload", element: self, fn: self, data: geometry});
-              self.meshpartload({data: {partname: k, geometry: geometry}});
+              self.meshpartload({data: {partname: k, geometry: geometry, ts: ts}});
             },
             "/media/space/textures" 
           );
@@ -28,8 +29,9 @@ elation.extend("space.meshparts", new function() {
   }
   this.meshpartload = function(ev) {
     var partname = ev.data.partname,
-        geometry = ev.data.geometry;
-    console.log('Loaded part', partname, geometry);
+        geometry = ev.data.geometry,
+        ts = ev.data.ts;
+    console.log('Loaded part in ' + (new Date().getTime() - ts) + 'ms', partname, geometry);
     geometry.computeBoundingBox();
     this.parts[partname] = geometry;
     this.parts._loading--;
