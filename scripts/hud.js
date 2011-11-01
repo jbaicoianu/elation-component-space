@@ -51,10 +51,14 @@ elation.extend('ui.widgets.radar', function(hud) {
   this.range = 8400;
   this.width = 200;
   this.height = 200;
+  this.sweepspeed = .02;
+  this.sweepangle = Math.PI;
   this.contacts = [];
   this.colors = {
-    blip: '#ffeedd',
-    outline: '#ddeeff'
+    blip: '#8aeeec',
+    outline: '#7b9cab',
+    background: '#000000',
+    lines: '#7b9cab'
   };
   this.types = {
     drone: 'blip',
@@ -97,45 +101,77 @@ elation.extend('ui.widgets.radar', function(hud) {
     return { x: x, y: y };
   }
   
+  this.sweep = function(ctx, cx, cy, bgColor, lnColor) {
+    var angle = this.sweepangle + this.sweepspeed,
+        angle = angle > (Math.PI * 2) ? 0 : angle,
+        points = [
+          elation.transform.rotate(-7, 99, angle),
+          elation.transform.rotate(7, 99, angle)
+        ];
+    
+    ctx.beginPath();
+    ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .02)";
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + points[0].x, cy + points[0].y);
+    ctx.lineTo(cx + points[1].x, cy + points[1].y);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .03)";
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + points[0].x, cy + points[0].y);
+    ctx.stroke();
+    
+    //this.hud.debug.log({ degrees:angle, x:points[0].x, y:points[0].y });
+    this.sweepangle = angle;
+  }
+  
   this.render = function() {
     var ctx = this.ctx,
         cx = this.center.x, 
         cy = this.center.y,
+        bgColor = hex2rgb(this.colors['background']),
+        lnColor = hex2rgb(this.colors['lines']),
         altitude = (this.width/2) - ((this.width/4) * (this.camera.position.y / (this.range/4))),
         altitude = altitude >= 0 ? altitude : 0;
     
     this.canvas.width = this.canvas.width;
-
+    
     ctx.beginPath();  
-    ctx.fillStyle = "rgba(32, 32, 32, .7)";  
+    ctx.arc(cx,cy,100,0,Math.PI*2,true);  
+    ctx.clip();
+    ctx.beginPath();  
+    ctx.fillStyle = "rgba("+bgColor[0]+", "+bgColor[1]+", "+bgColor[2]+", .7)";  
     ctx.arc(cx,cy,100,0,Math.PI*2,true);
     ctx.fill();
     ctx.beginPath();  
-    ctx.fillStyle = "rgba(128, 128, 128, .1)";  
+    ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .1)";  
     ctx.arc(cx,cy,altitude,0,Math.PI*2,true);
     ctx.fill();
     
-    var angle = this.draw(ctx, cx, cy);
+    this.sweep(ctx, cx, cy, bgColor, lnColor);
+    this.draw(ctx, cx, cy);
         
     ctx.beginPath();  
-    ctx.strokeStyle = "rgba(128, 128, 128, .5)";
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .5)";
     ctx.arc(cx,cy,altitude,0,Math.PI*2,true); 
     ctx.stroke();  
     ctx.beginPath();  
     ctx.arc(cx,cy,100,0,Math.PI*2,true);
     ctx.stroke();  
     ctx.beginPath();
-    ctx.fillStyle = "rgba(128, 128, 128, .1)";
+    ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .1)";
     ctx.moveTo(0,0);
     ctx.lineTo(100,101);
     ctx.lineTo(200,0);  
     ctx.fill();
     ctx.beginPath();
     ctx.moveTo(0,0);
-    ctx.strokeStyle = "rgba(128, 128, 128, .5)";
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .5)";
     ctx.lineTo(100,101);
     ctx.moveTo(200,0);
-    ctx.strokeStyle = "rgba(128, 128, 128, .5)";
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .5)";
     ctx.lineTo(100,101);  
     ctx.stroke();
   }
@@ -155,10 +191,14 @@ elation.extend('ui.widgets.radar', function(hud) {
         blipColor = hex2rgb(this.colors['blip']),
         drawBlip = function(x, y, obj) {
           ctx.beginPath();
-          ctx.fillStyle = "rgba("+blipColor[0]+", "+blipColor[1]+", "+blipColor[2]+", .9)";
-          ctx.arc(x,y,2,0,Math.PI*2,true);
+          ctx.fillStyle = "rgba("+blipColor[0]+", "+blipColor[1]+", "+blipColor[2]+", .25)";
+          ctx.arc(x,y,3,0,Math.PI*2,true);
           ctx.fill();
-          
+          ctx.beginPath();
+          ctx.fillStyle = "rgba("+blipColor[0]+", "+blipColor[1]+", "+blipColor[2]+", .8)";
+          ctx.arc(x,y,1,0,Math.PI*2,true);
+          ctx.fill();
+          var heading = Math.atan2(x - cx, y - cy);
           elation.events.fire('radar_blip', { x: x, y: y, heading: heading, obj: obj });
         }; 
     
@@ -366,7 +406,10 @@ elation.extend('ui.widgets.targeting', function(hud) {
   this.width = 300;
   this.height = 300;
   this.colors = {
-    blip: '#0f0'
+    blip: '#0f0',
+    target_arrow: '#8aeeec',
+    target_box: '#d53131',
+    target_ring: '#7b9cab'
   };
   this.init = function() {
     this.camera = elation.space.fly.obj[0].camera;
@@ -416,17 +459,19 @@ elation.extend('ui.widgets.targeting', function(hud) {
       return;
     
     var ctx = this.ctx,
+        lnColor = hex2rgb(this.colors['target_ring']),
         cx = this.center.x, 
         cy = this.center.y;
         
     this.canvas.width = this.canvas.width;
     
     ctx.beginPath();
-    ctx.fillStyle = "rgba(128, 128, 128, .25)";
+    ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .2)";
     ctx.arc(cx,cy,30,0,Math.PI*2,true);
     ctx.fill();  
     ctx.beginPath();
-    ctx.strokeStyle = "rgba(128, 128, 128, .5)";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .35)";
     ctx.arc(cx,cy,150,0,Math.PI*2,true);
     ctx.stroke();  
   }
@@ -435,11 +480,19 @@ elation.extend('ui.widgets.targeting', function(hud) {
     if (data.data.obj.type != 'label')
       return;
     
+    var ver = function(angle) {
+      return (angle > -(Math.PI/2) && angle < (Math.PI/2));
+    };
+    
     var ctx = this.ctx,
         blipColor = hex2rgb(this.colors['blip']),
+        lnColor = hex2rgb(this.colors['target_arrow']),
+        tgColor = hex2rgb(this.colors['target_box']),
         data = data.data,
+        heading = data.heading,
         bpos = data.obj.position,
         cpos = this.camera.position,
+        t = ver(heading),
         r = 150,
         tbr = 15,
         tbd = 8,
@@ -447,11 +500,17 @@ elation.extend('ui.widgets.targeting', function(hud) {
         cy = this.center.y,
         p = new THREE.Projector(),
         s = p.projectVector(bpos.clone(), this.camera),
+        s = {
+          x: t?-s.x:s.x,
+          y: t?-s.y:s.y,
+          z: s.z
+        },
         q = {
+          n: data.obj.type,
           x: cx * s.x,
           y: cy * s.y,
           z: s.z,
-          a: data.heading
+          a: heading
         },
         v = {
           x: bpos.x - cpos.x,
@@ -468,50 +527,50 @@ elation.extend('ui.widgets.targeting', function(hud) {
       y:y < tbr ? tbr : y > this.height-tbr ? this.height-tbr : y
     };
     
-    if (Math.pow((q.x), 2) + Math.pow((q.y), 2) > Math.pow(r,2)) {
+    if (t || Math.pow((q.x), 2) + Math.pow((q.y), 2) > Math.pow(r,2)) {
       an = Math.atan2(q.x, q.y);
       rot = elation.transform.rotate(0, r, an);
       rot2 = elation.transform.rotate(0, r-tbr, an);
     }
     
     this.render();
-    
     this.hud.debug.log(q);
     
-    ctx.beginPath();
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'butt';
-    ctx.moveTo(coords.x-tbr, coords.y-tbd);
-    ctx.lineTo(coords.x-tbr, coords.y-tbr);
-    ctx.lineTo(coords.x-tbd, coords.y-tbr);
-    ctx.moveTo(coords.x+tbd, coords.y-tbr);
-    ctx.lineTo(coords.x+tbr, coords.y-tbr);
-    ctx.lineTo(coords.x+tbr, coords.y-tbd);
-    ctx.moveTo(coords.x+tbr, coords.y+tbd);
-    ctx.lineTo(coords.x+tbr, coords.y+tbr);
-    ctx.lineTo(coords.x+tbd, coords.y+tbr);
-    ctx.moveTo(coords.x-tbd, coords.y+tbr);
-    ctx.lineTo(coords.x-tbr, coords.y+tbr);
-    ctx.lineTo(coords.x-tbr, coords.y+tbd);
-    ctx.stroke();
-    
-    var dist = 'D:' + dist,
-        metrics = ctx.measureText(dist);
-    
-    //console.log(metrics);
-    ctx.fillStyle = '#aaa';
-    ctx.font = 'sans-serif bold 10px sans-serif';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(dist, coords.x-(metrics.width/2), coords.y+tbr+15);
+    if (!t) {
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba("+tgColor[0]+", "+tgColor[1]+", "+tgColor[2]+", .9)";
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'butt';
+      ctx.moveTo(coords.x-tbr, coords.y-tbd);
+      ctx.lineTo(coords.x-tbr, coords.y-tbr);
+      ctx.lineTo(coords.x-tbd, coords.y-tbr);
+      ctx.moveTo(coords.x+tbd, coords.y-tbr);
+      ctx.lineTo(coords.x+tbr, coords.y-tbr);
+      ctx.lineTo(coords.x+tbr, coords.y-tbd);
+      ctx.moveTo(coords.x+tbr, coords.y+tbd);
+      ctx.lineTo(coords.x+tbr, coords.y+tbr);
+      ctx.lineTo(coords.x+tbd, coords.y+tbr);
+      ctx.moveTo(coords.x-tbd, coords.y+tbr);
+      ctx.lineTo(coords.x-tbr, coords.y+tbr);
+      ctx.lineTo(coords.x-tbr, coords.y+tbd);
+      ctx.stroke();
+      
+      var dist = 'D:' + dist,
+          metrics = ctx.measureText(dist);
+      
+      ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .8)";
+      ctx.font = 'sans-serif bold 10px sans-serif';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(dist, coords.x-(metrics.width/2), coords.y+tbr+15);
+    }
     
     if (an) {
       ctx.beginPath();
-      ctx.fillStyle = "lime";
+      ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .8)";
       ctx.arc(cx+-rot.x,cy+-rot.y,4,0,Math.PI*2,true);
       ctx.fill();
       ctx.beginPath();
-      ctx.strokeStyle = "lime";
+      ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .8)";
       ctx.moveTo(cx+-rot.x,cy+-rot.y);
       ctx.lineTo(cx+-rot2.x,cy+-rot2.y);
       ctx.stroke();
@@ -545,7 +604,7 @@ elation.extend('ui.widgets.debug', function(hud) {
       if (typeof data[key] != 'function')
       this.container.innerHTML += (this.container.innerHTML == ''
         ? ''
-        : ', ') +
+        : '<br>') +
         key + ':' + this.format(data[key]);
   }
   
