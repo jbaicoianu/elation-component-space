@@ -4,7 +4,7 @@ elation.extend('ui.hud', new function() {
     'debug', 
     'rotacol', 
     'radar', 
-    'targeting' 
+    'targeting'
   ];
   this.ticks = 0;
   
@@ -12,6 +12,7 @@ elation.extend('ui.hud', new function() {
   this.timings = {
     rotacol: 10,
     radar: 1,
+    pitch: 1,
     altimeter: 4,
     console: 0,
     targeting: 0,
@@ -33,7 +34,7 @@ elation.extend('ui.hud', new function() {
       this[event.type](event);
   }
   
-  this.renderframe_end = function() {
+  this.renderframe_end = function(e) {
     this.ticks++;
     
     for (var i=0; i<this.widgets.length; i++) {
@@ -41,7 +42,7 @@ elation.extend('ui.hud', new function() {
           timing = this.timings[widget];
       
       if (timing !== 0 && this.ticks % (timing || 2) == 0)
-        this[widget].render();
+        this[widget].render(e);
     }
   }
 });
@@ -126,7 +127,7 @@ elation.extend('ui.widgets.radar', function(hud) {
     this.sweepangle = angle;
   }
   
-  this.render = function() {
+  this.render = function(e) {
     var ctx = this.ctx,
         cx = this.center.x, 
         cy = this.center.y,
@@ -136,6 +137,7 @@ elation.extend('ui.widgets.radar', function(hud) {
         altitude = altitude >= 0 ? altitude : 0;
     
     this.canvas.width = this.canvas.width;
+    this.event = e;
     
     ctx.beginPath();  
     ctx.arc(cx,cy,100,0,Math.PI*2,true);  
@@ -189,7 +191,7 @@ elation.extend('ui.widgets.radar', function(hud) {
         contact, type,
         outlineColor = hex2rgb(this.colors['outline']),
         blipColor = hex2rgb(this.colors['blip']),
-        drawBlip = function(x, y, obj) {
+        drawBlip = function(x, y, obj, event) {
           ctx.beginPath();
           ctx.fillStyle = "rgba("+blipColor[0]+", "+blipColor[1]+", "+blipColor[2]+", .25)";
           ctx.arc(x,y,3,0,Math.PI*2,true);
@@ -198,8 +200,9 @@ elation.extend('ui.widgets.radar', function(hud) {
           ctx.fillStyle = "rgba("+blipColor[0]+", "+blipColor[1]+", "+blipColor[2]+", .8)";
           ctx.arc(x,y,1,0,Math.PI*2,true);
           ctx.fill();
-          var heading = Math.atan2(x - cx, y - cy);
-          elation.events.fire('radar_blip', { x: x, y: y, heading: heading, obj: obj });
+          var head = Math.atan2(x - cx, y - cy);
+
+          elation.events.fire('radar_blip', { x: x, y: y, head: head, heading: heading, obj: obj, event: event, angle: angle });
         }; 
     
     for (var i=0; i<contacts.length; i++) {
@@ -245,7 +248,7 @@ elation.extend('ui.widgets.radar', function(hud) {
               rot = this.rotate(x, y, heading);
           
           //if (this.checkInBounds(x, y))
-            drawBlip(rot.x, rot.y, contact);
+            drawBlip(rot.x, rot.y, contact, this.event);
           
           break;
       }
@@ -400,6 +403,52 @@ elation.extend('ui.widgets.altimeter', function(hud) {
   this.init();
 });
 
+elation.extend('ui.widgets.debug', function(hud) {
+  this.hud = hud;
+  
+  this.init = function() {
+    this.camera = elation.space.fly.obj[0].camera;
+    this.container = elation.html.create({
+      tag: 'div',
+      classname: 'hud_debug',
+      append: document.body
+    });
+    
+    this.hud.console.log('debug initialized.');
+  }
+  
+  this.format = function(pos) {
+    if (typeof pos.toFixed == 'function') {
+      var st = pos.toString(),
+          sp = st.split('.'),
+          ln = sp.length > 1 ? sp[1].length : 0,
+          pos = ln > 3 ? pos.toFixed(3) : pos;
+    }
+    
+    return pos;
+  }
+  
+  this.log = function(data) {
+    //console.log(data);
+    this.container.innerHTML = '';
+    if (typeof data.length == 'number')
+      for (var i=0; i<data.length; i++)
+        this.container.innerHTML += (this.container.innerHTML == ''
+          ? ''
+          : '<br>') +
+          this.format(data[i]);
+    else
+      for (var key in data)
+        if (typeof data[key] != 'function')
+        this.container.innerHTML += (this.container.innerHTML == ''
+          ? ''
+          : '<br>') +
+          key + ':' + this.format(data[key]);
+  }
+  
+  this.init();
+});
+
 elation.extend('ui.widgets.targeting', function(hud) {
   this.hud = hud;
   this.range = 3500;
@@ -407,10 +456,14 @@ elation.extend('ui.widgets.targeting', function(hud) {
   this.height = 300;
   this.colors = {
     blip: '#0f0',
-    target_arrow: '#8aeeec',
+    target_arrow: '#bbffee',
+    //target_arrow: '#8aeeec',
     target_box: '#d53131',
-    target_ring: '#7b9cab'
+    target_ring: '#bbffee'
+    //target_ring: '#7b9cab'
   };
+  this.opos = { x:0, y:0, z:0 };
+  
   this.init = function() {
     this.camera = elation.space.fly.obj[0].camera;
     
@@ -476,8 +529,8 @@ elation.extend('ui.widgets.targeting', function(hud) {
     ctx.stroke();  
   }
   
-  this.radar_blip = function(data) {
-    if (data.data.obj.type != 'label')
+  this.radar_blip = function(odata) {
+    if (odata.data.obj.type != 'label')
       return;
     
     var ver = function(angle) {
@@ -488,18 +541,20 @@ elation.extend('ui.widgets.targeting', function(hud) {
         blipColor = hex2rgb(this.colors['blip']),
         lnColor = hex2rgb(this.colors['target_arrow']),
         tgColor = hex2rgb(this.colors['target_box']),
-        data = data.data,
-        heading = data.heading,
+        data = odata.data,
+        heading = data.head,
         bpos = data.obj.position,
         cpos = this.camera.position,
         t = ver(heading),
         r = 150,
         tbr = 15,
         tbd = 8,
-        cx = this.center.x, 
+        cx = this.center.x,
         cy = this.center.y,
         p = new THREE.Projector(),
         s = p.projectVector(bpos.clone(), this.camera),
+        A = [ bpos.x, bpos.y, bpos.z ],
+        B = [ cpos.x, cpos.y, cpos.z ],
         s = {
           x: t?-s.x:s.x,
           y: t?-s.y:s.y,
@@ -517,7 +572,7 @@ elation.extend('ui.widgets.targeting', function(hud) {
           y: bpos.y - cpos.y,
           z: bpos.z - cpos.z
         },
-        dist = Math.round(Math.sqrt(Math.pow(v.x,2) + Math.pow(v.y,2) + Math.pow(v.z,2))),
+        dist = Math.round(elation.vector3.distance(A, B)),
         x = (cx+q.x),
         y = (cy-q.y),
         an, rot2;
@@ -534,7 +589,8 @@ elation.extend('ui.widgets.targeting', function(hud) {
     }
     
     this.render();
-    this.hud.debug.log(q);
+    this.setFPV(ctx, odata, cx, cy, cpos, r, lnColor);
+    //this.hud.debug.log(q);
     
     if (!t) {
       ctx.beginPath();
@@ -555,11 +611,11 @@ elation.extend('ui.widgets.targeting', function(hud) {
       ctx.lineTo(coords.x-tbr, coords.y+tbd);
       ctx.stroke();
       
-      var dist = 'D:' + dist,
-          metrics = ctx.measureText(dist);
-      
       ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .8)";
-      ctx.font = 'sans-serif bold 10px sans-serif';
+      ctx.font = '12px sans-serif bold';
+      var dist = 'D:' + dist,
+          metrics = ctx.measureText(dist);  
+
       ctx.textBaseline = 'bottom';
       ctx.fillText(dist, coords.x-(metrics.width/2), coords.y+tbr+15);
     }
@@ -575,70 +631,225 @@ elation.extend('ui.widgets.targeting', function(hud) {
       ctx.lineTo(cx+-rot2.x,cy+-rot2.y);
       ctx.stroke();
     }
+    
+    this.opos = {
+      x: cpos.x,
+      y: cpos.y,
+      z: cpos.z
+    };
   };
   
-  this.init();
-});
-
-elation.extend('ui.widgets.debug', function(hud) {
-  this.hud = hud;
-  
-  this.init = function() {
-    this.camera = elation.space.fly.obj[0].camera;
-    this.container = elation.html.create({
-      tag: 'div',
-      classname: 'hud_debug',
-      append: document.body
-    });
+  this.setFPV = function(ctx, data, cx, cy, cpos, r, lnColor) {
+    var delta = data.data.event.data.lastupdatedelta,
+        angle = data.data.angle,
+        head = data.data.heading,
+        pitch = angle[1],
+        bank = angle[2],
+        fps = 1 / delta,
+        r = r - 20,
+        J = 14.2, // FIXME - computer max delta programatically
+        v = elation.vector3,
+        A = [ cpos.x, cpos.y, cpos.z ],
+        B = [ this.opos.x, this.opos.y, this.opos.z ],
+        speed = elation.vector3.distance(A, B) * fps,
+        NA = v.normalize(A),
+        NB = v.normalize(B),
+        W = v.subtract(A, B),
+        K = [
+          (W[0] / J) * r,
+          (W[2] / J) * r
+        ],
+        F = Math.atan2(K[0], K[1]),
+        T = F - head,
+        rr = elation.transform.rotate(0, ((speed / 1000) * (r/2)), -T),
+        x = cpos.x - this.opos.x,
+        y = cpos.y - this.opos.y,
+        z = cpos.z - this.opos.z,
+        FPVxr = (Math.tan(bank) * .50),
+        FPVyr = (Math.tan(head) * .50),
+        fx = r * FPVxr,
+        fy = r * FPVyr,
+        fx = fx > r ? r : fx, 
+        fx = 0,//fx > r ? r : fx < -r ? -r : fx, 
+        fy = fy > r ? r : fy < -r ? -r : fy,
+        q = {
+          delta: data.data.event.data.lastupdatedelta,
+          fps: Math.round(fps),
+          speed: Math.round(speed) + '/sec',
+          F: F,
+          T: T,
+          heading: head,
+          sdelta: speed - this.speed,
+          pitch: Math.tan(pitch) * .5,
+          FPVxr: FPVxr,
+          FPVyr: FPVyr
+        }, 
+        cx = cx + rr.x,
+        cy = cy + rr.y;
     
-    this.hud.console.log('debug initialized.');
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .6)";
+    ctx.arc(cx,cy,6,0,Math.PI*2,true);
+    ctx.moveTo(cx+6,cy);
+    ctx.lineTo(cx+6+12,cy);
+    ctx.moveTo(cx-6,cy);
+    ctx.lineTo(cx-6-12,cy);
+    ctx.moveTo(cx,cy-6);
+    ctx.lineTo(cx,cy-6-6);
+    ctx.stroke();
+    
+    this.speed = speed;
+    this.setPitch(ctx, data, cx, cy, cpos, r, lnColor); 
   }
   
-  this.format = function(pos) {
-    return typeof pos.toFixed == 'function' ? pos.toFixed(3) : pos;
-  }
-  
-  this.log = function(data) {
-    this.container.innerHTML = '';
-    for (var key in data)
-      if (typeof data[key] != 'function')
-      this.container.innerHTML += (this.container.innerHTML == ''
-        ? ''
-        : '<br>') +
-        key + ':' + this.format(data[key]);
+  this.setPitch = function(ctx, data, cx, cy, cpos, r, lnColor) {
+    var angle = data.data.angle,
+        head = data.data.heading,
+        yaw = angle[0],
+        pitch = angle[1],
+        bank = angle[2],
+        r = 60,
+        degrees = pitch * 180 / Math.PI,
+        dim = elation.html.dimensions(),
+        d2p = dim.h / 50,
+        d = degrees * d2p,
+        q = {
+          d: d,
+          d2p: d2p,
+          pitch: degrees
+        },
+        line = function(key, nx, ny, x1, y1, x2, y2, x3, y3, x4, y4) {
+          rot(x1, y1, x2, y2);
+          rot(x3, y3, x4, y4);
+          
+          if (key == 0 || key == 180 || key == -180)
+            return;
+          
+          ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .5)";
+          ctx.font = '15pt system';
+          
+          var metrics = ctx.measureText(key);
+          var v1 = elation.transform.rotate(nx<0?nx-metrics.width-4:nx+4, ny + 10, bank);
+          
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(key, cx + v1.x, cy + v1.y);
+        },
+        rot = function(x1, y1, x2, y2) {
+          var v1 = elation.transform.rotate(x1, y1, bank);
+          var v2 = elation.transform.rotate(x2, y2, bank);
+          ctx.moveTo(cx + v1.x, cy + v1.y);
+          ctx.lineTo(cx + v2.x, cy + v2.y);
+        },
+        min = Math.round(degrees - (d2p)),
+        max = Math.round(degrees + (d2p)),
+        ar = [], y, ob = {}, type;
+    
+    for (var i=min; i<max; i++) {
+      if (i % 5 == 0) {
+        tmp = (degrees - i) * d2p
+        ar.push(-tmp);
+        ob[i] = -tmp;
+      }
+    }
+    
+    this.hud.debug.log(q);
+    
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .5)";
+    
+    for (var key in ob) {
+      y = -ob[key];
+      type = key == 0 || key == 180 || key == -180
+        ? 'center'
+        : key > 0
+          ? 'positive'
+          : key < 0
+            ? 'negative'
+            : 'buh';
+      
+      switch (type) {
+        case "center":
+          line(key, r, y,
+              (r*1.35), y, (r/2), y,
+              -(r*1.35), y, -(r/2), y);
+          line(key, -r, y,
+              (r/2), y, (r/2), y+(r/10),
+              -(r/2), y, -(r/2), y+(r/10));
+          break;
+        case "positive":
+          line(key, r, y,
+              r, y, (r/2), y,
+              -r, y, -(r/2), y);
+          line(key, -r, y,
+              r, y, r, y+(r/10),
+              -r, y, -r, y+(r/10));
+          break;
+        case "negative":
+          line(key, r, y,
+              r, y, (r/2), y,
+              -r, y, -(r/2), y);
+          line(key, -r, y,
+              r, y, r, y-(r/10),
+              -r, y, -r, y-(r/10));
+          break;
+      }
+    }
+    ctx.stroke();
   }
   
   this.init();
 });
 
-elation.extend('utils.quat2euler', function(q, degrees) {
-  var sqx   = q.x * q.x,
-      sqy   = q.y * q.y,
-      sqz   = q.z * q.z,
-      yaw   = Math.atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * sqy - 2 * sqz),
-      pitch = Math.atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * sqx - 2 * sqz),
-      roll  = Math.asin(2 * q.x * q.y + 2 * q.z * q.w),
-      r2d   = function(rad) { return rad * 180 / Math.PI; };
+elation.extend('vector3.dot', function(A, B) {
+  var D = [ 
+        A[0] * B[0],
+        A[1] * B[1],
+        A[2] * B[2]
+      ],
+      C = D[0] + D[1] + D[2];
   
-  if (degrees)
-    return [ r2d(yaw), r2d(pitch), r2d(roll) ];
-  else
-    return [ yaw, pitch, roll ];
+  return C;
+});
+elation.extend('vector3.normalize', function(A) {
+  var length = elation.vector3.magnitude(A),
+      B = [
+        A[0] / length,
+        A[1] / length,
+        A[2] / length
+      ],
+      C = [
+        (isNaN(B[0]) ? 0 : B[0]),
+        (isNaN(B[1]) ? 0 : B[1]),
+        (isNaN(B[2]) ? 0 : B[2])
+      ];
+  
+  return C;
 });
 
-elation.extend('css3.transform', function(el, transition, transform) {
-  switch(elation.browser.type) {
-    case 'firefox':
-      el.style.MozTransition = (transition ? '-moz-' : '') + (transition ? transition : '');
-      el.style.MozTransformOrigin = transform ? 'center' : '';
-      el.style.MozTransform = transform ? transform : '';
-      break;
-    case 'safari':
-      el.style.webkitTransition = (transition ? '-webkit-' : '') + (transition ? transition : '');
-      el.style.webkitTransformOrigin = transform ? 'center' : '';
-      el.style.webkitTransform = transform ? transform : '';
-      break;
-  }
+elation.extend('vector3.subtract', function(A, B) {
+  var C = [
+        A[0] - B[0],
+        A[1] - B[1],
+        A[2] - B[2]
+      ];
+  
+  return C;
+});
+elation.extend('vector3.distance', function(B, C) {
+  var A = elation.vector3.subtract(B, C),
+      dist = elation.vector3.magnitude(A);
+  
+  return dist;
+});
+elation.extend('vector3.magnitude', function(A) {
+  var sx = Math.pow(A[0], 2),
+      sy = Math.pow(A[1], 2),
+      sz = Math.pow(A[2], 2),
+      magnitude = Math.sqrt(sx + sy + sz);
+  
+  return magnitude;
 });
 
 elation.extend('transform.translate', function(x, y, tx, ty) {
@@ -699,6 +910,37 @@ elation.extend('transform.rotateOj', function(obj, angle) {
   
   return rotated;
 });
+
+elation.extend('utils.quat2euler', function(q, degrees) {
+  var sqx   = q.x * q.x,
+      sqy   = q.y * q.y,
+      sqz   = q.z * q.z,
+      yaw   = Math.atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * sqy - 2 * sqz),
+      pitch = Math.atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * sqx - 2 * sqz),
+      roll  = Math.asin(2 * q.x * q.y + 2 * q.z * q.w),
+      r2d   = function(rad) { return rad * 180 / Math.PI; };
+  
+  if (degrees)
+    return [ r2d(yaw), r2d(pitch), r2d(roll) ];
+  else
+    return [ yaw, pitch, roll ];
+});
+
+elation.extend('css3.transform', function(el, transition, transform) {
+  switch(elation.browser.type) {
+    case 'firefox':
+      el.style.MozTransition = (transition ? '-moz-' : '') + (transition ? transition : '');
+      el.style.MozTransformOrigin = transform ? 'center' : '';
+      el.style.MozTransform = transform ? transform : '';
+      break;
+    case 'safari':
+      el.style.webkitTransition = (transition ? '-webkit-' : '') + (transition ? transition : '');
+      el.style.webkitTransformOrigin = transform ? 'center' : '';
+      el.style.webkitTransform = transform ? transform : '';
+      break;
+  }
+});
+
 
 function hex2rgb(color) {
   var rgb = [128, 128, 128];

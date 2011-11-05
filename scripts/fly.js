@@ -60,7 +60,7 @@ elation.component.add('space.fly', {
     this.renderer.shadowMapWidth = 8192;
     this.renderer.shadowMapHeight = 8192;
  
-    this.renderer.shadowMapEnabled = true;
+    this.renderer.shadowMapEnabled = false;
     this.renderer.shadowMapSoft = true;
 
     this.renderer.autoClear = false;
@@ -114,7 +114,7 @@ elation.component.add('space.fly', {
     
     this.lastupdatedelta = (ts - this.lastupdate) / 1000;
     
-    elation.events.fire('renderframe_start', this);
+    //elation.events.fire('renderframe_start', this);
     
     if (this.controls && this.controlsenabled) {
       this.controls.update();
@@ -166,7 +166,7 @@ elation.component.add('space.fly', {
       this.lastupdate = ts;
     }
     
-    elation.events.fire('renderframe_end', this);
+    //elation.events.fire('renderframe_end', this);
 
     this.stats.update();
   },
