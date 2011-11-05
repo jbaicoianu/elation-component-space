@@ -12,9 +12,10 @@ elation.component.add('space.fly', {
     this.scene = this.args.scene || new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(0xCCE8FF, 0.00008);
 
-    this.camera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 1, 55000);
+    this.camera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 20, 5.5e15);
     //this.camera = new THREE.OrthographicCamera(this.viewsize[0] / -2, this.viewsize[0] / 2, this.viewsize[1] / -2, this.viewsize[1] / 2, 0, 5000);
     this.camera.position.z = 500;
+    this.scene.add(this.camera);
 
     elation.ui.hud.init();
     
@@ -48,12 +49,12 @@ elation.component.add('space.fly', {
 
     this.addObjects(this.args.sector, this.scene);
 
-    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({maxShadows: 10}) : new THREE.CanvasRenderer());
+    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({antialias: true, maxShadows: 10}) : new THREE.CanvasRenderer());
     this.renderer.setSize(this.viewsize[0], this.viewsize[1]);
 
-    this.renderer.shadowCameraNear = 20;
+    this.renderer.shadowCameraNear = this.camera.near;
     this.renderer.shadowCameraFar = this.camera.far;
-    this.renderer.shadowCameraFov = 50;
+    this.renderer.shadowCameraFov = this.camera.fov;
  
     //this.renderer.shadowMapBias = 0.0039;
     //this.renderer.shadowMapDarkness = 0.5;
@@ -72,8 +73,8 @@ elation.component.add('space.fly', {
     }
     this.stats = new Stats();
     this.stats.domElement.style.position = 'fixed';
-    this.stats.domElement.style.bottom = '0px';
-    this.stats.domElement.style.right = '0px';
+    this.stats.domElement.style.top = '0px';
+    this.stats.domElement.style.left = '0px';
     this.stats.domElement.style.zIndex = 100;
     this.container.appendChild( this.stats.domElement );
 
@@ -147,18 +148,15 @@ elation.component.add('space.fly', {
 
       this.renderer.clear();
       if (this.skyscene) {
-/*
-        this.skytarget.x = -this.camera.position.x;
-        this.skytarget.y = -this.camera.position.y;
-        this.skytarget.z = -this.camera.position.z;
-        this.skycamera.lookAt(this.skytarget);
-*/
-        //this.sky.position = this.camera.position;
-        //this.skycamera.rotation.x += Math.PI / 8 * this.lastupdatedelta);
         this.skycamera.rotation = this.camera.rotation;
         this.skycamera.quaternion = this.camera.quaternion;
         this.skycamera.useQuaternion = this.camera.useQuaternion;
+        var shadowmap = this.renderer.shadowMapEnabled;
+        if (shadowmap)
+          this.renderer.shadowMapEnabled = false;
         this.renderer.render(this.skyscene, this.skycamera);
+        if (shadowmap)
+          this.renderer.shadowMapEnabled = true;
       } else {
         this.sky.position = this.camera.position;
       }
@@ -174,7 +172,7 @@ elation.component.add('space.fly', {
     var currentobj = false;
     if (typeof elation.space.meshes[thing.type] == 'function') {
       currentobj = new elation.space.meshes[thing.type](thing);
-      if (currentobj.properties && currentobj.properties.physical && currentobj.properties.physical.exists != 0) {
+      if (currentobj.properties && currentobj.properties.physical && currentobj.properties.physical.exists !== 0) {
         root.add(currentobj);
 
         console.log("Added new " + thing.type + ": " + thing.parentname + '/' + thing.name, currentobj);
@@ -230,7 +228,7 @@ elation.component.add('space.fly', {
       this.skyscene = new THREE.Scene();
       this.skyscene.add(this.sky);
       this.skycamera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 1, 55000);
-      this.skytarget = new THREE.Vector3();
+      this.skyscene.add(this.skycamera);
     } else {
       this.sky = new THREE.Mesh(new THREE.SphereGeometry(30000, 10), new THREE.MeshBasicMaterial({ color: 0xB0E2FF}));
       this.sky.flipSided = true;

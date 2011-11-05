@@ -101,7 +101,7 @@ elation.extend("space.meshes.sector", function(args) {
         normalScale: 0.1
         //shininess: 10
       };
-      this.materials.push(new THREE.MeshNormalMaterial( parameters ));
+      this.materials.push(new THREE.MeshPhongMaterial( parameters ));
     }
     //this.materials.push(new THREE.MeshBasicMaterial({wireframe: true, color: 0x00ff00, opacity: 0.1, transparent: true}));
 
