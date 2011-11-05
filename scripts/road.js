@@ -85,7 +85,8 @@ elation.extend("space.meshes.road", function(args) {
       var parameters = {
         map: THREE.ImageUtils.loadTexture("/media/space/textures/road.png"),
         normalMap: THREE.ImageUtils.loadTexture("/media/space/textures/asphalt-normal.jpg"),
-        offsetRepeat: new THREE.Vector4(0,0,repeats,repeatt)
+        offsetRepeat: new THREE.Vector4(0,0,repeats,repeatt),
+        shading: THREE.FlatShading
       };
       if (parameters.map) {
         parameters.map.repeat.set(repeats,repeatt);
@@ -99,7 +100,7 @@ elation.extend("space.meshes.road", function(args) {
         parameters.normalMap.wrapS = THREE.RepeatWrapping;
         parameters.normalMap.wrapT = THREE.RepeatWrapping;
       }
-      return new THREE.MeshNormalMaterial(parameters);
+      return new THREE.MeshPhongMaterial(parameters);
     }
   }
   this.createSegment = function(start, end, width) {
