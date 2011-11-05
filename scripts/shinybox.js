@@ -10,6 +10,7 @@ elation.extend("space.meshes.shinybox", function(args) {
       shading: THREE.SmoothShading,
       specular: 0x808080,
       shininess: 50,
+      perPixel: true
     };
 
     if (this.properties.render && this.properties.render.normalmethod == "old") {
@@ -30,7 +31,7 @@ console.log('make it old');
       this.materials = new THREE.ShaderMaterial( parameters );
     } else {
       //this.materials = new THREE.MeshFaceMaterial(params);
-      this.materials = new THREE.MeshNormalMaterial(params);
+      this.materials = new THREE.MeshPhongMaterial(params);
     }
   }
   this.createGeometry = function() {
