@@ -92,11 +92,12 @@ elation.component.add('space.fly', {
     if (elation.utils.physics) {
       setTimeout(function() { 
         elation.utils.physics.system.start();
-        elation.ui.hud.console.log('manual flight controls unlocked.');
+        elation.ui.hud.console.log('ready.');
+        elation.ui.hud.radar.nextTarget();
       }, 5000);
     }
     
-    elation.ui.hud.console.log('flight controls at stationkeeping.');
+    elation.ui.hud.console.log('initializing, please wait...');
   },
   getsize: function() {
     if (this.container) {
@@ -115,7 +116,7 @@ elation.component.add('space.fly', {
     
     this.lastupdatedelta = (ts - this.lastupdate) / 1000;
     
-    //elation.events.fire('renderframe_start', this);
+    elation.events.fire('renderframe_start', this);
     
     if (this.controls && this.controlsenabled) {
       this.controls.update();
@@ -164,7 +165,7 @@ elation.component.add('space.fly', {
       this.lastupdate = ts;
     }
     
-    //elation.events.fire('renderframe_end', this);
+    elation.events.fire('renderframe_end', this);
 
     this.stats.update();
   },

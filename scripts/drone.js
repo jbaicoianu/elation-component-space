@@ -48,7 +48,7 @@ elation.extend("space.meshes.drone", function(args) {
     this.lastupdate = new Date().getTime();
 */
     this.nextblink = 0;
-    elation.events.add(document, 'keydown,keyup,mousedown,mousemove,mouseup', this);
+    elation.events.add(document, 'keydown,keyup,mousedown,mousemove,mouseup,mousewheel', this);
   }
   this.createPlaceholder = function() {
     var geometry = new THREE.SphereGeometry(50, 20, 20);
@@ -122,8 +122,26 @@ elation.extend("space.meshes.drone", function(args) {
       this[ev.type](ev);
     }
   }
+  this.mousewheel = function(ev) {
+		var	event = ev ? ev : window.event;
+				mwdelta = (event.wheelDelta) 
+					? (event.wheelDelta / 120) 
+					: (event.detail) 
+						? (-event.detail / 3) 
+						: 0;
+		
+		if (window.opera) mwdelta = -mwdelta;		
+		
+		this.mwdelta = mwdelta;
+    
+    if (elation.utils.arrayget(elation, 'ui.hud.radar')) {
+      if (mwdelta < 0)
+        elation.ui.hud.radar.nextTarget();
+      else
+        elation.ui.hud.radar.prevTarget();
+    }
+  }
   this.keydown = function(ev) {
-    //console.log('down', ev);
     switch (ev.keyCode) {
       case 87: /*W*/ this.moveState.forward = 1; break;
       case 83: /*S*/ this.moveState.back = 1; break;
@@ -142,10 +160,12 @@ elation.extend("space.meshes.drone", function(args) {
 
       case 81: /*Q*/ this.moveState.rollLeft = 1; break;
       case 69: /*E*/ this.moveState.rollRight = 1; break;
-
+      
+      case 84: elation.ui.hud.radar.nextTarget(); break;
+      
       case 32: /*spacebar*/ this.moveState.up = 1; break;
       default:
-        console.log('uh');
+        console.log('key not bound: '+ev.keyCode);
     }
     this.updateMovementVector();
     this.updateRotationVector();

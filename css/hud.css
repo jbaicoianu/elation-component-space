@@ -5,7 +5,7 @@
 canvas {
   position: fixed;
 }
-.hud_rotacol {
+.rotacol {
   position: fixed;
   top: 10px;
   right: 10px;
@@ -17,10 +17,10 @@ canvas {
   border-radius: .5em;
   box-shadow: 0px 0px 20px 1px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
 }
-.hud_console_display li {
+.console_display li {
   margin: -0.2em .4em;
 }
-.hud_console_display {
+.console_display {
   padding: 0;
   border-radius: .3em;
   height: 5.9em;
@@ -28,10 +28,10 @@ canvas {
   font-size: .8em;
   margin: 0;
 }
-.hud_console_bottom {
+.console_bottom {
   margin: 0;
 }
-.hud_console_input {
+.console_input {
   border-top: 1px solid #252525;
   padding: 0;
   background: black;
@@ -43,10 +43,10 @@ canvas {
   margin-top: .2em;
   box-shadow: 0px 0px 1px 1px #3b5c6b inset;
 }
-.hud_console {
+.console {
   position: fixed;
   bottom: 10px;
-  left: 225px;
+  left: 450px;
   height: 6em;
   width: 50%;
   padding: .3em;
@@ -57,7 +57,7 @@ canvas {
   border: 2px solid #3b5c6b;
   box-shadow: 0px 0px 30px 1px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
 }
-.hud_altimeter {
+.altimeter {
   position: fixed;
   bottom: 10px;
   left: 10px;
@@ -65,46 +65,104 @@ canvas {
   height: 200px;
   border-radius: .5em;
 }
-/*
-00:50 <+aw2284> let L be screen left, U be screen up, F be forward, and V the
-                vector from cam position to the object... take the vector
-                (L.V, U.V) and normalize it, and draw the arrow on the screen
-                from (0,0) to that point (or move it whereever)... the amount
-                you have to rotate is the angle between F and V
-00:50 <+i_c-Y> you should fourier transform the integral part
-00:51 <+aw2284> (assuming L and U are orthonormal)
-
-*/
-.hud_altimeter_canvas {
-  border-radius: .5em;
+div.debug span {
+  margin: 0;
+  float: left;
 }
-.hud_debug {
+div.debug span.alt {
+  display: block;
+  position: absolute;
+  margin-left: 60px;
+  width: 120px;
+}
+.debug {
   position: fixed;
-  top: 10px;
-  left: 10px;
+  bottom: 25px;
+  left: 15px;
   padding: .3em .6em;
-  background: #121516;
   opacity: .7;
   color: #7b9cab;
-  border-radius: .5em;
   font-size: .8em;
-  box-shadow: 0px 0px 20px 1px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
+  z-index: 1;
 }
-.hud_radar {
+div.target_top {
+  border-bottom: 2px solid #7B9CAB;
+  color: #7B9CAB;
+  padding: 0;
+  text-align: left;
+  height: 30px;
+  font-size: 11px;
+}
+div.target_topleft {
+  width: 59%;
+  height: 30px;
+  float: left;
+  padding: 0;
+}
+div.target_label {
+  border-bottom: 1px solid #7B9CAB;
+  color: #7B9CAB;
+  height: 14px;
+  padding-right: 3px;
+  text-align: right;
+}
+div.target_name {
+  color: #aaaaaa;
+  height: 16px;
+  padding-right: 3px;
+  text-align: right;
+  font-weight: bold;
+  font-size: 12px;
+}
+div.target_distance {
+  border-left: 1px solid #7B9CAB;
+  color: #C44;
+  width: 39%;
+  height: 26px;
+  float: left;
+  padding-left: 3px;
+  text-align: left;
+  font-size: 19px;
+  padding-top: 4px;
+}
+div.target {
+  background: #121516;
+  box-shadow: 0px 0px 11px 6px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
+  border-radius: 25px;
+  left: 10px;
+  border: 2px solid #7B9CAB;
+  opacity: .7;
+}
+.target,
+.radar {
   position: fixed;
   bottom: 10px;
-  left: 10px;
+  left:  233px;
   width: 200px;
   height: 200px;
-  box-shadow: 0px 0px 75px 35px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
   overflow: hidden;
+}
+.radar_background {
+  box-shadow: 0px 0px 75px 35px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
   border-radius: 100px;
   -webkit-border-radius: 100px;
+  z-index: 1;
 }
-.hud_radar_canvas {
-  position: relative;
+.radar_display {
+  z-index: 2;
+  -webkit-transition: opacity 100ms ease 0;
 }
-.hud_targeting {
+.radar_static {
+  z-index: 3;
+}
+.aeronautics {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  top: 0;
+  left: 0;
+}
+.static_overlay {
   position: fixed;
  /* width: 300px;
   height: 300px;*/
@@ -112,8 +170,5 @@ canvas {
   bottom: 0;
   left: 0;
   right: 0;
-}
-.hud_targeting_canvas {
-  width: 100%;
-  height: 100%;
+  z-index: 5;
 }
