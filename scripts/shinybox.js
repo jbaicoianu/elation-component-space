@@ -14,7 +14,6 @@ elation.extend("space.meshes.shinybox", function(args) {
     };
 
     if (this.properties.render && this.properties.render.normalmethod == "old") {
-console.log('make it old');
       var shader = THREE.ShaderUtils.lib[ "normal" ];
 
       var uniforms = THREE.UniformsUtils.clone( shader.uniforms );

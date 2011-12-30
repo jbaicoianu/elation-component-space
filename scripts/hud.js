@@ -216,7 +216,7 @@ elation.extend('ui.widgets.radar', function(hud) {
   
   this.addContact = function(contact) {
     this.contacts.push(contact);
-    console.log('Radar added contact', contact);
+    //console.log('Radar added contact', contact);
   }
   
   this.init();
