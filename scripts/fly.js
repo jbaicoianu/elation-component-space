@@ -10,7 +10,7 @@ elation.component.add('space.fly', {
     //this.camera = new THREE.FlyCamera({fov: 50, aspect: this.viewsize[0] / this.viewsize[1], movementSpeed: 200, domElement: this.container, near: 1, far: 1e4, rollSpeed: Math.PI / 6, dragToLook: true});
 
     this.scene = this.args.scene || new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0xCCE8FF, 0.00008);
+    this.scene.fog = new THREE.FogExp2(0xCCE8FF, 0.000008);
 
     this.camera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 20, 5.5e15);
     //this.camera = new THREE.OrthographicCamera(this.viewsize[0] / -2, this.viewsize[0] / 2, this.viewsize[1] / -2, this.viewsize[1] / 2, 0, 5000);
@@ -19,19 +19,6 @@ elation.component.add('space.fly', {
 
     elation.ui.hud.init();
     
-    this.controlsenabled = true;
-    this.controls = new THREE.TrackballControls( this.camera );
-    this.controls.rotateSpeed = -1.0;
-    this.controls.zoomSpeed = 4;
-    this.controls.panSpeed = 3;
-
-    this.controls.noZoom = false;
-    this.controls.noPan = false;
-
-    this.controls.staticMoving = true;
-    this.controls.dynamicDampingFactor = 0.3;
-    this.controls.keys = [ 65, 83, 68 ];
-
     this.scene.add(this.camera);
 
     // TODO - light should just be a property of the sun...
@@ -42,29 +29,17 @@ elation.component.add('space.fly', {
     this.lights['white'].castShadow = true;
     this.scene.add(this.lights['white']);
 
-    this.createSky(true);
+    //this.createSky(true);
 
     this.lights['ambient'] = new THREE.AmbientLight( 0x888888 );
-    this.scene.add(this.lights['ambient']);
+    //this.scene.add(this.lights['ambient']);
 
+    this.initRenderer(); 
+    this.initControls();
+
+console.log(this.args.sector);
     this.addObjects(this.args.sector, this.scene);
 
-    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({antialias: true, maxShadows: 10}) : new THREE.CanvasRenderer());
-    this.renderer.setSize(this.viewsize[0], this.viewsize[1]);
-
-    this.renderer.shadowCameraNear = this.camera.near;
-    this.renderer.shadowCameraFar = this.camera.far;
-    this.renderer.shadowCameraFov = this.camera.fov;
- 
-    //this.renderer.shadowMapBias = 0.0039;
-    //this.renderer.shadowMapDarkness = 0.5;
-    this.renderer.shadowMapWidth = 8192;
-    this.renderer.shadowMapHeight = 8192;
- 
-    this.renderer.shadowMapEnabled = false;
-    this.renderer.shadowMapSoft = true;
-
-    this.renderer.autoClear = false;
 
     if (this.container) {
       this.container.appendChild(this.renderer.domElement);
@@ -93,10 +68,52 @@ elation.component.add('space.fly', {
       setTimeout(function() { 
         elation.utils.physics.system.start();
         elation.ui.hud.console.log('manual flight controls unlocked.');
-      }, 5000);
+      }, 500);
     }
     
     elation.ui.hud.console.log('flight controls at stationkeeping.');
+
+    this.createAdminTool();
+  },
+  initControls: function() {
+    this.controlsenabled = true;
+/*
+    this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
+    this.controls.rotateSpeed = -1.0;
+    this.controls.zoomSpeed = 4;
+    this.controls.panSpeed = 3;
+
+    this.controls.noZoom = false;
+    this.controls.noPan = false;
+
+    this.controls.staticMoving = true;
+    this.controls.dynamicDampingFactor = 0.3;
+    this.controls.keys = [ 65, 83, 68 ];
+*/
+    this.controls = elation.space.controls(0, this.renderer.domElement);
+
+    // TODO - define some top-level bindings for accessing menus, etc
+    //this.controls.addContext("default", {}});
+    //this.controls.addBindings("default", {});
+    //this.controls.activateContext("default", this);
+  },
+  initRenderer: function() {
+    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({antialias: true, maxShadows: 10}) : new THREE.CanvasRenderer());
+    this.renderer.setSize(this.viewsize[0], this.viewsize[1]);
+
+    this.renderer.shadowCameraNear = this.camera.near;
+    this.renderer.shadowCameraFar = this.camera.far;
+    this.renderer.shadowCameraFov = this.camera.fov;
+ 
+    //this.renderer.shadowMapBias = 0.0039;
+    //this.renderer.shadowMapDarkness = 0.5;
+    this.renderer.shadowMapWidth = 8192;
+    this.renderer.shadowMapHeight = 8192;
+ 
+    this.renderer.shadowMapEnabled = false;
+    this.renderer.shadowMapSoft = true;
+
+    this.renderer.autoClear = false;
   },
   getsize: function() {
     if (this.container) {
@@ -123,9 +140,6 @@ elation.component.add('space.fly', {
         this.camera.aspect = this.viewsize[0] / this.viewsize[1];
         this.camera.updateProjectionMatrix();
       }
-      if (this.skyscene) {
-      }
-
 /*
       var vector = new THREE.Vector3( this.mouse[0], -this.mouse[1], 0.5 );
       this.projector.unprojectVector( vector, this.camera );
@@ -141,20 +155,31 @@ elation.component.add('space.fly', {
       if (elation.utils.physics) {
         elation.utils.physics.system.iterate((ts - this.lastupdate) / 1000);
       }
+/*
+this.lights['white'].position.x = Math.sin(ts / 2500) * 20000;
+this.lights['white'].position.y = (1 + Math.sin(ts / 5000)) * 10000;
+*/
+
+      var camera = this.camera;
+      if (elation.space.meshes.terrain2) {
+        THREE.SceneUtils.traverseHierarchy( this.scene, function ( node ) { if ( node instanceof elation.space.meshes.terrain2 ) node.updateViewport( camera ) } );
+      }
 
       this.renderer.clear();
-      if (this.skyscene) {
-        this.skycamera.rotation = this.camera.rotation;
-        this.skycamera.quaternion = this.camera.quaternion;
-        this.skycamera.useQuaternion = this.camera.useQuaternion;
-        var shadowmap = this.renderer.shadowMapEnabled;
-        if (shadowmap)
-          this.renderer.shadowMapEnabled = false;
-        this.renderer.render(this.skyscene, this.skycamera);
-        if (shadowmap)
-          this.renderer.shadowMapEnabled = true;
-      } else {
-        this.sky.position = this.camera.position;
+      if (this.sky) {
+        if (this.skyscene) {
+          this.skycamera.rotation = this.camera.rotation;
+          this.skycamera.quaternion = this.camera.quaternion;
+          this.skycamera.useQuaternion = this.camera.useQuaternion;
+          var shadowmap = this.renderer.shadowMapEnabled;
+          if (shadowmap)
+            this.renderer.shadowMapEnabled = false;
+          this.renderer.render(this.skyscene, this.skycamera);
+          if (shadowmap)
+            this.renderer.shadowMapEnabled = true;
+        } else {
+          this.sky.position = this.camera.position;
+        }
       }
       this.renderer.render(this.scene, this.camera);
       this.lastupdate = ts;
@@ -181,24 +206,35 @@ elation.component.add('space.fly', {
   },
   attachCameraToObject: function(thing) {
     //this.camera = this.followcamera;
-    this.controlsenabled = false;
-    this.camera.position = thing.position;
-    this.camera.rotation = thing.rotation;
-    this.camera.quaternion = thing.quaternion;
-    this.camera.useTarget = false;
-    this.camera.useQuaternion = true;
+    //this.controlsenabled = false;
+    if (thing instanceof THREE.Camera) {
+      this.oldcamera = this.camera;
+      this.camera = thing;
+    } else if (thing) {
+      this.camera.position = thing.position;
+      this.camera.rotation = thing.rotation;
+      this.camera.quaternion = thing.quaternion;
+      this.camera.useTarget = false;
+      this.camera.useQuaternion = true;
+    } else {
+      if (this.oldcamera) {
+        this.camera = this.oldcamera;
+      }
+    }
   },
   mousemove: function(ev) {
     this.mouse[0] = ( ev.clientX / this.viewsize[0] ) * 2 - 1;
     this.mouse[1] = ( ev.clientY / this.viewsize[1] ) * 2 - 1;
   },
-  createSky: function(useskybox) {
-    var path = "/media/space/textures/skybox/";
-    var format = '.jpg';
+  createSky: function(useskybox, path, format) {
+    //var path = "/media/space/textures/skybox/";
+    if (!format) {
+      format = 'jpg';
+    }
     var urls = [
-        path + 'px' + format, path + 'nx' + format,
-        path + 'py' + format, path + 'ny' + format,
-        path + 'nz' + format, path + 'pz' + format
+        path + 'px' + '.' + format, path + 'nx' + '.' + format,
+        path + 'py' + '.' + format, path + 'ny' + '.' + format,
+        path + 'nz' + '.' + format, path + 'pz' + '.' + format
       ];
 
     this.textureCube = THREE.ImageUtils.loadTextureCube( urls );
@@ -227,6 +263,14 @@ elation.component.add('space.fly', {
       this.sky.flipSided = true;
       this.scene.add(this.sky);
     }
+  },
+  
+  createAdminTool: function() {
+    var div = elation.html.create({tag: 'div', classname: "space_world_admin"});
+    var component = elation.space.admin("admin", div);
+    this.container.appendChild(div);
   }
-
 });
+elation.extend("space.meshes.universe", function() {
+});
+elation.space.meshes.universe.prototype = new elation.space.thing;
