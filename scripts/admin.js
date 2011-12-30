@@ -164,8 +164,9 @@ elation.component.add('space.admin', {
     this.tmpvec.set(this.mouse[0], -this.mouse[1], .5);
     this.projector.unprojectVector( this.tmpvec, camera );
 
-    this.tmpray.origin = new THREE.Vector3(0,0,0);//camera.position.clone();
-    camera.matrix.multiplyVector3(this.tmpray.origin);
+    this.tmpray.origin = camera.position.clone();
+    //this.tmpray.origin = new THREE.Vector3(0,0,0);
+    //camera.matrix.multiplyVector3(this.tmpray.origin);
     // FIXME - direction is wrong when camera is not at center...
     this.tmpray.direction = this.tmpvec.subSelf(this.tmpray.origin).normalize();
     var intersects = this.tmpray.intersectScene(elation.space.fly(0).scene);
