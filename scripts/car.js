@@ -5,7 +5,7 @@ elation.extend("space.meshes.car", function(args) {
   this.steermax = Math.PI / 4;
   this.state = { steer: 0, acceleration: new THREE.Vector3() };
   this.wheelbase = 60;
-  this.fronttires = [];
+  this.wheelradius = 10;
   this.friction = 12.8;
   this.parts = {};
 
@@ -88,10 +88,10 @@ elation.extend("space.meshes.car", function(args) {
       headlights: new THREE.MeshBasicMaterial({color: 0xffff99}), 
       brakelights: new THREE.MeshBasicMaterial({color: 0x660000}), 
     }
-    var chassis = new THREE.Mesh(new THREE.CubeGeometry(100,25,50, 5, 5, 5), materials['chassis']);
-    var cockpit = new THREE.Mesh(new THREE.CubeGeometry(60,20,48, 5, 5, 5), materials['chassis']);
-    chassis.position.y = 17;
-    cockpit.position.y = 32;
+    var chassis = new THREE.Mesh(new THREE.CubeGeometry(100,22,50, 5, 5, 5), materials['chassis']);
+    var cockpit = new THREE.Mesh(new THREE.CubeGeometry(60,16,48, 5, 5, 5), materials['chassis']);
+    chassis.position.y = 11 + this.wheelradius;
+    cockpit.position.y = 22 + 6 + this.wheelradius;
     cockpit.position.x = 10;
     var chassisgeom = new THREE.Geometry();
     THREE.GeometryUtils.merge(chassisgeom, chassis);
@@ -102,12 +102,12 @@ elation.extend("space.meshes.car", function(args) {
     var axle = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 50), materials['wheels']);
     axle.rotation.z = Math.PI / 2;
     axle.rotation.y = Math.PI / 2;
-    var tiregeom = new THREE.CylinderGeometry(10, 10, 5, 12);
+    var tiregeom = new THREE.CylinderGeometry(this.wheelradius, this.wheelradius, 5, 12);
     var tire = new THREE.Mesh(tiregeom, materials['wheels']);
     tire.rotation.x = Math.PI / 2;
     tire.position.z = -25;
-    tire.position.y = 5;
-    axle.position.y = 5;
+    tire.position.y = this.wheelradius;
+    axle.position.y = this.wheelradius;
 
     var backwheelgeom = new THREE.Geometry();
     THREE.GeometryUtils.merge(backwheelgeom, axle);
@@ -129,8 +129,8 @@ elation.extend("space.meshes.car", function(args) {
     var tire_left = new THREE.Mesh(tiregeom, materials['wheels']);
     var tire_right = new THREE.Mesh(tiregeom, materials['wheels']);
     tire_left.rotation.x = tire_right.rotation.x = Math.PI / 2;
-    tire_left.position.set(0, 5, -25);
-    tire_right.position.set(0, 5, 25);
+    tire_left.position.set(0, this.wheelradius, -25);
+    tire_right.position.set(0, this.wheelradius, 25);
     this.parts['wheel_front'].add(tire_left);
     this.parts['wheel_front'].add(tire_right);
     this.parts['wheel_front_left'] = tire_left;
@@ -142,7 +142,7 @@ elation.extend("space.meshes.car", function(args) {
     var lightpair = new THREE.Geometry();
     lightmesh.rotation.z = Math.PI / 2;
     lightmesh.position.x = -.5;
-    lightmesh.position.y = 20;
+    lightmesh.position.y = 12 + this.wheelradius;
     lightmesh.position.z = -15;
     THREE.GeometryUtils.merge(lightpair, lightmesh);
     lightmesh.position.z = 15;
