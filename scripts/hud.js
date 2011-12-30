@@ -114,7 +114,6 @@ elation.extend('ui.widgets.overlay', function(hud) {
   }
   
   this.draw = function(fn, skip) {
-    console.log('DRAWWWWW MOTHERFUCKER');
     fn(this.ctx, this.center.x, this.center.y);
     
     if (!skip)
