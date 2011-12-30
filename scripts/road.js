@@ -1,10 +1,8 @@
 elation.extend("space.meshes.road", function(args) {
-	THREE.Object3D.call( this );
+  elation.space.thing.call( this, args );
+  this.autocreategeometry = false;
 
-  this.args = args || {};
-  this.properties = this.args.properties || {};
-
-  this.init = function() {
+  this.postinit = function() {
     if (this.properties.path) {
       this.geometry = new THREE.Geometry();
       var width = this.properties.physical.width || 10;
@@ -121,5 +119,5 @@ elation.extend("space.meshes.road", function(args) {
   }
   this.init();
 });
-elation.space.meshes.road.prototype = new THREE.Object3D();
+elation.space.meshes.road.prototype = new elation.space.thing();
 elation.space.meshes.road.prototype.constructor = elation.space.meshes.road;
