@@ -15,25 +15,29 @@ elation.extend("space.thing", function(args) {
       this.preinit();
     }
 
-    if (this.properties.physical) {
-      if (this.properties.physical.exists === 0) 
-        return;
-      if (this.properties.physical.position) {
-        this.position.x = this.properties.physical.position[0];
-        this.position.y = this.properties.physical.position[1];
-        this.position.z = this.properties.physical.position[2];
-      }
-      if (this.properties.physical.rotation) {
-        this.rotation.x = this.properties.physical.rotation[0] * (Math.PI / 180);
-        this.rotation.y = this.properties.physical.rotation[1] * (Math.PI / 180);
-        this.rotation.z = this.properties.physical.rotation[2] * (Math.PI / 180);
-      }
-      if (this.autocreategeometry) {
-        this.createMaterial();
-        this.createGeometry();
-      }
-      this.createDynamics();
-      this.createRadarContact();
+    if (!this.properties.physical) {
+      this.properties.physical = {};
+    }
+    if (this.properties.physical.exists === 0) 
+      return;
+    if (this.properties.physical.position) {
+      this.position.x = this.properties.physical.position[0];
+      this.position.y = this.properties.physical.position[1];
+      this.position.z = this.properties.physical.position[2];
+    }
+    if (this.properties.physical.rotation) {
+      this.rotation.x = this.properties.physical.rotation[0] * (Math.PI / 180);
+      this.rotation.y = this.properties.physical.rotation[1] * (Math.PI / 180);
+      this.rotation.z = this.properties.physical.rotation[2] * (Math.PI / 180);
+    }
+    if (this.autocreategeometry) {
+      this.createMaterial();
+      this.createGeometry();
+    }
+    this.createDynamics();
+    this.createRadarContact();
+    if (this.dynamics) {
+      elation.events.add([this.dynamics], "dynamicsupdate", this);
     }
 
 /*
@@ -49,6 +53,8 @@ console.log('I got things', this.args.things);
         }
       }
 */
+    elation.events.add([this], "select,deselect", this);
+
     if (typeof this.postinit == 'function') {
       this.postinit();
     }
@@ -87,11 +93,22 @@ console.log('I got things', this.args.things);
   }
   this.createDynamics = function() {
   }
+  this.createRadarContact = function() {
+  }
 
   this.handleEvent = function(ev) {
     if (typeof this[ev.type] == 'function') {
       this[ev.type](ev);
     }
+  }
+  this.select = function(ev) {
+    console.log("selected", this);
+  }
+  this.deselect = function(ev) {
+    console.log("deselected", this);
+  }
+  this.dynamicsupdate = function(ev) {
+    //this.rotation.copy(this.dynamics.rot);
   }
 });
 elation.space.thing.prototype = new THREE.Object3D();
