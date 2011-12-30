@@ -1,5 +1,6 @@
 elation.extend("space.meshes.sector", function(args) {
-	elation.space.thing.call( this, args );
+  elation.space.thing.call( this, args );
+  this.autocreategeometry = false;
 
 /*
   this.init = function() {
@@ -8,24 +9,40 @@ elation.extend("space.meshes.sector", function(args) {
   }
 */
   this.postinit = function() {
-    // FIXME - gross, stupid, ugly hack
-    if (this.children[0]) {
-      if (this.position) {
-        this.children[0].position.set(this.position.x, this.position.y, this.position.z);
-        this.position.set(0,0,0);
+    var hideplane = elation.utils.arrayget(this.properties, "sector.hideplane");
+    if (!elation.utils.isTrue(hideplane)) {
+      this.createMaterial();
+      this.createGeometry();
+
+      // FIXME - gross, stupid, ugly hack
+      this.rotation.set(-Math.PI/2,0,0);
+      if (this.children[0]) {
+        if (this.position) {
+          this.children[0].position.set(this.position.x, this.position.y, this.position.z);
+          this.position.set(0,0,0);
+        }
+        if (this.rotation) {
+          this.children[0].rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
+          this.rotation.set(0,0,0);
+        }
       }
-      if (this.rotation) {
-        this.children[0].rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
-        this.rotation.set(0,0,0);
-      }
+    } else {
+      this.rotation.set(0,0,0);
     }
+    
+    if (this.properties.render && this.properties.render.skybox) {
+      elation.space.fly(0).createSky(true, this.properties.render.skybox);
+    }
+
   }
   this.createGeometry = function() {
-    var geometry = new THREE.PlaneGeometry( 50000, 50000, 200, 200 );
-    geometry.computeFaceNormals();
-    geometry.computeVertexNormals();
-    geometry.computeTangents();
-    this.createMesh(geometry, this.materials);
+    if (!this.geometry) {
+      this.geometry = new THREE.PlaneGeometry( 50000, 50000, 100, 100 );
+      this.geometry.computeFaceNormals();
+      this.geometry.computeVertexNormals();
+      this.geometry.computeTangents();
+      this.createMesh(this.geometry, this.materials[0]);
+    }
   }
 /*
   this.createMesh = function() {
