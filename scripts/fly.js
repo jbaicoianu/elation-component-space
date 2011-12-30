@@ -63,7 +63,7 @@ elation.component.add('space.fly', {
 
         elation.ui.hud.console.log('ready.');
         elation.ui.hud.radar.nextTarget();
-      }, 5000);
+      }, 500);
     }
     
     elation.ui.hud.console.log('initializing, please wait...');
