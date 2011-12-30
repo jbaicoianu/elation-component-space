@@ -1,7 +1,7 @@
 <div class="spacecraft_things">
   <h2>Edit Thing: {$thing->name}</h2>
   <h3>Properties</h3>
-<form method="get">
+<form method="post">
   Add Property
   <input type="hidden" name="parentname" value="{$thing->parentname}" />
   <input type="hidden" name="name" value="{$thing->name}" />
