@@ -1,10 +1,15 @@
 {component name="space.threejs"}
-{dependency type="javascript" url="/~bai/three.js/examples/fonts/helvetiker_regular.typeface.js"}
 {dependency type="component" name="utils.sylvester"}
 {dependency type="component" name="utils.dynamics"}
 {dependency name="utils.phy"}
+{dependency name="deepzoom.image"}
+{dependency name="deepzoom.canvas"}
+{dependency name="space.controls"}
 {dependency name="space.thing"}
+{dependency name="space.materials"}
 {dependency name="space.meshparts"}
+{dependency name="space.admin"}
+
 {foreach from=$types key=type item=typecount}
   {dependency name="space.`$type`"}
 {/foreach}
