@@ -161,6 +161,7 @@ div.target {
   height: 300px;
   top: 0;
   left: 0;
+  pointer-events: none;
 }
 .static_overlay {
   position: fixed;
