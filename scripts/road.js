@@ -105,7 +105,7 @@ elation.extend("space.meshes.road", function(args) {
     var diff = new THREE.Vector3().sub(end, start);
     var length = diff.length();
     var texscale = 1;
-    var mesh = new THREE.Mesh(new THREE.CubeGeometry(length, 5, width, Math.floor(length / width), 1, 4), [this.createMaterial({repeat: [Math.floor(length / width) * texscale, texscale], diffuse: false})]);
+    var mesh = new THREE.Mesh(new THREE.CubeGeometry(length, 5, width, Math.floor(length / width), 1, 4), this.createMaterial({repeat: [Math.floor(length / width) * texscale, texscale], diffuse: false}));
     mesh.geometry.computeFaceNormals();
     mesh.geometry.computeVertexNormals();
     mesh.geometry.computeTangents();
