@@ -1,0 +1,35 @@
+.space_world_admin {
+  position: fixed;
+  right: 1em;
+  bottom: 1em;
+  border: 1px solid black;
+  border-radius: 8px;
+  background: rgba(200,200,200,.5);
+  padding: .5em;
+  box-shadow: 0 0 50px #000;
+}
+.space_admin_scene_thinglist {
+  padding-left: 0;
+  list-style-position: inside;
+  list-style-type: none;
+  margin: 0;
+}
+.space_admin_scene_thinglist .space_admin_scene_thinglist {
+  margin-left: .5em;
+  padding-left: .1em;
+  border-left: 1px dotted black;
+  list-style-image: url(/images/elation/blackdash.png);
+}
+.space_admin_scene_thinglist em {
+  font-style: normal;
+  font-size: .6em;
+}
+.space_admin_scene_thinglist li {
+  background: rgba(200,200,200,.5);
+}
+.space_admin_scene_thinglist li.state_hover {
+  background: #ffa;
+}
+.space_admin_scene_thinglist li.state_active {
+  background: #afa;
+}
