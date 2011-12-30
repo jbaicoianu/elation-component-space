@@ -36,7 +36,6 @@ elation.component.add('space.fly', {
 
     this.initRenderer(); 
     this.initControls();
-    this.createAdminTool();
 
     this.addObjects(this.args.sector, this.scene);
 
@@ -68,6 +67,7 @@ elation.component.add('space.fly', {
     }
     
     elation.ui.hud.console.log('initializing, please wait...');
+    this.createAdminTool();
   },
   initControls: function() {
     this.controlsenabled = true;
