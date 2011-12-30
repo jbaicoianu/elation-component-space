@@ -36,6 +36,7 @@ elation.component.add('space.fly', {
 
     this.initRenderer(); 
     this.initControls();
+    this.createAdminTool();
 
     this.addObjects(this.args.sector, this.scene);
 
@@ -60,13 +61,13 @@ elation.component.add('space.fly', {
     if (elation.utils.physics) {
       setTimeout(function() { 
         elation.utils.physics.system.start();
-        elation.ui.hud.console.log('manual flight controls unlocked.');
-      }, 500);
+
+        elation.ui.hud.console.log('ready.');
+        elation.ui.hud.radar.nextTarget();
+      }, 5000);
     }
     
-    elation.ui.hud.console.log('flight controls at stationkeeping.');
-
-    this.createAdminTool();
+    elation.ui.hud.console.log('initializing, please wait...');
   },
   initControls: function() {
     this.controlsenabled = true;
@@ -119,10 +120,14 @@ elation.component.add('space.fly', {
     (function(self) {
       requestAnimationFrame( function() { self.loop(); } );
     })(this);
-
+  
     var newsize = this.getsize();
     var ts = new Date().getTime();
-
+    
+    this.lastupdatedelta = (ts - this.lastupdate) / 1000;
+    
+    elation.events.fire('renderframe_start', this);
+    
     if (this.controls && this.controlsenabled) {
       this.controls.update();
     }
@@ -146,7 +151,7 @@ elation.component.add('space.fly', {
       }
 */
       if (elation.utils.physics) {
-        elation.utils.physics.system.iterate((ts - this.lastupdate) / 1000);
+        elation.utils.physics.system.iterate(this.lastupdatedelta);
       }
 
       var camera = this.camera;
@@ -173,6 +178,9 @@ elation.component.add('space.fly', {
       this.renderer.render(this.scene, this.camera);
       this.lastupdate = ts;
     }
+    
+    elation.events.fire('renderframe_end', this);
+
     this.stats.update();
   },
   addObjects: function(thing, root) {
