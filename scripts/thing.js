@@ -93,8 +93,6 @@ console.log('I got things', this.args.things);
   }
   this.createDynamics = function() {
   }
-  this.createRadarContact = function() {
-  }
 
   this.handleEvent = function(ev) {
     if (typeof this[ev.type] == 'function') {
