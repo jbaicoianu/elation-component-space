@@ -37,9 +37,7 @@ elation.component.add('space.fly', {
     this.initRenderer(); 
     this.initControls();
 
-console.log(this.args.sector);
     this.addObjects(this.args.sector, this.scene);
-
 
     if (this.container) {
       this.container.appendChild(this.renderer.domElement);
@@ -53,11 +51,6 @@ console.log(this.args.sector);
     this.stats.domElement.style.zIndex = 100;
     this.container.appendChild( this.stats.domElement );
 
-/*
-    (function(self) {
-      setTimeout(function() { self.loop(); }, 500);
-    })(this);
-*/
     this.projector = new THREE.Projector();
     this.mouse = [0,0];
     elation.events.add(this.container, 'mousemove', this);
@@ -77,7 +70,7 @@ console.log(this.args.sector);
   },
   initControls: function() {
     this.controlsenabled = true;
-/*
+    /*
     this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
     this.controls.rotateSpeed = -1.0;
     this.controls.zoomSpeed = 4;
@@ -89,7 +82,7 @@ console.log(this.args.sector);
     this.controls.staticMoving = true;
     this.controls.dynamicDampingFactor = 0.3;
     this.controls.keys = [ 65, 83, 68 ];
-*/
+    */
     this.controls = elation.space.controls(0, this.renderer.domElement);
 
     // TODO - define some top-level bindings for accessing menus, etc
@@ -155,10 +148,6 @@ console.log(this.args.sector);
       if (elation.utils.physics) {
         elation.utils.physics.system.iterate((ts - this.lastupdate) / 1000);
       }
-/*
-this.lights['white'].position.x = Math.sin(ts / 2500) * 20000;
-this.lights['white'].position.y = (1 + Math.sin(ts / 5000)) * 10000;
-*/
 
       var camera = this.camera;
       if (elation.space.meshes.terrain2) {
@@ -271,6 +260,7 @@ this.lights['white'].position.y = (1 + Math.sin(ts / 5000)) * 10000;
     this.container.appendChild(div);
   }
 });
+/* Placeholder for simple universe mesh */
 elation.extend("space.meshes.universe", function() {
 });
 elation.space.meshes.universe.prototype = new elation.space.thing;
