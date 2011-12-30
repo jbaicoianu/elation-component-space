@@ -689,7 +689,9 @@ elation.extend('ui.widgets.aeronautics', function(hud) {
           var v1 = elation.transform.rotate(nx<0?nx-metrics.width-4:nx+4, ny + 10, bank);
           
           ctx.textBaseline = 'bottom';
-          ctx.fillText(key, cx + v1.x, cy + v1.y);
+          if (cx) {
+            ctx.fillText(key, cx + v1.x, cy + v1.y);
+          }
         },
         rot = function(x1, y1, x2, y2) {
           var v1 = elation.transform.rotate(x1, y1, bank);
