@@ -138,6 +138,7 @@ class Component_space extends Component {
     return $this->GetComponentResponse("./thing.tpl", $vars);
   }
   function controller_thing_edit($args) {
+    $didupdate = false;
     if (!empty($args["addproperty"])) {
       $newitem = new ThingProperty();
       $newitem->parentname = $args["parentname"];
@@ -149,6 +150,7 @@ class Component_space extends Component {
       try {
         $this->orm->save($newitem);
         $vars["error"] = false;
+        $didupdate = true;
       } catch (Exception $e) {
         $vars["error"] = true;
       }
@@ -161,9 +163,8 @@ class Component_space extends Component {
       $properties = $vars["thing"]->getThingProperties()->toArray();
       $updates = any($args["updateproperty"], array()); 
       $updatetypes = any($args["updatetype"], array()); 
-      $didupdate = false;
       foreach ($properties as $prop) {
-        if (!empty($updates[$prop->property]) && !empty($updates[$prop->property][$prop->propertykey])) {
+        if (isset($updates[$prop->property]) && isset($updates[$prop->property][$prop->propertykey])) {
           if ($prop->value != $updates[$prop->property][$prop->propertykey] || $prop->propertytype != $updatetypes[$prop->property][$prop->propertykey]) {
             $prop->value = $updates[$prop->property][$prop->propertykey];
             $prop->propertytype = $updatetypes[$prop->property][$prop->propertykey];
@@ -174,7 +175,7 @@ class Component_space extends Component {
         $vars["properties"][$prop->property][$prop->propertykey] = $prop;
       }
       if ($didupdate) {
-        //header("Location: " . $this->root->request["url"]);
+        header("Location: " . $this->root->request["url"]);
       }
       $things = ComponentManager::fetch("space.things", array("from" => $args["parentname"] . "/" . $args["name"]), "data");
       $vars["thing"]->things = $things["things"];
@@ -221,7 +222,7 @@ class Component_space extends Component {
     $vars["anchor"] = any($args["anchor"], "/milky way/solar system/sol/earth");
     $vars["skybox"] = !isset($args["skybox"]) || !empty($args["skybox"]);
     $vars["capacities"] = $data["thingtypes"];
-    //$data = ComponentManager::fetch("space.things", array("datatype" => "tree"), "data");
+    $data = ComponentManager::fetch("space.things", array("datatype" => "tree"), "data");
     $vars["things"] = $data["things"];
     $vars["highres"] = any($args["hq"], false);
 
@@ -260,6 +261,7 @@ class Component_space extends Component {
   }
   function controller_fly($args) {
     $root = any($args["root"], "/milky way/solar system/sol/earth/north america/stupidtown");
+    header("Access-Control-Allow-Origin: http://cdn.supcrit.com");
     $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $root), "data");
     $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
     return $this->GetComponentResponse("./fly.tpl", $vars);
