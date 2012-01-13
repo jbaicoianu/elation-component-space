@@ -10,22 +10,28 @@ elation.extend("space.meshparts", new function() {
 
     var loader = new THREE.JSONLoader();
     //elation.events.add([this], "meshpartload,meshpartsloaded", this);
-    (function(self, loader, parts) {
-      var ts = new Date().getTime();
-      for (var k in parts) {
-        if (typeof self.parts[k] == 'undefined') {
-          //console.log('Loading meshpart: ' + k + ' (' + parts[k] + ')');
-          self.parts[k] = false; // prevent others from kicking off the same load again
-          loader.load( parts[k], function(geometry) {
-              //elation.events.fire({type: "meshpartload", element: self, fn: self, data: geometry});
-              self.meshpartload({data: {partname: k, geometry: geometry, ts: ts}});
+    var ts = new Date().getTime();
+    for (var k in parts) {
+      this.parts._loading++;
+      if (typeof this.parts[k] == 'undefined') {
+        //console.log('Loading meshpart: ' + k + ' (' + parts[k] + ')');
+        this.parts[k] = false; // prevent others from kicking off the same load again
+        (function(self, loader, partname, part) {
+          loader.load( part, function(geometry) {
+              elation.events.fire({type: "meshpartload", element: self, fn: self, data: geometry});
+              self.meshpartload({data: {partname: partname, geometry: geometry, ts: ts}});
             },
             "/media/space/textures" 
           );
-        }
-        self.parts._loading++;
+        })(this, loader, k, parts[k]);
+      } else {
+        (function(self, k) {
+          setTimeout(function() { 
+            self.meshpartload({data: {partname: k, geometry: self.parts[k], ts: ts}});
+          }, 0);
+        })(this, k);
       }
-    })(this, loader, parts);
+    }
   }
   this.meshpartload = function(ev) {
     var partname = ev.data.partname,
@@ -48,6 +54,7 @@ elation.extend("space.meshparts", new function() {
   }
   this.meshpartsloaded = function() {
     console.log('finished loading parts', this.parts);
+    elation.events.fire({type: "meshpartsloaded", element: this, fn: this, data: this.parts});
     //this.createGeometry();
   }
   this.requestPart = function(partname, repeat) {
