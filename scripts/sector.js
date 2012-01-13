@@ -16,14 +16,16 @@ elation.extend("space.meshes.sector", function(args) {
 
       // FIXME - gross, stupid, ugly hack
       this.rotation.set(-Math.PI/2,0,0);
-      if (this.children[0]) {
-        if (this.position) {
-          this.children[0].position.set(this.position.x, this.position.y, this.position.z);
-          this.position.set(0,0,0);
-        }
-        if (this.rotation) {
-          this.children[0].rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
-          this.rotation.set(0,0,0);
+      for (var i = 0; i < this.children.length; i++) {
+        if (this.children[i].geometry && this.children[i].geometry instanceof THREE.PlaneGeometry) {
+          if (this.position) {
+            this.children[i].position.set(this.position.x, this.position.y, this.position.z);
+            this.position.set(0,0,0);
+          }
+          if (this.rotation) {
+            this.children[i].rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
+            this.rotation.set(0,0,0);
+          }
         }
       }
     } else {
@@ -31,13 +33,13 @@ elation.extend("space.meshes.sector", function(args) {
     }
     
     if (this.properties.render && this.properties.render.skybox) {
-      elation.space.fly(0).createSky(true, this.properties.render.skybox);
+      this.createSky(true, this.properties.render.skybox);
     }
 
   }
   this.createGeometry = function() {
     if (!this.geometry) {
-      this.geometry = new THREE.PlaneGeometry( 50000, 50000, 100, 100 );
+      this.geometry = new THREE.PlaneGeometry( 50000, 50000, 50, 50 );
       this.geometry.computeFaceNormals();
       this.geometry.computeVertexNormals();
       this.geometry.computeTangents();
@@ -54,7 +56,7 @@ elation.extend("space.meshes.sector", function(args) {
     this.geometry.computeTangents();
 
     var mesh = new THREE.Mesh( this.geometry, this.materials);
-    mesh.castShadow = false;
+    mesh.castShadow = true;
     mesh.receiveShadow = true;
 
     if (this.args.physical) {
@@ -115,14 +117,58 @@ elation.extend("space.meshes.sector", function(args) {
         shininess: 2,
         shading: THREE.FlatShading,
         specular: 0x666666,
+        overdraw: true,
         normalScale: 0.1
         //shininess: 10
       };
-      this.materials.push(new THREE.MeshPhongMaterial( parameters ));
+      if (Detector.webgl) {
+        this.materials.push(new THREE.MeshPhongMaterial( parameters ));
+      } else {
+        delete parameters.map;
+        delete parameters.normalMap;
+        parameters.color = 0x999900;
+        this.materials.push(new THREE.MeshBasicMaterial( parameters ));
+      }
     }
     //this.materials.push(new THREE.MeshBasicMaterial({wireframe: true, color: 0x00ff00, opacity: 0.1, transparent: true}));
 
   }
+  this.createSky = function(useskybox, path, format) {
+    //var path = "/media/space/textures/skybox/";
+    if (!format) {
+      format = 'jpg';
+    }
+    var urls = [
+        path + 'px' + '.' + format, path + 'nx' + '.' + format,
+        path + 'py' + '.' + format, path + 'ny' + '.' + format,
+        path + 'nz' + '.' + format, path + 'pz' + '.' + format
+      ];
+
+
+    if (useskybox) {
+      var texturecube = THREE.ImageUtils.loadTextureCube( urls );
+      var shader = THREE.ShaderUtils.lib[ "cube" ];
+      shader.uniforms[ "tCube" ].texture = texturecube;
+
+      var material = new THREE.ShaderMaterial( {
+
+        fragmentShader: shader.fragmentShader,
+        vertexShader: shader.vertexShader,
+        uniforms: shader.uniforms,
+        depthWrite: false
+
+      } );
+
+      this.sky = new THREE.Mesh( new THREE.CubeGeometry( 3000000, 3000000, 3000000 ), material);
+      this.sky.flipSided = true;
+      //this.sky.position = elation.space.fly(0).camerapos;
+      this.add(this.sky);
+    } else {
+      this.sky = new THREE.Mesh(new THREE.SphereGeometry(30000, 10), new THREE.MeshBasicMaterial({ color: 0xB0E2FF}));
+      this.sky.flipSided = true;
+      this.scene.add(this.sky);
+    }
+  },
   this.init();
 });
 elation.space.meshes.sector.prototype = new elation.space.thing()
