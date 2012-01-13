@@ -1,7 +1,11 @@
 /**
  * Context-aware input mapper
  *
- * Handles bindings and contexts for various types of inputs in a generic way
+ * Handles bindings and contexts for various types of inputs in a generic way.
+ * Works in two layers, first by mapping physical inputs (mouse, keyboard,
+ * gamepad, accelerometer, etc) to generalized event names (mouse_button_1, 
+ * mouse_drag_x, keyboard_w, gamepad_0_axis_1, etc), and then mapping these
+ * to context-specific actions ("move_forward", "jump", "fire", etc).
  * 
  * Contexts
  * --------
