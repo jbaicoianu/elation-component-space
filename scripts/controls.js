@@ -1,3 +1,67 @@
+/**
+ * Context-aware input mapper
+ *
+ * Handles bindings and contexts for various types of inputs in a generic way
+ * 
+ * Contexts
+ * --------
+ *   Contexts let you define groups of actions for different situations, which
+ *   can be activated or deactivated programatically (eg, when a player enters
+ *   or exits a vehicle).  When activating contexts, an object can be passed which
+ *   is then available as 'this' within the action callbacks.
+ *
+ *   Example:
+ *
+ *       var myApplication = new SuperCoolGame();
+ *       var controls = new THREEx.ControlMapper();
+ *
+ *       controls.addContext("default", {
+ *         "menu": function(ev) { this.showMenu(); },
+ *         "screenshot": function(ev) { this.screenshot(); }
+ *       });
+ *       controls.addContext("player", {
+ *         "move_forward": function(ev) { this.move(0, 0, -ev.data); },
+ *         "move_back": function(ev) { this.move(0, 0, ev.data); },
+ *         "move_left": function(ev) { this.move(-ev.data, 0, 0); },
+ *         "move_right": function(ev) { this.move(ev.data, 0, 0); },
+ *         "pitch": function(ev) { this.pitch(ev.data); }
+ *         "turn": function(ev) { this.turn(ev.data); }
+ *         "jump": function(ev) { this.jump(ev.data); }
+ *       });
+ *       controls.activateContext("default", myApplication);
+ *       controls.activateContext("player", myApplication.player);
+ *    
+ *
+ * Bindings
+ * --------
+ *   Bindings define virtual identifiers for all input events, which can then
+ *   be mapped to context-specific actions.
+ *
+ *   - keyboard: keyboard_<#letter>, keyboard_space, keyboard_delete, etc.
+ *   - mouse: mouse_pos mouse_x mouse_y mouse_drag_x mouse_button_<#button>
+ *   - gamepad: gamepad_<#stick>_axis_<#axis>
+ *
+ *   Example:
+ *
+ *     controls.addBindings("default", {
+ *       "keyboard_esc": "menu",
+ *       "gamepad_0_button_10": "menu" // start button
+ *     };
+ *     controls.addBindings("player", {
+ *       "keyboard_w": "move_forward",
+ *       "keyboard_a": "move_left",
+ *       "keyboard_s": "move_back",
+ *       "keyboard_d": "move_right",
+ *       "mouse_x": "turn",
+ *       "mouse_y": "pitch",
+ *       "gamepad_0_axis_0": "move_right",
+ *       "gamepad_0_axis_1": "move_forward",
+ *       "gamepad_0_axis_2": "turn",
+ *       "gamepad_0_axis_3": "pitch"
+ *       "gamepad_0_button_1": "jump"
+ *     });
+ **/
+
 elation.component.add("space.controls", {
   contexts: {},
   activecontexts: [],
@@ -10,7 +74,7 @@ elation.component.add("space.controls", {
 
   init: function() {
     elation.events.add(this.container, "mousedown,mousemove,mouseup", this);
-    elation.events.add(window, "keydown,keyup,MozGamepadConnected,gamepadconnected,gamepaddisconnected", this);
+    elation.events.add(window, "keydown,keyup,WebkitGamepadConnected,WebkitGamepadDisconnected,MozGamepadConnected,MozGamepadDisconnected,gamepadconnected,gamepaddisconnected", this);
   },
   addContext: function(context, actions) {
     this.contexts[context] = actions;
@@ -151,22 +215,25 @@ console.log('Deactivate control context ' + context);
   pollGamepads: function() {
     if (this.gamepads.length > 0) {
       for (var i = 0; i < this.gamepads.length; i++) {
-        var gamepad = this.gamepads[i];
-        for (var a = 0; a < gamepad.axes.length; a++) {
-          var bindname = this.getBindingName('gamepad', i, 'axis_' + a);
-          if (this.state[bindname] != gamepad.axes[a]) {
-            this.changes.push(bindname);
-            this.state[bindname] = gamepad.axes[a];
+        if (this.gamepads[i] != null) {
+          var gamepad = this.gamepads[i];
+          for (var a = 0; a < gamepad.axes.length; a++) {
+            var bindname = this.getBindingName('gamepad', i, 'axis_' + a);
+            if (this.state[bindname] != gamepad.axes[a]) {
+              this.changes.push(bindname);
+              this.state[bindname] = gamepad.axes[a];
+              this.state[bindname + '_full'] = THREE.Math.mapLinear(gamepad.axes[a], -1, 1, 0, 1);
+//console.log(bindname + '_full', this.state[bindname + '_full']);
+            }
+          }
+          for (var b = 0; b < gamepad.buttons.length; b++) {
+            var bindname = this.getBindingName('gamepad', i, 'button_' + b);
+            if (this.state[bindname] != gamepad.buttons[b]) {
+              this.changes.push(bindname);
+              this.state[bindname] = gamepad.buttons[b];
+            }
           }
         }
-        for (var b = 0; b < gamepad.buttons.length; b++) {
-          var bindname = this.getBindingName('gamepad', i, 'button_' + b);
-          if (this.state[bindname] != gamepad.buttons[b]) {
-            this.changes.push(bindname);
-            this.state[bindname] = gamepad.buttons[b];
-          }
-        }
-
       }
     }
   },
@@ -200,6 +267,10 @@ console.log('Deactivate control context ' + context);
     if (changed["mouse_pos"]) {
       this.changes.push("mouse_pos");
       this.state["mouse_pos"] = mpos;
+      if (this.state["mouse_button_0"]) {
+        this.changes.push("mouse_drag");
+        this.state["mouse_drag"] = mpos;
+      }
       if (changed["mouse_x"]) {
         this.state["mouse_delta_x"] = this.state["mouse_x"] - mpos[0];
         this.state["mouse_x"] = mpos[0];
@@ -231,6 +302,13 @@ console.log('Deactivate control context ' + context);
     if (this.state[bindid]) {
       this.state[bindid] = 0;
       this.changes.push(bindid);
+
+      if (bindid = "mouse_button_0") {
+        this.state['mouse_drag_x'] = 0;
+        this.state['mouse_drag_y'] = 0;
+        this.changes.push("mouse_drag_x");
+        this.changes.push("mouse_drag_y");
+      }
     }
   },
   keydown: function(ev) {
@@ -247,14 +325,37 @@ console.log('Deactivate control context ' + context);
     this.state[keyname] = 0;
     this.changes.push(keyname);
   },
+  WebkitGamepadConnected: function(ev) {
+    this.gamepadconnected(ev);
+  },
+  WebkitGamepadDisconnected: function(ev) {
+    this.gamepaddisconnected(ev);
+  },
   MozGamepadConnected: function(ev) {
-    this.gamepads.push(ev.gamepad);
+    this.gamepadconnected(ev);
+  },
+  MozGamepadDisconnected: function(ev) {
+    this.gamepaddisconnected(ev);
   },
   gamepadconnected: function(ev) {
-alert('e');
-    console.log('add a gamepad:', ev);
+    for (var i = 0; i < this.gamepads.length; i++) {
+      if (this.gamepads[i] == null) {
+        this.gamepads[i] = ev.gamepad;
+        console.log('replace previously-connected gamepad ' + i + ':', ev);
+        break;
+      }
+    }
+    if (i == this.gamepads.length) {
+      this.gamepads.push(ev.gamepad);
+      console.log('add new gamepad ' + i + ':', ev);
+    }
   },
   gamepaddisconnected: function(ev) {
-    console.log('remove a gamepad:', ev);
+    for (var i = 0; i < this.gamepads.length; i++) {
+      if (this.gamepads[i] == ev.gamepad) {
+        console.log('remove gamepad ' + i + ':', ev);
+        this.gamepads[i] = null;
+      }
+    }
   }
 });
