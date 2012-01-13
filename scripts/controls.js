@@ -35,7 +35,8 @@
  * Bindings
  * --------
  *   Bindings define virtual identifiers for all input events, which can then
- *   be mapped to context-specific actions.
+ *   be mapped to context-specific actions.  In most cases, ev.data contains 
+ *   a floating point value from 0..1 for buttons or -1..1 for axes
  *
  *   - keyboard: keyboard_<#letter>, keyboard_space, keyboard_delete, etc.
  *   - mouse: mouse_pos mouse_x mouse_y mouse_drag_x mouse_button_<#button>
@@ -45,7 +46,7 @@
  *
  *     controls.addBindings("default", {
  *       "keyboard_esc": "menu",
- *       "gamepad_0_button_10": "menu" // start button
+ *       "gamepad_0_button_10": "menu" // first gamepad start button
  *     };
  *     controls.addBindings("player", {
  *       "keyboard_w": "move_forward",
@@ -223,7 +224,6 @@ console.log('Deactivate control context ' + context);
               this.changes.push(bindname);
               this.state[bindname] = gamepad.axes[a];
               this.state[bindname + '_full'] = THREE.Math.mapLinear(gamepad.axes[a], -1, 1, 0, 1);
-//console.log(bindname + '_full', this.state[bindname + '_full']);
             }
           }
           for (var b = 0; b < gamepad.buttons.length; b++) {
