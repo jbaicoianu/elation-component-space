@@ -33,3 +33,26 @@
 .space_admin_scene_thinglist li.state_active {
   background: #afa;
 }
+.space_admin_scene_thinglist li.state_editing {
+  background: #faa;
+}
+.space_admin_scene_thinglist li .space_admin_thing_edit {
+  display: none;
+  float: right;
+  font-size: .8em;
+}
+.space_admin_scene_thinglist li:hover>.space_admin_thing_edit {
+  display: block;
+}
+.space_admin_thing_editor {
+  display: block;
+  position: absolute;
+  width: 20em;
+  left: -22em;
+  bottom: 0;
+  border: 1px solid black;
+  border-radius: 8px;
+  background: rgba(255,180,180,.5);
+  padding: .5em;
+  box-shadow: 0 0 50px #000;
+}
