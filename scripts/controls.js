@@ -96,7 +96,7 @@ elation.component.add("space.controls", {
   deactivateContext: function(context) {
     var i = this.activecontexts.indexOf(context);
     if (i != -1) {
-console.log('Deactivate control context ' + context);
+      console.log('Deactivate control context ' + context);
       this.activecontexts.splice(i, 1);
       if (this.contexttargets[context]) {
         delete this.contexttargets[context];
