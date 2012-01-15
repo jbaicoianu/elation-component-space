@@ -203,7 +203,7 @@ elation.component.add('space.admin', {
       mousepos = this.mouse;
     }
     var camera = elation.space.fly(0).camera;
-    this.tmpvec.set(this.mouse[0], -this.mouse[1], .5);
+    this.tmpvec.set(this.mouse[0], -this.mouse[1], -1);
     this.projector.unprojectVector( this.tmpvec, camera );
 
     this.tmpray.origin = new THREE.Vector3(0,0,0);
