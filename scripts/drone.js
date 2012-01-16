@@ -21,7 +21,7 @@ elation.extend("space.meshes.drone", function(args) {
       this.materials = [new THREE.MeshFaceMaterial({color: 0xffffff})];
       (function(self, mesh) {
         var loader = new THREE.JSONLoader();
-        loader.load( { model: mesh, callback: function(geometry) { self.loadMesh(geometry); } });
+        loader.load( mesh, function(geometry) { self.loadMesh(geometry); });
       })(this, this.properties.render.mesh);
     } else {
       this.createPlaceholder();
@@ -86,9 +86,6 @@ elation.extend("space.meshes.drone", function(args) {
     //mesh.position.y = -1.25;
     //mesh.castShadow = true;
     //mesh.receiveShadow = true;
-if (this.properties && this.properties.physical && this.properties.physical.scale) 
-  mesh.scale.set(this.properties.physical.scale[0], this.properties.physical.scale[1], this.properties.physical.scale[2]);
-console.log(this.properties.physical.scale);
     this.add(mesh);
     this.updateCollisionSize();
   }
