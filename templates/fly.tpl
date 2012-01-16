@@ -2,6 +2,7 @@
 {dependency type="component" name="utils.sylvester"}
 {dependency type="component" name="utils.dynamics"}
 {dependency name="utils.phy"}
+{dependency name="ui.select"}
 {dependency name="deepzoom.image"}
 {dependency name="deepzoom.canvas"}
 {dependency name="space.controls"}
