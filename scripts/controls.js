@@ -122,7 +122,7 @@ elation.component.add("space.controls", {
           if (this.bindings[context] && this.bindings[context][this.changes[i]]) {
             var action = this.bindings[context][this.changes[i]];
             if (this.contexts[context][action]) {
-              var ev = {timeStamp: now, value: this.state[this.changes[i]]};
+              var ev = {timeStamp: now, type: this.changes[i], value: this.state[this.changes[i]]};
               //console.log('call it', this.changes[i], this.bindings[context][this.changes[i]], this.state[this.changes[i]]);
               if (this.contexttargets[context]) {
                 ev.data = this.contexttargets[context];
@@ -253,29 +253,23 @@ elation.component.add("space.controls", {
   },
   mousemove: function(ev) {
     var mpos = this.getMousePosition(ev);
-    var changed = {mouse_pos: false, mouse_x: false, mouse_y: false};
+    var status = {mouse_pos: false, mouse_x: false, mouse_y: false};
     if (!this.state["mouse_pos"]) {
-      changed["mouse_pos"] = true;
-      changed["mouse_x"] = true;
-      changed["mouse_y"] = true;
+      status["mouse_pos"] = true;
+      status["mouse_x"] = true;
+      status["mouse_y"] = true;
     } else {
       if (this.state["mouse_pos"][0] != mpos[0]) {
-        changed["mouse_pos"] = true;
-        changed["mouse_x"] = true;
+        status["mouse_pos"] = true;
+        status["mouse_x"] = true;
       }
       if (this.state["mouse_pos"][1] != mpos[1]) {
-        changed["mouse_pos"] = true;
-        changed["mouse_y"] = true;
+        status["mouse_pos"] = true;
+        status["mouse_y"] = true;
       }
     }
-    if (changed["mouse_pos"]) {
-      this.changes.push("mouse_pos");
-      this.state["mouse_pos"] = mpos;
-      if (this.state["mouse_button_0"]) {
-        this.changes.push("mouse_drag");
-        this.state["mouse_drag"] = mpos;
-      }
-      if (changed["mouse_x"]) {
+    if (status["mouse_pos"]) {
+      if (status["mouse_x"]) {
         this.state["mouse_delta_x"] = this.state["mouse_x"] - mpos[0];
         this.state["mouse_x"] = mpos[0];
         this.changes.push("mouse_x");
@@ -286,8 +280,15 @@ elation.component.add("space.controls", {
           this.changes.push("mouse_drag_x");
           this.changes.push("mouse_drag_delta_x");
         }
+      } else {
+        this.state["mouse_delta_x"] = 0;
+        this.state["mouse_drag_delta_x"] = 0;
       }
-      if (changed["mouse_y"]) {
+      this.state["mouse_pos"] = mpos;
+      this.state["mouse_delta"] = [this.state["mouse_delta_x"], this.state["mouse_delta_y"]];
+      this.changes.push("mouse_pos");
+      this.changes.push("mouse_delta");
+      if (status["mouse_y"]) {
         this.state["mouse_delta_y"] = this.state["mouse_y"] - mpos[1];
         this.state["mouse_y"] = mpos[1];
         this.changes.push("mouse_y");
@@ -298,6 +299,15 @@ elation.component.add("space.controls", {
           this.changes.push("mouse_drag_y");
           this.changes.push("mouse_drag_delta_y");
         }
+      } else {
+        this.state["mouse_delta_y"] = 0;
+        this.state["mouse_drag_delta_y"] = 0;
+      }
+      if (this.state["mouse_button_0"]) {
+        this.state["mouse_drag"] = this.state["mouse_pos"];
+        this.state["mouse_drag_delta"] = [this.state["mouse_drag_delta_x"], this.state["mouse_drag_delta_y"]];
+        this.changes.push("mouse_drag");
+        this.changes.push("mouse_drag_delta");
       }
     }
   },
