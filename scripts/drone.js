@@ -1,21 +1,21 @@
 elation.extend("space.meshes.drone", function(args) {
-	THREE.Object3D.call( this );
-  this.args = args || {};
-  this.properties = args.properties || {};
+  elation.space.thing.call( this, args );
 
-  this.dragToLook = true;
-  this.mouseStatus = 0;
   this.moveState = { up: 0, down: 0, left: 0, right: 0, forward: 0, back: 0, pitchUp: 0, pitchDown: 0, yawLeft: 0, yawRight: 0, rollLeft: 0, rollRight: 0 };
-  this.strength = 35000;
+  this.strength = 3500;
   this.moveVector = new THREE.Vector3(0,0,0);
   this.rotationVector = new THREE.Vector3(0,0,0);
   this.tmpQuaternion = new THREE.Quaternion();
-  this.minheight = 50;
+  this.controlcontext = 'vehicle_quadrotor';
 
-  this.init = function() {
+  this.camerapositions = [
+    [new THREE.Vector3(0,2,4), new THREE.Vector3()]
+  ];
+
+  this.postinit = function() {
     this.useQuaternion = true;
 
-    if (this.position.y < this.minheight) this.position.y = this.minheight;
+    if (this.position.y < this.collisionradius) this.position.y = this.collisionradius;
 
     if (this.properties.render && this.properties.render.mesh) {
       this.materials = [new THREE.MeshFaceMaterial({color: 0xffffff})];
@@ -27,41 +27,70 @@ elation.extend("space.meshes.drone", function(args) {
       this.createPlaceholder();
     }
 
-    elation.space.fly(0).attachCameraToObject(this);
-
+    /*
     this.light = new THREE.PointLight(0xff0000, .5, 1000);
     this.light.position = this.position;
     this.add(this.light);
-
-    this.dynamics = new elation.utils.physics.object({position: this.position, restitution: .5, radius: this.minheight, drag: 0.1});
-    elation.events.add([this.dynamics], "dynamicsupdate,rotate", this);
-    elation.utils.physics.system.add(this.dynamics);
-    this.dynamics.addForce("gravity", [0,-9800 * 2,0]);
-/*
-    (function(self) {
-      self.dynamics = new elation.utils.dynamics(self, {
-        onmove: function(a) { self.respond(); },
-        drag:0.1,
-        mass: 1
-      });
-    })(this);
-    this.lastupdate = new Date().getTime();
-*/
     this.nextblink = 0;
-    elation.events.add(document, 'keydown,keyup,mousedown,mousemove,mouseup,mousewheel', this);
+    */
+
+    this.dynamics.addForce("gravity", [0,-9800 * 2,0]);
+
+    elation.space.controls(0).addContext("vehicle_quadrotor", {
+      'move_up': function(ev) { this.moveState.up = ev.value; },
+      'move_down': function(ev) { this.moveState.down = ev.value; },
+      'move_left': function(ev) { this.moveState.left = ev.value; },
+      'move_right': function(ev) { this.moveState.right = ev.value; },
+      'move_forward': function(ev) { this.moveState.forward = ev.value; },
+      'move_backward': function(ev) { this.moveState.back = ev.value; },
+      'look_up': function(ev) { this.moveState.pitchUp = ev.value; },
+      'look_down': function(ev) { this.moveState.pitchDown = ev.value; },
+      'look_left': function(ev) { this.moveState.yawLeft = ev.value; },
+      'look_right': function(ev) { this.moveState.yawRight = ev.value; },
+      'roll_left': function(ev) { this.moveState.rollLeft = ev.value; },
+      'roll_right': function(ev) { this.moveState.rollRight = ev.value; },
+    });
+    elation.space.controls(0).addBindings("vehicle_quadrotor", {
+      'keyboard_w': 'move_forward',
+      'keyboard_a': 'move_left',
+      'keyboard_s': 'move_backward',
+      'keyboard_d': 'move_right',
+      'keyboard_q': 'roll_left',
+      'keyboard_e': 'roll_right',
+      'keyboard_up': 'look_up',
+      'keyboard_left': 'look_left',
+      'keyboard_down': 'look_down',
+      'keyboard_right': 'look_right',
+      'keyboard_space': 'move_up',
+      'keyboard_r': 'move_up',
+      'keyboard_f': 'move_down',
+      'mouse_drag_x': 'look_right',
+      'mouse_drag_y': 'look_down',
+      'gamepad_0_axis_0': 'move_right',
+      'gamepad_0_axis_1': 'move_backward',
+      'gamepad_0_axis_2': 'look_right',
+      'gamepad_0_axis_3': 'look_down',
+      'gamepad_0_axis_13_full': 'move_up',
+    });
+
+    this.createCamera(this.camerapositions[0][0], this.camerapositions[0][1]);
   }
   this.createPlaceholder = function() {
-    var geometry = new THREE.SphereGeometry(50, 20, 20);
+    var geometry = new THREE.SphereGeometry(10, 20, 20);
     this.loadMesh(geometry);
   }
   this.loadMesh = function(geometry) {
     var material = new THREE.MeshPhongMaterial({color: 0x666699});
     var mesh = new THREE.Mesh(geometry, material);
-    mesh.position.z = -1.5;
-    mesh.position.y = -1.25;
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
+    //mesh.position.z = -1.5;
+    //mesh.position.y = -1.25;
+    //mesh.castShadow = true;
+    //mesh.receiveShadow = true;
+if (this.properties && this.properties.physical && this.properties.physical.scale) 
+  mesh.scale.set(this.properties.physical.scale[0], this.properties.physical.scale[1], this.properties.physical.scale[2]);
+console.log(this.properties.physical.scale);
     this.add(mesh);
+    this.updateCollisionSize();
   }
 
   this.setPosition = function(pos) {
@@ -69,45 +98,6 @@ elation.extend("space.meshes.drone", function(args) {
     this.position.y = pos[1];
     this.position.z = pos[2];
     this.dynamics.setPosition(pos);
-  }
-/*
-  this.update = function(parentMatrixWorld, forceUpdate, camera) {
-    this.supr.update.call( this, parentMatrixWorld, forceUpdate, camera );
-    var ts = new Date().getTime();
-    if (ts > this.lastupdate) {
-      this.dynamics.iterate((ts - this.lastupdate) / 1000);
-    }
-
-    // blink test
-    if (this.light && ts >= this.nextblink) {
-      if (this.light.intensity == 1) {
-        this.light.intensity = 0;
-        this.nextblink = ts + 1800;
-      } else {
-        this.light.intensity = 1;
-        this.nextblink = ts + 200;
-      }
-    }
-    this.lastupdate = ts;
-    if (this.position.y < this.minheight) {
-      if (this.dynamics.vel.e(2) <= 0) {
-        this.position.y = this.minheight;
-        this.dynamics.removeForce('gravity');
-        this.dynamics.setVelocityY(0);
-        this.dynamics.setFriction(250);
-      } else {
-        this.dynamics.addForce('gravity', [0, -9800 * 2, 0]);
-        this.position.y = this.minheight + 1;
-      }
-    } else {
-      this.dynamics.setFriction(0);
-    }
-  }
-*/
-  this.respond = function() {
-    this.position.x = this.dynamics.pos.e(1);
-    this.position.y = this.dynamics.pos.e(2);
-    this.position.z = this.dynamics.pos.e(3);
   }
   this.rotateRel = function(rot) {
     var rel = rot;//new THREE.Vector3(rot.e(1), rot.e(2), rot.e(3));
@@ -123,6 +113,7 @@ elation.extend("space.meshes.drone", function(args) {
     }
   }
   this.mousewheel = function(ev) {
+    // FIXME - should be moved into the hud object and mapped through the control mapper
 		var	event = ev ? ev : window.event;
 				mwdelta = (event.wheelDelta) 
 					? (event.wheelDelta / 120) 
@@ -141,100 +132,7 @@ elation.extend("space.meshes.drone", function(args) {
         elation.ui.hud.radar.prevTarget();
     }
   }
-  this.keydown = function(ev) {
-    switch (ev.keyCode) {
-      case 87: /*W*/ this.moveState.forward = 1; break;
-      case 83: /*S*/ this.moveState.back = 1; break;
 
-      case 65: /*A*/ this.moveState.left = 1; break;
-      case 68: /*D*/ this.moveState.right = 1; break;
-
-      case 82: /*R*/ this.moveState.up = 1; break;
-      case 70: /*F*/ this.moveState.down = 1; break;
-
-      case 38: /*up*/ this.moveState.pitchUp = 1; break;
-      case 40: /*down*/ this.moveState.pitchDown = 1; break;
-
-      case 37: /*left*/ this.moveState.yawLeft = 1; break;
-      case 39: /*right*/ this.moveState.yawRight = 1; break;
-
-      case 81: /*Q*/ this.moveState.rollLeft = 1; break;
-      case 69: /*E*/ this.moveState.rollRight = 1; break;
-      
-      case 84: elation.ui.hud.radar.nextTarget(); break;
-      
-      case 32: /*spacebar*/ this.moveState.up = 1; break;
-      default:
-        console.log('key not bound: '+ev.keyCode);
-    }
-    this.updateMovementVector();
-    this.updateRotationVector();
-  }
-  this.keyup = function(ev) {
-    switch (ev.keyCode) {
-      case 87: /*W*/ this.moveState.forward = 0; break;
-      case 83: /*S*/ this.moveState.back = 0; break;
-
-      case 65: /*A*/ this.moveState.left = 0; break;
-      case 68: /*D*/ this.moveState.right = 0; break;
-
-      case 82: /*R*/ this.moveState.up = 0; break;
-      case 70: /*F*/ this.moveState.down = 0; break;
-
-      case 38: /*up*/ this.moveState.pitchUp = 0; break;
-      case 40: /*down*/ this.moveState.pitchDown = 0; break;
-
-      case 37: /*left*/ this.moveState.yawLeft = 0; break;
-      case 39: /*right*/ this.moveState.yawRight = 0; break;
-
-      case 81: /*Q*/ this.moveState.rollLeft = 0; break;
-      case 69: /*E*/ this.moveState.rollRight = 0; break;
-
-      case 32: /*spacebar*/ this.moveState.up = 0; break;
-    }
-    this.updateMovementVector();
-    this.updateRotationVector();
-  }
-	this.mousedown = function(ev) {
-		ev.preventDefault();
-		ev.stopPropagation();
-
-		if (this.dragToLook) {
-			this.mouseStatus++;
-		} else {
-			switch ( event.button ) {
-				case 0: this.moveForward = true; break;
-				case 2: this.moveBackward = true; break;
-			}
-		}
-	};
-
-  this.mousemove = function(ev) {
-		if (!this.dragToLook || this.mouseStatus > 0) {
-			var halfWidth  = window.innerWidth / 2;
-			var halfHeight = window.innerHeight / 2;
-			
-			this.moveState.yawLeft   = -(ev.clientX - halfWidth) / halfWidth;
-			this.moveState.pitchDown =  (ev.clientY - halfHeight) / halfHeight;
-			this.updateRotationVector();
-		}
-	};
-
-	this.mouseup = function(ev) {
-		ev.preventDefault();
-		ev.stopPropagation();
-
-		if (this.dragToLook) {
-			this.mouseStatus--;
-			this.moveState.yawLeft = this.moveState.pitchDown = 0;
-		} else {
-			switch ( event.button ) {
-				case 0: this.moveForward = false; break;
-				case 2: this.moveBackward = false; break;
-			}
-		}
-		this.updateRotationVector();
-	};
   this.updateMovementVector = function() {
     var forward = ( this.moveState.forward || ( this.autoForward && !this.moveState.back ) ) ? 1 : 0;
     
@@ -256,27 +154,28 @@ elation.extend("space.meshes.drone", function(args) {
     this.dynamics.setAngularVelocity([this.rotationVector.x, this.rotationVector.y, this.rotationVector.z]);
   }
   this.dynamicsupdate = function(ev) {
-    if (this.position.y < this.minheight) {
+    //console.log('yay', [this.dynamics.vel.x, this.dynamics.vel.y, this.dynamics.vel.z]);
+    this.updateMovementVector();
+    this.updateRotationVector();
+    this.rotateRel(this.rotationVector.clone().multiplyScalar(ev.data));
+    if (this.position.y < this.collisionradius) {
       if (this.dynamics.vel.y <= 0) {
-        this.position.y = this.minheight;
+        this.position.y = this.collisionradius;
         this.dynamics.setVelocityY(this.dynamics.vel.y * -this.dynamics.restitution);
         //this.dynamics.removeForce('gravity');
         //this.dynamics.setVelocityY(0);
         this.dynamics.setFriction(250);
       } else {
         //this.dynamics.addForce('gravity', [0, -9800 * 2, 0]);
-        //this.position.y = this.minheight + 1;
+        //this.position.y = this.collisionradius + 1;
       }
     } else {
       this.dynamics.setFriction(0);
     }
   }
-  this.rotate = function(ev) {
-    this.rotateRel(ev.data);
-  }
   this.init();
 });
-elation.space.meshes.drone.prototype = new THREE.Object3D();
-elation.space.meshes.drone.prototype.supr = THREE.Object3D.prototype;
+elation.space.meshes.drone.prototype = new elation.space.thing()
+elation.space.meshes.drone.prototype.supr = elation.space.thing.prototype
 elation.space.meshes.drone.prototype.constructor = elation.space.meshes.drone;
 
