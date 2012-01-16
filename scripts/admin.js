@@ -149,8 +149,20 @@ elation.component.add('space.admin', {
     }
     this.thingeditor.setActiveThing(thing);
   },
-  setObjectState: function(state, obj) {
-    if (typeof obj != 'undefined' && this.objectstates[state] != obj) {
+  setObjectState: function(state, obj, hoverdata) {
+    if (typeof obj == 'undefined') {
+      return;
+    }
+    if (hoverdata) {
+      // FIXME - we're trying to emulate MouseEvents here, but custom events only let you
+      //         set attributes within the "data" objects, not as top-level event attributes
+      var evdata  = {
+        clientX: hoverdata.point.x,
+        clientY: hoverdata.point.y,
+        clientZ: hoverdata.point.z,
+      };
+    }
+    if (this.objectstates[state] != obj) {
       var oldobj = this.objectstates[state];
       this.objectstates[state] = obj;
 
@@ -171,10 +183,17 @@ elation.component.add('space.admin', {
             this.editThing(false);
           }
           break;
-        
+        case 'hover':
+          evdata.relatedTarget = obj;
+          elation.events.fire({type: "mouseout", element: oldobj, target: oldobj, data: evdata});  
+          evdata.relatedTarget = oldobj;
+          elation.events.fire({type: "mouseover", element: obj, target: obj, data: evdata});  
+          break;
       }
       //console.log('Set ' + state + ' object:', obj);
       this.updateScene();
+    } else if (state == 'hover') {
+      elation.events.fire({type: "mousemove", element: obj, data: evdata});  
     }
   },
   ui_select_change: function(ev) {
@@ -228,7 +247,7 @@ elation.component.add('space.admin', {
           break;
         }
       }
-      this.setObjectState('hover', this.findThingParent(picked.object));
+      this.setObjectState('hover', this.findThingParent(picked.object), picked);
     } else {
       this.setObjectState('hover', false);
     }
