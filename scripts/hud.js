@@ -166,8 +166,7 @@ elation.extend('ui.widgets.radar', function(hud) {
   };
   
   this.init = function() {
-    this.camera = elation.space.fly.obj[0].camera;
-    this.pos = this.camera.position;
+    this.setCamera(elation.space.fly.obj[0].camera);
     this.container = this.hud.container('radar radar_background', true);
     this.canvas = this.hud.container('radar radar_display', true);
     this.ctx = this.canvas.getContext('2d');
@@ -179,6 +178,10 @@ elation.extend('ui.widgets.radar', function(hud) {
     //this.hud.console.log('radar system initialized.');
   }
   
+  this.setCamera = function(camera) {
+    this.camera = camera;
+  }
+
   this.rotate = function(X, Y, angle) {
     var range = (this.range/2) + ((this.range/2) * (this.camera.position.y / (this.range/4))) || 8400,
         cx = this.center.x, 
@@ -213,7 +216,7 @@ elation.extend('ui.widgets.radar', function(hud) {
     ctx.moveTo(cx, cy);
     ctx.lineTo(cx + points[0].x, cy + points[0].y);
     ctx.stroke();
-    
+
     this.sweepangle = angle;
     this.sweeperpos = points[0];
   }
@@ -269,7 +272,7 @@ elation.extend('ui.widgets.radar', function(hud) {
     //this.canvas.width = this.canvas.width;
     this.hud.clear(this.ctx, this.width, this.height);
     this.event = e;
-    
+  
     ctx.beginPath();  
     ctx.arc(cx,cy,100,0,Math.PI*2,true);  
     ctx.clip();
@@ -283,7 +286,7 @@ elation.extend('ui.widgets.radar', function(hud) {
     ctx.arc(cx,cy,altitude,0,Math.PI*2,true); 
     ctx.stroke();
     ctx.lineWidth = 1
-    
+
     this.sweep(ctx, cx, cy, bgColor, lnColor);
     this.draw(ctx, cx, cy);
     //this.flicker();
@@ -402,10 +405,11 @@ elation.extend('ui.widgets.radar', function(hud) {
   }
 
   this.draw = function(ctx, cx, cy) {
-    var angle = elation.utils.quat2euler(this.camera.quaternion),
+    var campos = this.camera.matrixWorld.decompose(),
+        angle = elation.utils.quat2euler(campos[1]),
         heading = angle[0],
         bank = angle[1],
-        pos = this.camera.position,
+        pos = campos[0],
         contacts = this.contacts,
         contact, type,
         outlineColor = this.color('target_outline'),
@@ -525,6 +529,16 @@ elation.extend('ui.widgets.radar', function(hud) {
     //console.log('Radar added contact', contact);
   }
   
+  this.removeContact = function(contact) {
+    for (var i = 0; i < this.contacts.length; i++) {
+      if (this.contacts[i] == contact) {
+        this.contacts.splice(i, 1);
+        break;
+      }
+    }
+    //console.log('Radar added contact', contact);
+  }
+
   this.init();
 });
 elation.extend('canvas.circle', function(ctx, x, y, s, c, a, f) {
