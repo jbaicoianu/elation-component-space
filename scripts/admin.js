@@ -153,10 +153,11 @@ elation.component.add('space.admin', {
     if (typeof obj == 'undefined') {
       return;
     }
+    var evdata;
     if (hoverdata) {
       // FIXME - we're trying to emulate MouseEvents here, but custom events only let you
       //         set attributes within the "data" objects, not as top-level event attributes
-      var evdata  = {
+      evdata = {
         clientX: hoverdata.point.x,
         clientY: hoverdata.point.y,
         clientZ: hoverdata.point.z,
