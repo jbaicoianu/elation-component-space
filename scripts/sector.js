@@ -13,23 +13,6 @@ elation.extend("space.meshes.sector", function(args) {
     if (!elation.utils.isTrue(hideplane)) {
       this.createMaterial();
       this.createGeometry();
-
-      // FIXME - gross, stupid, ugly hack
-      this.rotation.set(-Math.PI/2,0,0);
-      for (var i = 0; i < this.children.length; i++) {
-        if (this.children[i].geometry && this.children[i].geometry instanceof THREE.PlaneGeometry) {
-          if (this.position) {
-            this.children[i].position.set(this.position.x, this.position.y, this.position.z);
-            this.position.set(0,0,0);
-          }
-          if (this.rotation) {
-            this.children[i].rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
-            this.rotation.set(0,0,0);
-          }
-        }
-      }
-    } else {
-      this.rotation.set(0,0,0);
     }
     
     if (this.properties.render && this.properties.render.skybox) {
@@ -43,42 +26,12 @@ elation.extend("space.meshes.sector", function(args) {
       this.geometry.computeFaceNormals();
       this.geometry.computeVertexNormals();
       this.geometry.computeTangents();
+      var rot = new THREE.Matrix4();
+      rot.setRotationFromEuler(new THREE.Vector3(-Math.PI/2,0,0), 'XYZ');
+      this.geometry.applyMatrix(rot);
       this.createMesh(this.geometry, this.materials[0]);
     }
   }
-/*
-  this.createMesh = function() {
-    this.geometry = new THREE.PlaneGeometry( 50000, 50000, 200, 200 );
-
-    // FIXME - one or all of these seem to be needed to get the geometry to render with the normal shader
-    this.geometry.computeFaceNormals();
-    this.geometry.computeVertexNormals();
-    this.geometry.computeTangents();
-
-    var mesh = new THREE.Mesh( this.geometry, this.materials);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-
-    if (this.args.physical) {
-      if (this.args.physical.position) {
-        mesh.position.x = this.args.physical.position[0];
-        mesh.position.y = this.args.physical.position[1];
-        mesh.position.z = this.args.physical.position[2];
-      }
-      if (this.args.physical.rotation) {
-        mesh.rotation.x = this.args.physical.rotation[0] * (Math.PI / 180);
-        mesh.rotation.y = this.args.physical.rotation[1] * (Math.PI / 180);
-        mesh.rotation.z = this.args.physical.rotation[2] * (Math.PI / 180);
-      }
-    }
-    this.add(mesh);
-
-    var mc = new THREE.PlaneCollider(mesh.position, new THREE.Vector3(0,1,0));
-    mc.entity = this;
-    THREE.Collisions.colliders.push( mc );
-
-  }
-*/
   this.createMaterial = function() {
     this.materials = [];
 
