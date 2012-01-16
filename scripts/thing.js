@@ -164,7 +164,6 @@ elation.extend("space.thing", function(args) {
   this.updateCollisionSize = function() {
       //console.log(this, this.collisionradius, this.boundRadius);
       var bounds = this.getBoundingBox();
-console.log(bounds);
       var dist = [(bounds.max.x - bounds.min.x) / 2, (bounds.max.y - bounds.min.y) / 2, (bounds.max.z - bounds.min.z) / 2];
       var center = [(bounds.max.x + bounds.min.x) / 2, (bounds.max.y + bounds.min.y) / 2, (bounds.max.z + bounds.min.z) / 2];
       var radius = Math.max(dist[0], dist[1], dist[2]);
@@ -204,7 +203,7 @@ console.log(bounds);
     }
     if (obj.geometry) {
       obj.geometry.computeBoundingBox();
-      console.log(obj, obj.geometry.boundingSphere, obj.geometry.boundingBox);
+      //console.log(obj, obj.geometry.boundingSphere, obj.geometry.boundingBox);
       var geobbox = obj.geometry.boundingBox;
       if (geobbox) {
         if (geobbox.min.x < bbox.min.x) bbox.min.x = geobbox.min.x; 
@@ -216,7 +215,7 @@ console.log(bounds);
         if (geobbox.max.z > bbox.max.z) bbox.max.z = geobbox.max.z; 
       }
     } else {
-      console.log('no geom', obj);
+      //console.log('no geom', obj);
     }
     /*
     if (obj != this) {
