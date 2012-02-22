@@ -180,6 +180,9 @@ elation.extend('ui.widgets.radar', function(hud) {
   
   this.setCamera = function(camera) {
     this.camera = camera;
+    if (elation.ui.hud.rotacol) {
+      elation.ui.hud.rotacol.camera = this.camera;
+    }
   }
 
   this.rotate = function(X, Y, angle) {
@@ -1034,7 +1037,7 @@ elation.extend('ui.widgets.rotacol', function(hud) {
   }
   
   this.render = function(pos) {
-    var pos = this.camera.position;
+    var pos = this.camera.matrixWorld.getPosition();
     this.container.innerHTML = 'x:' + this.format(pos.x) + ' y:' + this.format(pos.y) + ' z:' + this.format(pos.z);
   }
   
