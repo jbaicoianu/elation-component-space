@@ -1,12 +1,13 @@
 elation.extend("space.meshes.drone", function(args) {
   elation.space.thing.call( this, args );
 
-  this.moveState = { up: 0, down: 0, left: 0, right: 0, forward: 0, back: 0, pitchUp: 0, pitchDown: 0, yawLeft: 0, yawRight: 0, rollLeft: 0, rollRight: 0 };
-  this.strength = 3500;
+  this.setStates({ up: 0, down: 0, left: 0, right: 0, forward: 0, back: 0, pitchUp: 0, pitchDown: 0, yawLeft: 0, yawRight: 0, rollLeft: 0, rollRight: 0 });
+  this.strength = elation.utils.arrayget(this.properties, "drone.strength", 5000);
   this.moveVector = new THREE.Vector3(0,0,0);
   this.rotationVector = new THREE.Vector3(0,0,0);
   this.tmpQuaternion = new THREE.Quaternion();
   this.controlcontext = 'vehicle_quadrotor';
+  this.drag = .1257;
 
   this.camerapositions = [
     [new THREE.Vector3(0,2,4), new THREE.Vector3()]
@@ -27,28 +28,30 @@ elation.extend("space.meshes.drone", function(args) {
       this.createPlaceholder();
     }
 
-    /*
-    this.light = new THREE.PointLight(0xff0000, .5, 1000);
-    this.light.position = this.position;
-    this.add(this.light);
-    this.nextblink = 0;
-    */
+    if (this.properties.drone && this.properties.drone.light) {
+      this.light = new THREE.PointLight(0xffffff, 4, 1000);
+      //this.light.position = this.position;
+      //this.light.shadowMapEnabled = true;
+      //this.light.castShadow = true;
+      this.add(this.light);
+      this.nextblink = 0;
+    }
 
-    this.dynamics.addForce("gravity", [0,-9800 * 2,0]);
+    this.dynamics.addForce("gravity", [0,-9800 * 2 * this.mass,0]);
 
     elation.space.controls(0).addContext("vehicle_quadrotor", {
-      'move_up': function(ev) { this.moveState.up = ev.value; },
-      'move_down': function(ev) { this.moveState.down = ev.value; },
-      'move_left': function(ev) { this.moveState.left = ev.value; },
-      'move_right': function(ev) { this.moveState.right = ev.value; },
-      'move_forward': function(ev) { this.moveState.forward = ev.value; },
-      'move_backward': function(ev) { this.moveState.back = ev.value; },
-      'look_up': function(ev) { this.moveState.pitchUp = ev.value; },
-      'look_down': function(ev) { this.moveState.pitchDown = ev.value; },
-      'look_left': function(ev) { this.moveState.yawLeft = ev.value; },
-      'look_right': function(ev) { this.moveState.yawRight = ev.value; },
-      'roll_left': function(ev) { this.moveState.rollLeft = ev.value; },
-      'roll_right': function(ev) { this.moveState.rollRight = ev.value; },
+      'move_up': function(ev) { this.setState('up', ev.value); },
+      'move_down': function(ev) { this.setState('down', ev.value); },
+      'move_left': function(ev) { this.setState('left', ev.value); },
+      'move_right': function(ev) { this.setState('right', ev.value); },
+      'move_forward': function(ev) { this.setState('forward', ev.value); },
+      'move_backward': function(ev) { this.setState('back', ev.value); },
+      'look_up': function(ev) { this.setState('pitchUp', ev.value); },
+      'look_down': function(ev) { this.setState('pitchDown', ev.value); },
+      'look_left': function(ev) { this.setState('yawLeft', ev.value); },
+      'look_right': function(ev) { this.setState('yawRight', ev.value); },
+      'roll_left': function(ev) { this.setState('rollLeft', ev.value); },
+      'roll_right': function(ev) { this.setState('rollRight', ev.value); },
     });
     elation.space.controls(0).addBindings("vehicle_quadrotor", {
       'keyboard_w': 'move_forward',
@@ -130,12 +133,16 @@ elation.extend("space.meshes.drone", function(args) {
     }
   }
 
+  this.updateParts = function() {
+    this.updateMovementVector();
+    this.updateRotationVector();
+  }
   this.updateMovementVector = function() {
-    var forward = ( this.moveState.forward || ( this.autoForward && !this.moveState.back ) ) ? 1 : 0;
+    var forward = ( this.state.forward || ( this.autoForward && !this.state.back ) ) ? 1 : 0;
     
-    this.moveVector.x = ( -this.moveState.left    + this.moveState.right );
-    this.moveVector.y = ( -this.moveState.down    + this.moveState.up );
-    this.moveVector.z = ( -forward + this.moveState.back );
+    this.moveVector.x = ( -this.state.left    + this.state.right );
+    this.moveVector.y = ( -this.state.down    + this.state.up );
+    this.moveVector.z = ( -forward + this.state.back );
 
     if (this.moveVector.length() > 0) {
       this.dynamics.addForce("thrusters", this.matrix.multiplyVector3(this.moveVector.multiplyScalar(this.strength)));
@@ -144,9 +151,9 @@ elation.extend("space.meshes.drone", function(args) {
     }
   }
   this.updateRotationVector = function() {
-    this.rotationVector.x = ( -this.moveState.pitchDown + this.moveState.pitchUp );
-    this.rotationVector.y = ( -this.moveState.yawRight  + this.moveState.yawLeft );
-    this.rotationVector.z = ( -this.moveState.rollRight + this.moveState.rollLeft );
+    this.rotationVector.x = ( -this.state.pitchDown + this.state.pitchUp );
+    this.rotationVector.y = ( -this.state.yawRight  + this.state.yawLeft );
+    this.rotationVector.z = ( -this.state.rollRight + this.state.rollLeft );
 
     this.dynamics.setAngularVelocity([this.rotationVector.x, this.rotationVector.y, this.rotationVector.z]);
   }
@@ -155,9 +162,10 @@ elation.extend("space.meshes.drone", function(args) {
     this.updateMovementVector();
     this.updateRotationVector();
     this.rotateRel(this.rotationVector.clone().multiplyScalar(ev.data));
-    if (this.position.y < this.collisionradius) {
+/*
+    if (this.position.y < this.collisionradius + 10) {
       if (this.dynamics.vel.y <= 0) {
-        this.position.y = this.collisionradius;
+        this.position.y = this.collisionradius + 10;
         this.dynamics.setVelocityY(this.dynamics.vel.y * -this.dynamics.restitution);
         //this.dynamics.removeForce('gravity');
         //this.dynamics.setVelocityY(0);
@@ -169,6 +177,7 @@ elation.extend("space.meshes.drone", function(args) {
     } else {
       this.dynamics.setFriction(0);
     }
+*/
   }
   this.init();
 });
