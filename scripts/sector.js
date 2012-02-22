@@ -22,7 +22,7 @@ elation.extend("space.meshes.sector", function(args) {
   }
   this.createGeometry = function() {
     if (!this.geometry) {
-      this.geometry = new THREE.PlaneGeometry( 50000, 50000, 50, 50 );
+      this.geometry = new THREE.PlaneGeometry( 50000, 50000, 5, 5 );
       this.geometry.computeFaceNormals();
       this.geometry.computeVertexNormals();
       this.geometry.computeTangents();
@@ -30,6 +30,7 @@ elation.extend("space.meshes.sector", function(args) {
       rot.setRotationFromEuler(new THREE.Vector3(-Math.PI/2,0,0), 'XYZ');
       this.geometry.applyMatrix(rot);
       this.createMesh(this.geometry, this.materials[0]);
+      this.updateCollisionSize();
     }
   }
   this.createMaterial = function() {
