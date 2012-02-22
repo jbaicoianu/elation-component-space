@@ -18,7 +18,7 @@ elation.extend("space.meshparts", new function() {
         this.parts[k] = false; // prevent others from kicking off the same load again
         (function(self, loader, partname, part) {
           loader.load( part, function(geometry) {
-              elation.events.fire({type: "meshpartload", element: self, fn: self, data: geometry});
+              //elation.events.fire({type: "meshpartload", element: self, fn: self, data: geometry});
               self.meshpartload({data: {partname: partname, geometry: geometry, ts: ts}});
             },
             "/media/space/textures" 
@@ -38,6 +38,10 @@ elation.extend("space.meshparts", new function() {
         geometry = ev.data.geometry,
         ts = ev.data.ts;
     console.log('Loaded part in ' + (new Date().getTime() - ts) + 'ms', partname, geometry);
+    if (!geometry) {
+      console.log("wtf?", ev);
+      return;
+    }
     geometry.computeBoundingBox();
     this.parts[partname] = geometry;
     this.parts._loading--;
@@ -76,8 +80,8 @@ elation.extend("space.meshparts", new function() {
 
         //console.log('scaley scale', scale);
         //var scale = 10;
-        var sizex = (chunk.geometry.boundingBox.x[1] - chunk.geometry.boundingBox.x[0]) * scale[0];
-        var sizey = (chunk.geometry.boundingBox.y[1] - chunk.geometry.boundingBox.y[0]) * scale[1];
+        var sizex = (chunk.geometry.boundingBox.max.x - chunk.geometry.boundingBox.min.x) * scale[0];
+        var sizey = (chunk.geometry.boundingBox.max.y - chunk.geometry.boundingBox.min.y) * scale[1];
         chunk.scale.set(scale[0],scale[1],scale[1]);
 
         for (var y = 0; y < repeat[1]; y++) {
@@ -102,8 +106,8 @@ elation.extend("space.meshparts", new function() {
 
     //var chunk = new THREE.Mesh(this.parts[part], this.materials.face);
     var chunksize = [
-      this.parts[part].boundingBox.x[1] - this.parts[part].boundingBox.x[0],
-      this.parts[part].boundingBox.y[1] - this.parts[part].boundingBox.y[0],
+      this.parts[part].boundingBox.max.x - this.parts[part].boundingBox.min.x,
+      this.parts[part].boundingBox.max.y - this.parts[part].boundingBox.min.y,
     ];
     var scale = size[1] / chunksize[1];
     var xsize = chunksize[0] * scale;
