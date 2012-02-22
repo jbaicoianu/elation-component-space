@@ -1,9 +1,8 @@
 elation.space.foocache = {};
 elation.extend("space.meshes.building", function(args) {
-	THREE.LOD.call( this );
+	elation.space.thing.call(this, args);
 
-  this.args = args || {};
-  this.properties = args.properties || {};
+  this.lod = new THREE.LOD();
   this.lodlevels = {
     'high': 0,
     'medium': 5000,
@@ -11,7 +10,7 @@ elation.extend("space.meshes.building", function(args) {
   };
   this.materials = {};
 
-  this.init = function() {
+  this.postinit = function() {
     this.type = 'building';
     if (this.properties.physical) {
       if (this.properties.physical.exists === 0) 
@@ -39,8 +38,8 @@ elation.extend("space.meshes.building", function(args) {
           this.loadMesh(this.properties.render.meshlow, 'medium');
         }
       }
-      // FIXME - hack until building is a space.thing
-      elation.space.thing.prototype.createRadarContact.apply(this);
+      this.add(this.lod);
+      this.updateCollisionSize();
     }
   }
   this.createBox = function() {
@@ -109,18 +108,10 @@ elation.extend("space.meshes.building", function(args) {
       geometry.computeFaceNormals();
       geometry.computeTangents();
     //}
-    this.addLevel(newobj, this.lodlevels[lodlevel], true);
+    this.lod.addLevel(newobj, this.lodlevels[lodlevel], true);
     console.log(this, 'Added LOD mesh', lodlevel, this.lodlevels[lodlevel], newobj);
-
-    if (lodlevel == "low") {
-      var mc = THREE.CollisionUtils.MeshColliderWBox(newobj);
-      mc.entity = this;
-      THREE.Collisions.colliders.push( mc );
-      console.log(this.name + ' added collider', mc);
-    }
-
   }
   this.init();
 });
-elation.space.meshes.building.prototype = new THREE.LOD();
+elation.space.meshes.building.prototype = new elation.space.thing();
 elation.space.meshes.building.prototype.constructor = elation.space.meshes.building;
