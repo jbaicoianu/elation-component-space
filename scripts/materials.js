@@ -9,6 +9,10 @@ elation.extend("space.materials", new function() {
     if (repeat) {
       this.texturecache[url].wrapS = THREE.RepeatWrapping;
       this.texturecache[url].wrapT = THREE.RepeatWrapping;
+
+      if (elation.utils.isArray(repeat)) {
+        this.texturecache[url].repeat.set(repeat[0], repeat[1]);
+      }
     }
     return this.texturecache[url];
   }
