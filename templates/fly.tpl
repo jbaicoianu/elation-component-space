@@ -5,6 +5,7 @@
 {dependency name="deepzoom.canvas"}
 {dependency name="space.controls"}
 {dependency name="space.thing"}
+{dependency name="space.observer"}
 {dependency name="space.materials"}
 {dependency name="space.meshparts"}
 {dependency name="space.admin"}
@@ -18,4 +19,4 @@
 <div elation:component="space.fly">
  <elation:args>{ldelim}"sector":{jsonencode var=$sector}{rdelim}</elation:args>
 </div>
-{set var="page.title"}Physics Flight Demo{/set}
+{set var="page.title"}WebGL World Viewer{if !empty($root)} - {$root}{/if}{/set}

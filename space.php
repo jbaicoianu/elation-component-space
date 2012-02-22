@@ -260,9 +260,9 @@ class Component_space extends Component {
     return $this->GetComponentResponse("./viewport.tpl", $vars);
   }
   function controller_fly($args) {
-    $root = any($args["root"], "/milky way/solar system/sol/earth/north america/stupidtown");
+    $vars["root"] = any($args["root"], "/milky way/solar system/sol/earth/north america/stupidtown");
     header("Access-Control-Allow-Origin: http://cdn.supcrit.com");
-    $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $root), "data");
+    $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $vars["root"]), "data");
     $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
     return $this->GetComponentResponse("./fly.tpl", $vars);
   }
