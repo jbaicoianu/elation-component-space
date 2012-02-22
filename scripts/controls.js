@@ -79,7 +79,7 @@ elation.component.add("space.controls", {
 
   init: function() {
     elation.events.add(this.container, "mousedown,mousemove,mouseup", this);
-    elation.events.add(window, "keydown,keyup,WebkitGamepadConnected,WebkitGamepadDisconnected,MozGamepadConnected,MozGamepadDisconnected,gamepadconnected,gamepaddisconnected", this);
+    elation.events.add(window, "keydown,keyup,webkitGamepadConnected,webkitgamepaddisconnected,MozGamepadConnected,MozGamepadDisconnected,gamepadconnected,gamepaddisconnected", this);
   },
   addContext: function(context, actions) {
     this.contexts[context] = actions;
@@ -87,7 +87,7 @@ elation.component.add("space.controls", {
   activateContext: function(context, target) {
     if (this.activecontexts.indexOf(context) == -1) {
       console.log('Activate control context ' + context);
-      this.activecontexts.push(context);
+      this.activecontexts.unshift(context);
     }
     if (target) {
       this.contexttargets[context] = target;
@@ -339,10 +339,10 @@ elation.component.add("space.controls", {
     this.state[keyname] = 0;
     this.changes.push(keyname);
   },
-  WebkitGamepadConnected: function(ev) {
+  webkitGamepadconnected: function(ev) {
     this.gamepadconnected(ev);
   },
-  WebkitGamepadDisconnected: function(ev) {
+  webkitgamepaddisconnected: function(ev) {
     this.gamepaddisconnected(ev);
   },
   MozGamepadConnected: function(ev) {
@@ -350,6 +350,9 @@ elation.component.add("space.controls", {
   },
   MozGamepadDisconnected: function(ev) {
     this.gamepaddisconnected(ev);
+  },
+  webkitGamepadConnected: function(ev) {
+    gamepadconnected(ev);
   },
   gamepadconnected: function(ev) {
     for (var i = 0; i < this.gamepads.length; i++) {
