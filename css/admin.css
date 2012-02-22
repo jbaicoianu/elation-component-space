@@ -55,4 +55,5 @@
   background: rgba(255,180,180,.5);
   padding: .5em;
   box-shadow: 0 0 50px #000;
+  z-index: 100;
 }
