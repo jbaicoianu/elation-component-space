@@ -7,6 +7,7 @@ elation.component.add('space.fly', {
 
   init: function() {
     this.viewsize = this.getsize();
+    console.log('### SECTOR', this);
 
     this.scene = this.args.scene || new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(0xCCE8FF, 0.000008);
@@ -14,8 +15,11 @@ elation.component.add('space.fly', {
     this.camera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 10, 1.5e15);
     this.camera.position = this.camerapos;
     this.scene.add(this.camera);
-
-    elation.ui.hud.init();
+    
+    var HUD = elation.utils.arrayget(this.args, 'sector.properties.render.hud').split(',');
+    
+    console.log('widgets', HUD);
+    elation.ui.hud.init(HUD);
     
     this.scene.add(this.camera);
 
@@ -70,7 +74,7 @@ elation.component.add('space.fly', {
         elation.utils.physics.system.start();
 
         //elation.ui.hud.console.log('ready.');
-        elation.ui.hud.radar.nextTarget();
+        //elation.ui.hud.radar.nextTarget();
       }, 500);
     }
     

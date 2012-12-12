@@ -1,4 +1,98 @@
-elation.extend("space.meshes.planet", function(args) {
+elation.extend("space.meshes.planet", function(args, controller) { 
+  elation.space.thing.call(this, args);
+  this.texture = elation.utils.arrayget(args, 'properties.render.texture');
+  this.heightMap = elation.utils.arrayget(args, 'properties.render.heightmap');
+  this.normalMap = elation.utils.arrayget(args, 'properties.render.normalmap');
+  this.radius = 5000;//elation.utils.arrayget(args, 'properties.physical.radius');
+  this.controller = controller;
+  
+  this.postinit = function() {
+    this.viewport = this.controller || elation.space.fly.obj[0];
+    
+    this.create();
+    elation.events.fire('planet', this);
+  }
+
+  this.create = function() {
+    var parameters = {
+      normalMap: THREE.ImageUtils.loadTexture(this.normalMap),
+      map: THREE.ImageUtils.loadTexture(this.texture),
+      specular: 0x111111,
+      color: 0xffffff,
+      ambient: 0x222222,
+      shininess: 1,
+      specular: 0x333333,
+      normalScale: 0.5,
+      blending: THREE.AdditiveAlphaBlending
+    };
+    
+    var material = new THREE.MeshPhongMaterial(parameters),
+        sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius,108,54),material);
+    
+    this.add(sphere);
+    
+    sphere.geometry.computeTangents();
+    sphere.geometry.computeVertexNormals();
+  }
+  
+  // distort rectangular texture so it can fit on a sphere better
+  this.fixtexture = function(bitmap) {
+    var image = ctx.getImageData(0,0,width,height),
+        data = image.data,
+        PI = Math.PI,
+        TWOPI = PI*2,
+        pixels = image.width * image.height,
+        theta,phi,phi2,i=0,i2,j,newpixel,
+        imagein = [], imageout = [];
+    
+    while (++i<pixels) {
+      var j = 4*i,
+          pixel = [data[j],data[j+1],data[j+2],data[j+3]];
+      
+      //console.log(i, j, pixel);
+      imagein.push(pixel);
+    }
+    
+    console.log('buh',pixels, i, data.length);
+
+    for (j=0; j<image.height; j++) {
+      theta = PI * (j - (image.height-1) / 2.0) / (image.height-1);
+      
+      for (i=0; i<image.width; i++) {
+         phi = TWOPI * (i - image.width / 2.0) / image.width;
+         phi2 = phi * Math.cos(theta);
+         i2 = phi2 * image.width / TWOPI + (image.width / 2);
+         
+         if (i2 < 0 || i2 > image.width-1) {
+            newpixel = [255,0,0,255]; 
+         } else {
+            newpixel = imagein[j * image.width + i2];
+         }
+         
+         imageout[j * image.width + i] = newpixel;
+      }
+    }
+    
+    var tmp = [];
+    i=0;
+    while (++i<pixels) {
+      for (var j=0; i<imageout[i].length; j++) {
+        tmp.push(imageout[i][j]);
+      }
+    }
+    console.log('out',tmp.length);
+    
+    return bitmap;
+  }
+  
+  this.init();
+});
+
+elation.space.meshes.planet.prototype = new elation.space.thing();
+elation.space.meshes.planet.prototype.constructor = elation.space.meshes.planet;
+
+
+elation.extend("space.meshes.oldplanet", function(args) { return;
 	elation.space.thing.call( this, args );
 
   this.radius = this.properties.physical.radius || 1000;

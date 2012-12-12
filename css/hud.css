@@ -2,6 +2,9 @@
   font-family: sans-serif;
   font-weight: bold;
 }
+div.main {
+  background: url('/~lazarus/elation/images/space/galaxy_starfield.png');
+}
 canvas {
   position: fixed;
 }
@@ -46,9 +49,9 @@ canvas {
 .console {
   position: fixed;
   bottom: 10px;
-  left: 450px;
+  right: 10px;
   height: 6em;
-  width: 50%;
+  width: 40%;
   padding: .3em;
   background: #121516;
   opacity: .7;
@@ -56,6 +59,7 @@ canvas {
   border-radius: .5em;
   border: 2px solid #3b5c6b;
   box-shadow: 0px 0px 30px 1px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
+  z-index: 6;
 }
 .altimeter {
   position: fixed;
@@ -72,7 +76,7 @@ div.debug span {
 div.debug span.alt {
   display: block;
   position: absolute;
-  margin-left: 60px;
+  margin-left: 70px;
   width: 120px;
 }
 .debug {
@@ -83,7 +87,7 @@ div.debug span.alt {
   opacity: .7;
   color: #7b9cab;
   font-size: .8em;
-  z-index: 1;
+  z-index: 6;
 }
 div.target_top {
   border-bottom: 2px solid #7B9CAB;
@@ -125,12 +129,16 @@ div.target_distance {
   font-size: 19px;
   padding-top: 4px;
 }
+.target_canvas {
+  width: 200px;
+  height: 170px;
+}
 div.target {
   background: #121516;
   box-shadow: 0px 0px 11px 6px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
   border-radius: 25px;
   left: 10px;
-  border: 2px solid #7B9CAB;
+  border: 2px solid #9BBCCB;
   opacity: .7;
 }
 .target,
@@ -155,12 +163,18 @@ div.target {
 .radar_static {
   z-index: 3;
 }
+canvas.targeting {
+  opacity: 1;
+}
+.targeting,
 .aeronautics {
   position: fixed;
   width: 300px;
   height: 300px;
   top: 0;
   left: 0;
+  opacity: .55;
+  z-index: 5;
   pointer-events: none;
 }
 .static_overlay {
@@ -173,4 +187,101 @@ div.target {
   right: 0;
   z-index: 5;
   pointer-events: none;
+}
+.atlas {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+}
+.atlas_controls_top ul,
+.atlas_controls_right ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.atlas_controls_right .atlas_controls_label {
+  text-align: center;
+  color: #AB6a3B;
+}
+div#atlas_top_resources li:hover,
+div.atlas_controls_section:hover {
+  opacity: .8;
+}
+div#atlas_top_resources li,
+div.atlas_controls_section {
+  background: none repeat scroll 0 0 #1B3C4B;
+  border-radius: 20px 0 0 20px;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  margin: 0.5em;
+  opacity: 0.5;
+  padding: 1em;
+  cursor: default;
+}
+div#atlas_top_resources li.resources_spice {
+  background: #050;
+  border-radius: 20px 0 0 20px;
+}
+div#atlas_top_resources li.resources_water {
+  background: #005;
+}
+div#atlas_top_resources li.resources_gas {
+  background: #541;
+}
+div#atlas_top_resources li.resources_credits {
+  border-radius: 0 20px 20px 0;
+  margin-right: 5px;
+  background: #500;
+}
+div#atlas_top_resources li {
+  border-radius: 0;
+  height: 2.5em;
+  padding: 0em;
+  margin: .5em .1em;
+  text-align: center;
+}
+.atlas_controls_right ul li label {
+  margin-left: 0.3em;
+}
+.atlas_controls_right p {
+  float: right;
+}
+.atlas_controls_top p,
+.atlas_controls_right p {
+  padding: 0;
+  margin: 0;
+  font-size: 10pt;
+}
+.atlas_controls_top,
+.atlas_controls_right {
+  position: fixed;
+  right: 10px;
+  top: 10px;
+  z-index: 7;
+  color: #7b9cab;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+.atlas_controls_top #atlas_top_resources li {
+  float: left;
+  width: 4.5em;
+}
+.atlas_controls_top #atlas_top_resources {
+
+}
+.atlas_controls_top {
+
+}
+.atlas_planet {
+  position: fixed;
+  z-index: 6;
+  right: 10px;
+  border: 1px solid #00aa00;
 }
