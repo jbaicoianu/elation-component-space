@@ -78,15 +78,16 @@ elation.component.add("space.controls", {
   viewport: [],
 
   init: function() {
-    elation.events.add(this.container, "mousedown,mousemove,mouseup", this);
+    elation.events.add(this.container, "mousedown,mousemove,mouseup,mousewheel", this);
     elation.events.add(window, "keydown,keyup,WebkitGamepadConnected,WebkitGamepadDisconnected,MozGamepadConnected,MozGamepadDisconnected,gamepadconnected,gamepaddisconnected", this);
   },
   addContext: function(context, actions) {
+    console.log('Add control context ' + context, actions);
     this.contexts[context] = actions;
   },
   activateContext: function(context, target) {
+      console.log('Activate control context ' + context, target);
     if (this.activecontexts.indexOf(context) == -1) {
-      console.log('Activate control context ' + context);
       this.activecontexts.push(context);
     }
     if (target) {
@@ -119,11 +120,13 @@ elation.component.add("space.controls", {
       for (var i = 0; i < this.changes.length; i++) {
         for (var j = 0; j < this.activecontexts.length; j++) {
           var context = this.activecontexts[j];
+          console.log('Update context', context, action);
           if (this.bindings[context] && this.bindings[context][this.changes[i]]) {
             var action = this.bindings[context][this.changes[i]];
+            console.log('Update context',context, action);
             if (this.contexts[context][action]) {
               var ev = {timeStamp: now, type: this.changes[i], value: this.state[this.changes[i]]};
-              //console.log('call it', this.changes[i], this.bindings[context][this.changes[i]], this.state[this.changes[i]]);
+              console.log('call it', context, this.changes[i], this.bindings[context][this.changes[i]], this.state[this.changes[i]]);
               if (this.contexttargets[context]) {
                 ev.data = this.contexttargets[context];
                 this.contexts[context][action].call(ev.data, ev);
@@ -305,7 +308,7 @@ elation.component.add("space.controls", {
       }
       if (this.state["mouse_button_0"]) {
         this.state["mouse_drag"] = this.state["mouse_pos"];
-        this.state["mouse_drag_delta"] = [this.state["mouse_drag_delta_x"], this.state["mouse_drag_delta_y"]];
+        this.state["mouse_drag_delta"] = [this.state["mouse_drag_delta_x"]||0, this.state["mouse_drag_delta_y"]||0];
         this.changes.push("mouse_drag");
         this.changes.push("mouse_drag_delta");
       }
@@ -324,6 +327,18 @@ elation.component.add("space.controls", {
         this.changes.push("mouse_drag_y");
       }
     }
+  },
+  DOMMouseScroll: function(ev) { this.mousewheel(ev); },
+  mousewheel: function(ev) {
+		var	event = ev ? ev : window.event,
+				mwdelta = event.wheelDelta 
+          ? (event.wheelDelta / 120) : event.detail ? (-event.detail / 3) : 0;
+		
+		if (window.opera) 
+      mwdelta = -mwdelta;		
+    
+    this.state["mousewheel"] = [mwdelta];
+    this.changes.push("mousewheel");
   },
   keydown: function(ev) {
     var keyname = this.getBindingName("keyboard", ev.keyCode);

@@ -264,9 +264,19 @@ class Component_space extends Component {
     header("Access-Control-Allow-Origin: http://cdn.supcrit.com");
     $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $root), "data");
     $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
+    $vars["craters1"] = file('http://www.meobets.com/~lazarus/craters125km.mkr',  FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $vars["craters2"] = file('http://www.meobets.com/~lazarus/craters75-125km.mkr',  FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $vars["craters3"] = file('http://www.meobets.com/~lazarus/craters25-75km.mkr',  FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $vars["craters4"] = file('http://www.meobets.com/~lazarus/craters0-25km.mkr',  FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     return $this->GetComponentResponse("./fly.tpl", $vars);
   }
-
+  function controller_starbinger($args) {
+    $root = any($args["root"], "/Starbinger/Sector 001/Planet");
+    header("Access-Control-Allow-Origin: http://cdn.supcrit.com");
+    $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $root), "data");
+    $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
+    return $this->GetComponentResponse("./starbinger.tpl", $vars);
+  }
   function getUniqueThingTypes($thing) {
     $types = array();
     if (is_array($thing)) {
@@ -313,6 +323,7 @@ class Component_space extends Component {
     if (!empty($props)) {
       foreach ($props as $prop) {
         switch ($prop->propertykey) {
+          case 'normalmap':
           case 'texture':
           case 'heightmap':
             $value = DependencyManager::$locations['imageswww'] . $this->castProperty($prop);
