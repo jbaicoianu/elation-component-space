@@ -271,12 +271,80 @@ class Component_space extends Component {
     return $this->GetComponentResponse("./fly.tpl", $vars);
   }
   function controller_starbinger($args) {
-    $root = any($args["root"], "/Starbinger/Sector 001/Planet");
+    $root = any($args["root"], "/Starbinger/Sector 002");
     header("Access-Control-Allow-Origin: http://cdn.supcrit.com");
     $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $root), "data");
     $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
+    
+    $stars = array(
+     "M"=>array('color'=>'0xdd1111','temp'=>'2600,4300','radius'=>'.15,.72','mass'=>'.06,.67','luminosity'=>'.001,.15','hzone'=>'.03,.39','lifetime'=>'700000,45000'),
+     "K"=>array('color'=>'0xffa500','temp'=>'4300,5700','radius'=>'.72,.92','mass'=>'.67,.92','luminosity'=>'.15,.79','hzone'=>'.39,.89','lifetime'=>'45000,12000'),
+     "G"=>array('color'=>'0xffd700','temp'=>'5700,6400','radius'=>'.92,1.3','mass'=>'.92,1.3','luminosity'=>'.79,3.2','hzone'=>'.89,1.8','lifetime'=>'12000,3200'),
+     "F"=>array('color'=>'0xffff00','temp'=>'6400,8200','radius'=>'1.3,1.7','mass'=>'1.3,2.0','luminosity'=>'3.2,14','hzone'=>'1.8,3.7','lifetime'=>'3200,1000'),
+     "A"=>array('color'=>'0xffffff','temp'=>'8200,12000','radius'=>'1.7,3.0','mass'=>'2.0,3.8','luminosity'=>'14,180','hzone'=>'3.7,13','lifetime'=>'1000,150'),
+     "B"=>array('color'=>'0xafeeee','temp'=>'12000,35000','radius'=>'3.0,8.5','mass'=>'3.8,23','luminosity'=>'180,170000','hzone'=>'13,410','lifetime'=>'150,6'),
+     "O"=>array('color'=>'0x87cefa','temp'=>'35000,55000','radius'=>'8.5,18','mass'=>'23,140','luminosity'=>'170000,1600000','hzone'=>'410,1400','lifetime'=>'6,1.5')
+    );
+    
+    $order = array(
+      '20'=>'K',
+      '40'=>'G',
+      '60'=>'F',
+      '80'=>'A',
+      '90'=>'B',
+      '95'=>'O'
+    );
+    
+    $seed = any($args["seed"],rand());
+    srand($seed);
+    $vars["random"] = $rand = rand(0,100);
+    $vars["type"] = 'M';
+    $star = $stars['M'];
+    
+    foreach ($order as $p=>$type) {
+      if ($rand >= $p) {
+        $vars["type"] = $type;
+        $star = $stars[$type];
+      }
+    }
+    
+    $vars["random2"] = $rand2 = rand(0,100) * .01;
+    
+    $temp = explode(',',$star['temp']);
+    $radius = explode(',',$star['radius']);
+    $mass = explode(',',$star['mass']);
+    $luminosity = explode(',',$star['luminosity']);
+    $hzone = explode(',',$star['hzone']);
+    $lifetime = explode(',',$star['lifetime']);
+    
+    $s = array(
+      'type'=> $vars["type"] . floor($rand2 * 10),
+      'seed'=> $seed,
+      'color'=> $star["color"],
+      'temperature'=> ($temp[0] + (($temp[1] - $temp[0]) * $rand2)),
+      'radius'=> (($radius[0] + (($radius[1] - $radius[0]) * $rand2)) * 10000),
+      'mass'=> ($mass[0] + (($mass[1] - $mass[0]) * $rand2)),
+      'luminosity'=> ($luminosity[0] + (($luminosity[1] - $luminosity[0]) * $rand2)),
+      'hzone'=> ($hzone[0] + (($hzone[1] - $hzone[0]) * $rand2)),
+      'lifetime'=> ($lifetime[0] + (($lifetime[1] - $lifetime[0]) * $rand2)),
+      'randoms'=> $rand . ', ' . $rand2
+    );
+    
+    $vars["sector"]["things"]["Star"] = array(
+      name=>'Star',
+      type=>'star',
+      parentname=>'/Starbinger/Sector 001',
+      quantity=>1,
+      properties=>array(
+        'generated'=>$s,
+        'physical'=>array("position"=>array(0,0,0),"radius"=>$s['radius']),
+        'render'=>array("color"=>$s['color'])
+      )
+    );
+    
     return $this->GetComponentResponse("./starbinger.tpl", $vars);
   }
+  
   function getUniqueThingTypes($thing) {
     $types = array();
     if (is_array($thing)) {

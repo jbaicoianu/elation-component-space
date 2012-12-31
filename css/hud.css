@@ -3,7 +3,7 @@
   font-weight: bold;
 }
 div.main {
-  background: url('/~lazarus/elation/images/space/galaxy_starfield.png');
+  /*background: url('/~lazarus/elation/images/space/galaxy_starfield.png');*/
 }
 canvas {
   position: fixed;
@@ -76,13 +76,13 @@ div.debug span {
 div.debug span.alt {
   display: block;
   position: absolute;
-  margin-left: 70px;
+  margin-left: 90px;
   width: 120px;
 }
 .debug {
   position: fixed;
-  bottom: 25px;
-  left: 15px;
+  bottom: 14px;
+  left: 17px;
   padding: .3em .6em;
   opacity: .7;
   color: #7b9cab;
@@ -138,7 +138,7 @@ div.target {
   box-shadow: 0px 0px 11px 6px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
   border-radius: 25px;
   left: 10px;
-  border: 2px solid #9BBCCB;
+  border: 2px solid #6B8C9B;
   opacity: .7;
 }
 .target,

@@ -47,7 +47,7 @@ elation.extend('ui.hud', new function() {
   };
   
   this.init = function(widgets, controller) {
-    this.controller = controller || elation.space.fly.obj[0];
+    this.controller = elation.space.controller;
     
     if (widgets && typeof widgets == 'object')
       this.widgets = widgets;
@@ -55,7 +55,6 @@ elation.extend('ui.hud', new function() {
     for (var i=0; i<this.widgets.length; i++) {
       var widget = this.widgets[i];
       
-      console.log('hud init component', i, widget);
       this[widget] = new elation.ui.widgets[widget](this);
     }
     
@@ -831,16 +830,17 @@ elation.extend('ui.widgets.overlay', function(hud) {
 
 elation.extend('ui.widgets.radar', function(hud) {
   this.hud = hud;
-  this.range = 8400;
+  this.range = 500;
   this.width = 200;
   this.height = 200;
   this.odist = 0;
-  this.sweepspeed = .02;
+  this.sweepspeed = .05;
   this.sweepangle = Math.PI;
   this.contacts = [];
   this.colors = this.hud.colors;
   this.types = {
     drone: 'blip',
+    planet: 'blip',
     building: 'outline',
     road: 'outline'
   };
@@ -854,7 +854,23 @@ elation.extend('ui.widgets.radar', function(hud) {
     this.outline();
     this.nextTarget();
     this.render();
+    
+    elation.events.add(null,'select,deselect',this);
+    
     //this.hud.console.log('radar system initialized.');
+  }
+  
+  this.handleEvent = function(event) {
+    console.log('radar handleEvent', event);
+    this[event.type](event);
+  }
+  
+  this.select = function(event) {
+    console.log('radar select', event);
+  }
+  
+  this.deselect = function(event) {
+    console.log('radar deselect', event);
   }
   
   this.setCamera = function(camera) {
@@ -945,7 +961,8 @@ elation.extend('ui.widgets.radar', function(hud) {
         cy = this.center.y,
         bgColor = hex2rgb(this.colors['background']),
         lnColor = hex2rgb(this.colors['lines']),
-        altitude = (this.width/2) - ((this.width/4) * (this.camera.position.y / (this.range/4))),
+        //altitude = (this.width/2) - ((this.width/4) * (this.camera.position.y / (this.range/4))),
+        altitude = this.width/3,
         altitude = altitude >= 0 ? altitude : 0;
     
     //this.canvas.width = this.canvas.width;
@@ -964,7 +981,7 @@ elation.extend('ui.widgets.radar', function(hud) {
     ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .5)";
     ctx.arc(cx,cy,altitude,0,Math.PI*2,true); 
     ctx.stroke();
-    ctx.lineWidth = 1
+    ctx.lineWidth = 1;
 
     this.sweep(ctx, cx, cy, bgColor, lnColor);
     this.draw(ctx, cx, cy);
@@ -981,7 +998,8 @@ elation.extend('ui.widgets.radar', function(hud) {
     
     if (r) {
       c.circle(this.ctx, r.x, r.y, 3, this.color('target_hilight'), .5, 'stroke');
-      c.line(this.ctx, [[center.x, center.y],[r.x, r.y]], this.color('target_hilight'), .3, 'stroke');
+      this.ctx.lineWidth = 2;
+      c.line(this.ctx, [[center.x, center.y],[r.x, r.y]], this.color('target_hilight'), .2, 'stroke');
     }
   }
   
@@ -1107,7 +1125,7 @@ elation.extend('ui.widgets.radar', function(hud) {
         outlineColor = this.color('target_outline'),
         blipColor = this.color('target_blip'),
         hilightColor = this.color('target_hilight'),
-        drawBlip = function(x, y, obj, event, a, type) {
+        drawBlip = function(x, y, obj, event, a, type, parent) {
           //console.log(type);
           if (type == 'outline') {
             ctx.beginPath();
@@ -1119,9 +1137,18 @@ elation.extend('ui.widgets.radar', function(hud) {
             ctx.lineTo(x, y+3);
             ctx.stroke();          
           } else {
+            var physical = contact.thing.properties.physical;
+            
+            var w = (physical && physical.radius ? Math.ceil((parent.width / 2) * (physical.radius / parent.range)) : 2);
+            
+            
+            //console.log('radar',contact.thing.type);
             ctx.beginPath();
-            ctx.fillStyle = "rgba("+blipColor[0]+", "+blipColor[1]+", "+blipColor[2]+", "+(.3 + a)+")";
-            ctx.arc(x,y,2,0,Math.PI*2,true);
+            if (contact.thing.type == 'spacedust')
+              ctx.fillStyle = "rgba(120, 120, 120, .5)";
+            else
+              ctx.fillStyle = "rgba("+blipColor[0]+", "+blipColor[1]+", "+blipColor[2]+", "+(.3 + a)+")";
+            ctx.arc(x,y,w,0,Math.PI*2,true);
             ctx.fill();
           }
           
@@ -1135,6 +1162,10 @@ elation.extend('ui.widgets.radar', function(hud) {
       contact = contacts[i];
       type = this.types[contact.type] || 'blip';
       
+      if (elation.utils.arrayget(contact,'thing.properties.render.noradar'))
+        continue;
+      
+      //console.log(contact.thing.type);
       switch(type) {
         case "outline":
           var cpos = contact.position,
@@ -1197,7 +1228,7 @@ elation.extend('ui.widgets.radar', function(hud) {
               c = (1 - ((c / 2) / Math.PI)) * 5,
               c = (c * .1);
           
-          drawBlip(rot.x, rot.y, contact, this.event, c, type);
+          drawBlip(rot.x, rot.y, contact, this.event, c, type, this);
           
           if (contact.target) {
             this.updateTargetDistance(contact);
@@ -1377,7 +1408,7 @@ elation.extend('ui.widgets.aeronautics', function(hud) {
         bank = angle[2],
         r = 60,
         degrees = pitch * 180 / Math.PI,
-        dim = elation.html.dimensions(),
+        dim = elation.html.dimensions(window),
         d2p = dim.h / 53, // Why 53?!
         d = degrees * d2p,
         q = {
@@ -1952,7 +1983,7 @@ elation.extend('ui.widgets.debug', function(hud) {
   }
   
   this.format = function(pos) {
-    if (typeof pos.toFixed == 'function') {
+    if (pos && typeof pos.toFixed == 'function') {
       var st = pos.toString(),
           sp = st.split('.'),
           ln = sp.length > 1 ? sp[1].length : 0,

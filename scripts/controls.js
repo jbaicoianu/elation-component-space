@@ -120,13 +120,11 @@ elation.component.add("space.controls", {
       for (var i = 0; i < this.changes.length; i++) {
         for (var j = 0; j < this.activecontexts.length; j++) {
           var context = this.activecontexts[j];
-          console.log('Update context', context, action);
           if (this.bindings[context] && this.bindings[context][this.changes[i]]) {
             var action = this.bindings[context][this.changes[i]];
-            console.log('Update context',context, action);
             if (this.contexts[context][action]) {
               var ev = {timeStamp: now, type: this.changes[i], value: this.state[this.changes[i]]};
-              console.log('call it', context, this.changes[i], this.bindings[context][this.changes[i]], this.state[this.changes[i]]);
+              console.log('update context', context, this.changes[i], this.bindings[context][this.changes[i]], this.state[this.changes[i]]);
               if (this.contexttargets[context]) {
                 ev.data = this.contexttargets[context];
                 this.contexts[context][action].call(ev.data, ev);

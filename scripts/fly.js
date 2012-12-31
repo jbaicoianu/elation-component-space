@@ -6,6 +6,7 @@ elation.component.add('space.fly', {
   camerapos: new THREE.Vector3(0,50,500),
 
   init: function() {
+    elation.space.controller = this;
     this.viewsize = this.getsize();
     console.log('### SECTOR', this);
 

@@ -3,7 +3,7 @@ elation.extend("space.meshes.planet", function(args, controller) {
   this.texture = elation.utils.arrayget(args, 'properties.render.texture');
   this.heightMap = elation.utils.arrayget(args, 'properties.render.heightmap');
   this.normalMap = elation.utils.arrayget(args, 'properties.render.normalmap');
-  this.radius = 5000;//elation.utils.arrayget(args, 'properties.physical.radius');
+  this.radius = elation.utils.arrayget(args, 'properties.physical.radius');
   this.controller = controller;
   
   this.postinit = function() {
@@ -12,10 +12,9 @@ elation.extend("space.meshes.planet", function(args, controller) {
     this.create();
     elation.events.fire('planet', this);
   }
-
+console.log('## PLANET ',this.radius);
   this.create = function() {
     var parameters = {
-      normalMap: THREE.ImageUtils.loadTexture(this.normalMap),
       map: THREE.ImageUtils.loadTexture(this.texture),
       specular: 0x111111,
       color: 0xffffff,
@@ -25,6 +24,9 @@ elation.extend("space.meshes.planet", function(args, controller) {
       normalScale: 0.5,
       blending: THREE.AdditiveAlphaBlending
     };
+    
+    if (this.normalMap != '/~lazarus/elation/index.php/images')
+      parameters.normalMap = THREE.ImageUtils.loadTexture(this.normalMap);
     
     var material = new THREE.MeshPhongMaterial(parameters),
         sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius,108,54),material);
@@ -53,7 +55,7 @@ elation.extend("space.meshes.planet", function(args, controller) {
       imagein.push(pixel);
     }
     
-    console.log('buh',pixels, i, data.length);
+    //console.log('buh',pixels, i, data.length);
 
     for (j=0; j<image.height; j++) {
       theta = PI * (j - (image.height-1) / 2.0) / (image.height-1);

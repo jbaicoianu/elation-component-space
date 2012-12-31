@@ -21,7 +21,7 @@ elation.extend("space.meshes.sector", function(args) {
 
   }
   this.createGeometry = function() {
-    if (!this.geometry) {
+    if (false && !this.geometry) {
       this.geometry = new THREE.PlaneGeometry( 50000, 50000, 50, 50 );
       this.geometry.computeFaceNormals();
       this.geometry.computeVertexNormals();

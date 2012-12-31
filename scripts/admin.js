@@ -1,7 +1,7 @@
 elation.component.add('space.admin', {
   init: function(name, container, args) {
     this.args = args;
-    this.controller = args.controller || elation.space.fly(0);
+    this.controller = elation.space.controller;
     
     this.projector = new THREE.Projector();
     this.mouse = [0,0];
@@ -165,7 +165,7 @@ elation.component.add('space.admin', {
         clientZ: hoverdata.point.z,
       };
     }
-    if (this.objectstates[state] != obj) {
+    if (obj && this.objectstates[state] != obj) {
       var oldobj = this.objectstates[state];
       this.objectstates[state] = obj;
 
@@ -187,10 +187,12 @@ elation.component.add('space.admin', {
           }
           break;
         case 'hover':
-          evdata.relatedTarget = obj;
-          elation.events.fire({type: "mouseout", element: oldobj, target: oldobj, data: evdata});  
-          evdata.relatedTarget = oldobj;
-          elation.events.fire({type: "mouseover", element: obj, target: obj, data: evdata});  
+          if (evdata) {
+            evdata.relatedTarget = obj;
+            elation.events.fire({type: "mouseout", element: oldobj, target: oldobj, data: evdata});  
+            evdata.relatedTarget = oldobj;
+            elation.events.fire({type: "mouseover", element: obj, target: obj, data: evdata});  
+          }
           break;
       }
       //console.log('Set ' + state + ' object:', obj);
