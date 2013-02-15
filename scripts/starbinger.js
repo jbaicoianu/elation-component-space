@@ -2,46 +2,29 @@ elation.component.add('space.starbinger', {
   usewebgl: Detector.webgl,
   lights: {},
   materials: {},
-  objects: [],
-  camerapos: new THREE.Vector3(0,0,80000),
+  objects_array: [],
+  objects: {},
+  camerapos: new THREE.Vector3(0,0,0),
 
   init: function() {
+    this.dustCount = 1000;
+    this.dustDiameter = 750;
+    this.dustRadius = this.dustDiameter / 2;
+    this.dustSize = 2;
+    
     elation.space.controller = this;
     this.viewsize = this.getsize();
 
     this.scene = this.args.scene || new THREE.Scene();
+    this.sceneCube = new THREE.Scene();
     //this.scene.fog = new THREE.FogExp2(0xCCE8FF, 0.000008);
 
-    this.camera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 10, 1.5e15);
+    this.camera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 3, 1.5e15);
+    this.cameraCube = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 1, 100);
+    elation.events.add(window,'resize',this);
     this.camera.position = this.camerapos;
     this.scene.add(this.camera);
-    
-    //this.scene.add(this.camera);
-
-    // TODO - light should just be a property of the sun...
-    /*
-    this.lights['white'] = new THREE.SpotLight( 0xffffff, 1, 50000);
-    this.lights['white'].position.x = -10000;
-    this.lights['white'].position.y = 10000;
-    this.lights['white'].position.z = 10000;
-    this.lights['white'].castShadow = true;
-
-    this.lights['white'].shadowCameraNear = 700;
-    this.lights['white'].shadowCameraFar = this.camera.far;
-    this.lights['white'].shadowCameraFov = this.camera.fov;
- 
-    this.lights['white'].shadowBias = 0.00000001;
-    this.lights['white'].shadowDarkness = 0.5;
-    this.lights['white'].shadowMapWidth = 8192;
-    this.lights['white'].shadowMapHeight = 8192;
- 
-    this.scene.add(this.lights['white']);
-
-    //this.createSky(true);
-
-    this.lights['ambient'] = new THREE.AmbientLight( 0x999999 );
-    this.scene.add(this.lights['ambient']);
-    */
+    this.sceneCube.add(this.cameraCube);    
     
     this.initRenderer(); 
     this.initControls();
@@ -81,77 +64,82 @@ elation.component.add('space.starbinger', {
     this.createAdminTool();
     elation.space.thing.setController = this;
     
+    this.addSkybox();
+    this.addDust();
+  },
+  resize: function(event) {
+    this.viewsize = this.getsize();
+		this.camera.aspect = this.viewsize[0] / this.viewsize[1];
+		this.cameraCube.aspect = this.viewsize[0] / this.viewsize[1];
+		this.camera.updateProjectionMatrix();
+		this.cameraCube.updateProjectionMatrix();
+
+		this.renderer.setSize( this.viewsize[0], this.viewsize[1] );
+
+    //this.camera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 1, 1.5e15);
+    //this.cameraCube = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 1, 100);
+  },
+  addSkybox: function() {
     var texture = THREE.ImageUtils.loadTexture( '/~lazarus/elation/images/space/galaxy_starfield.png');
-    
     texture.repeat.y = 1;
     texture.repeat.x = .5;
-    
     var material = new THREE.MeshBasicMaterial({ map: texture, depthWrite: false });
     var materialArray = material;
     var skyboxGeom = new THREE.CubeGeometry(100, 100, 100);
     
     this.skybox = new THREE.Mesh(skyboxGeom, materialArray);
     this.skybox.flipSided = true;
-    this.skybox.position = this.camera.position;
+    this.skybox.position = this.cameraCube.position;
     
-    this.scene.add(this.skybox);
+    this.sceneCube.add(this.skybox);
+    this.renderer.autoClear = false;
+    this.cameraCube.useQuaternion = true;
+  },
+  r: function(min, max) {
+    var rand = Math.random(),
+        value = (max - min) * rand + min;
     
+    return Math.round(value);
+  },
+  addDust: function() {
     // create the particles
-    this.particleCount = 1200;
-    this.particleVelocity = .1;
-    this.particles = new THREE.Geometry();
+    this.dustParticles = new THREE.Geometry();
+    //var hexColor = '0x'+this.r(0,9)+this.r(0,9)+this.r(0,9)+this.r(0,9)+this.r(0,9)+this.r(0,9);
+    
+    //console.log('HEX COLOR!!@!',hexColor);
     var pMaterial = new THREE.ParticleBasicMaterial({
           color: 0xFFFFFF,
-          size: 2,
+          size: this.dustSize,
           map: THREE.ImageUtils.loadTexture(
-            "/~lazarus/elation/images/space/particle.png"
+            "/~lazarus/elation/images/space/particle_3.png"
           ),
           blending: THREE.AdditiveBlending,
           transparent: true
         });
     
-        /*pMaterial =
-          new THREE.ParticleBasicMaterial({
-            color: 0x999999,
-            size: 1
-          });*/
-
-    for(var p = 0; p < this.particleCount; p++) {
-      var pX = 0 + Math.random() * 500 - 250,
-          pY = 0 + Math.random() * 500 - 250,
-          pZ = 150000 + Math.random() * 500 - 250,
-          particle = new THREE.Vertex(
-            new THREE.Vector3(pX, pY, pZ)
+    for (var p = 0; p < this.dustCount; p++) {
+      var ppos = new THREE.Vector3(
+            this.camera.position.x + Math.random() * this.dustDiameter - this.dustRadius,
+            this.camera.position.y + Math.random() * this.dustDiameter - this.dustRadius,
+            this.camera.position.z + Math.random() * this.dustDiameter - this.dustRadius
           );
-
-      //particle.velocity = new THREE.Vector3(0,0,this.particleVelocity);
       
-      // add to radar
-      particle.thing = {};
-      particle.type = 'spacedust';
-      particle.name = 'particle';
-      particle.thing.type = 'spacedust';
-      particle.thing.args = {};
-      particle.thing.args.name = 'particle';
-      particle.thing.properties = {};
-      particle.thing.properties.position = {x:pX, y:pY, x:pX};
-      particle.thing.properties.physical = {};
-      particle.thing.properties.physical.radius = 1;
-      elation.ui.hud.radar.addContact(particle);
-      
-      this.particles.vertices.push(particle);
+      if (this.camera.position.distanceTo(ppos) <= this.dustRadius) {
+        particle = new THREE.Vertex(ppos);
+        this.dustParticles.vertices.push(particle);
+      }
     }
 
-    this.particleSystem = new THREE.ParticleSystem(this.particles, pMaterial);
-    this.particleSystem.sortParticles = true;
+    this.dustSystem = new THREE.ParticleSystem(this.dustParticles, pMaterial);
+    //this.dustSystem.position.copy(this.camera.position);
+    this.dustSystem.sortParticles = false;
     
     // add it to the scene
-    this.scene.add(this.particleSystem);
+    this.scene.add(this.dustSystem);
   },
   initControls: function() {
     this.controlsenabled = true;
     /*
-    this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
     this.controls.rotateSpeed = -1.0;
     this.controls.zoomSpeed = 4;
     this.controls.panSpeed = 3;
@@ -171,11 +159,12 @@ elation.component.add('space.starbinger', {
     //this.controls.activateContext("default", this);
   },
   initRenderer: function() {
-    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({antialias: true, maxShadows: 10}) : new THREE.CanvasRenderer());
+    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({antialias: true, maxShadows: 1000}) : new THREE.CanvasRenderer());
     this.renderer.setSize(this.viewsize[0], this.viewsize[1]);
 
     this.renderer.shadowMapEnabled = true;
     this.renderer.shadowMapSoft = true;
+    this.renderer.shadowMapType = THREE.BasicShadowMap;
 
     this.renderer.autoClear = true;
   },
@@ -191,8 +180,11 @@ elation.component.add('space.starbinger', {
       requestAnimationFrame( function() { self.loop(); } );
     })(this);
   
-    var newsize = this.getsize();
+    this.newsize = newsize = this.getsize();
     var ts = new Date().getTime();
+    
+    this.renderer.clear();
+    this.renderer.setViewport(0, 0, this.newsize[0], this.newsize[1]);
     
     this.lastupdatedelta = (ts - this.lastupdate) / 1000;
     
@@ -201,9 +193,35 @@ elation.component.add('space.starbinger', {
     if (this.controls && this.controlsenabled) {
       this.controls.update();
     }
+    
     if (elation.utils.physics) {
       elation.utils.physics.system.iterate(this.lastupdatedelta);
     }
+    
+    elation.events.fire('renderframe_middle', this);
+    
+    if (this.dustSystem) {
+      var pCount = this.dustCount,
+          ship = this.objects.player.Player,
+          particle;
+      
+      while (pCount--) {
+        particle = this.dustParticles.vertices[pCount];
+        
+        if (particle && this.camera.position.distanceTo(particle.position) > this.dustRadius) {
+          particle.position = ship.matrixWorld.multiplyVector3(new THREE.Vector3(
+            Math.random() * this.dustDiameter - this.dustRadius,
+            Math.random() * this.dustDiameter - this.dustRadius,
+            Math.random() * this.dustDiameter - this.dustRadius
+          ));
+        }
+        
+        //particle.position.addSelf(particle.velocity);
+      }
+      
+      this.dustSystem.geometry.__dirtyVertices = true;
+    }
+    
     if (this.camera) {
       if (this.viewsize[0] != newsize[0] || this.viewsize[1] != newsize[1]) {
         this.viewsize = newsize;
@@ -211,58 +229,22 @@ elation.component.add('space.starbinger', {
         this.camera.aspect = this.viewsize[0] / this.viewsize[1];
         this.camera.updateProjectionMatrix();
       }
-
-      var camera = this.camera;
-      if (elation.space.meshes.terrain2) {
-        THREE.SceneUtils.traverseHierarchy( this.scene, function ( node ) { if ( node instanceof elation.space.meshes.terrain2 ) node.updateViewport( camera ) } );
-      }
       
+			this.cameraCube.quaternion.copy( this.camera.quaternion );
+      this.renderer.render(this.sceneCube, this.cameraCube);
       this.renderer.render(this.scene, this.camera);
-      this.lastupdate = ts;
-    }
-
-    if (this.particleSystem) {
-      //this.particleSystem.rotation.y += 0.01;
-      var pCount = this.particleCount;
-      while(pCount--) {
-
-        // get the particle
-        var particle = this.particles.vertices[pCount];
-
-        // check if we need to reset
-        //if (pCount == 0)
-        //  console.log(particle.position.z);
-        
-        
-        if(particle.position.z > this.camera.position.z + 250) {
-          particle.position.z = this.camera.position.z - 250;
-          //particle.velocity.z = 0;
-        }
-
-        // update the velocity with
-        // a splat of randomniz
-        //particle.velocity.z += this.particleVelocity;
-
-        // and the position
-        /*
-        particle.position.addSelf(
-          particle.velocity);*/
-      }
-
-      // flag to the particle system
-      // that we've changed its vertices.
-      this.particleSystem.geometry.__dirtyVertices = true;
     }
     
     elation.events.fire('renderframe_end', this);
 
     this.stats.update();
+    this.lastupdate = ts;
   },
   clearScene: function(root) {
     root = root || this.scene;
     
-    for (var i=0; i<this.objects.length; i++) {
-      root.remove(this.objects[i]);
+    for (var i=0; i<this.objects_array.length; i++) {
+      root.remove(this.objects_array[i]);
     }
   },
   addObjects: function(thing, root) {
@@ -270,16 +252,21 @@ elation.component.add('space.starbinger', {
     if (typeof elation.space.meshes[thing.type] == 'function') {
       currentobj = new elation.space.meshes[thing.type](thing, this);
       console.log("Added new " + thing.type + ": " + thing.parentname + '/' + thing.name, currentobj);
+      this.objects_array.push(currentobj);
       if (currentobj.properties && currentobj.properties.physical && currentobj.properties.physical.exists !== 0) {
         root.add(currentobj);
 
-        this.objects.push(currentobj);
         if (thing.things) {
           for (var k in thing.things) {
             this.addObjects(thing.things[k], currentobj);
           }
         }
       }
+      
+      if (!this.objects[thing.type])
+        this.objects[thing.type] = {};
+      
+      this.objects[thing.type][currentobj.name] = currentobj;
     } else {
       console.log("don't know how to handle thing type '" + thing.type + "'", thing);
     }
@@ -297,7 +284,7 @@ elation.component.add('space.starbinger', {
       this.camera.rotation = thing.rotation;
       this.camera.quaternion = thing.quaternion;
       this.camera.useTarget = false;
-      this.camera.useQuaternion = !!thing.quaternion;
+      this.camera.useQuaternion = true;
       console.log('camera attach', this.camera, thing);
     } else {
       if (this.oldcamera) {
@@ -337,8 +324,11 @@ elation.extend('ui.widgets.starbinger', function(hud) {
     var c = this.controller.camera,
         s = this.controller.args.sector.things.Star.properties.generated;
     
+    //console.log('stuff!!@#JIODJKLDJKLDKLJDJKLD');
     this.hud.debug.log(s);
   }
+  
+  this.init();
 });
 
 /* Starbinger UI Widget */

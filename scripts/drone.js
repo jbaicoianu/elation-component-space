@@ -9,7 +9,7 @@ elation.extend("space.meshes.drone", function(args) {
   this.controlcontext = 'vehicle_quadrotor';
 
   this.camerapositions = [
-    [new THREE.Vector3(0,0,0), new THREE.Vector3()]
+    [new THREE.Vector3(0,2,4), new THREE.Vector3()]
   ];
 
   this.postinit = function() {
@@ -34,7 +34,7 @@ elation.extend("space.meshes.drone", function(args) {
     this.nextblink = 0;
     */
 
-    //this.dynamics.addForce("gravity", [0,-9800 * 2,0]);
+    this.dynamics.addForce("gravity", [0,-9800 * 2,0]);
 
     elation.space.controls(0).addContext("vehicle_quadrotor", {
       'move_up': function(ev) { this.moveState.up = ev.value; },

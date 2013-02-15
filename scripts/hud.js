@@ -29,6 +29,7 @@ elation.extend('ui.hud', new function() {
     altimeter: 4,
     console: 0,
     aeronautics: 1,
+    target: 4,
     targeting: 1,
     debug: 0
   };
@@ -40,7 +41,8 @@ elation.extend('ui.hud', new function() {
     target_outline: '#7b9cab',
     target_arrow: '#8affac',
     target_box: '#aa0000',
-    target_ring: '#8affac',
+    target_ring: '#FF0000',
+    //target_ring: '#8affac',
     target_hilight: '#CDE472',
     atlas_planet_lines: '#bb2222',
     radar_sweeper: '#FD5252'
@@ -80,12 +82,14 @@ elation.extend('ui.hud', new function() {
     }
   }
   
-  this.container = function(classname, canvas) {
+  this.container = function(classname, canvas, NoDOM) {
     var container = elation.html.create({
       tag: canvas ? 'canvas' : 'div',
       classname: classname,
-      append: document.body
     });
+    
+    if (!NoDOM)
+      document.body.appendChild(container);
     
     if (canvas) {
       container.setAttribute('width', container.offsetWidth);
@@ -118,7 +122,59 @@ elation.extend('ui.hud', new function() {
   }
 });
 
-/* ATLAS spot picker */
+elation.extend('ui.widgets.rearview', function(hud) {
+  this.hud = hud;
+  this.colors = this.hud.colors;
+  
+  this.init = function() { return;
+    this.controller = this.hud.controller;
+    this.container = this.hud.container('rearview rearview_display');
+    this.windowsize = this.controller.viewsize;
+    this.width = this.container.offsetWidth;
+    this.height = this.container.offsetHeight;
+    this.viewsize = [ this.width, this.height ];
+    this.scene = this.controller.scene;
+    
+    this.initRenderer();
+    this.camera1 = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 10, 1.5e15);
+    this.scene.add( this.camera1 );
+    
+    elation.events.add(null, 'renderframe_end', this);
+  }
+  
+  this.initRenderer = function() {
+    //this.renderTarget = new THREE.WebGLRenderTarget( this.width, this.height, { format: THREE.RGBFormat } );
+    this.renderer1 = new THREE.WebGLRenderer({antialias: true});
+    this.renderer1.setSize(this.viewsize[0], this.viewsize[1]);
+    this.container.appendChild(this.renderer1.domElement);
+    //this.renderer.shadowMapEnabled = true;
+    //this.renderer.shadowMapSoft = true;
+
+    this.renderer1.autoClear = false;
+  }
+  
+  this.render = function() { return; }
+  
+  this.renderframe_end = function(event) {
+    //this.windowsize = this.controller.newsize;
+    //this.viewsize = [ (this.windowsize[0] / 4), (this.windowsize[1] / 4) ];
+
+    var ship = this.controller.objects.spaceship.Elemental;
+    this.camera1.rotation = ship.matrixRotationWorld.multiplyVector3( new THREE.Vector3(0,Math.PI,0) ).addSelf(ship.rotation);
+    this.camera1.position = this.controller.camera.position;
+
+    this.camera1.updateProjectionMatrix();
+    this.renderer1.setViewport(1, 1, this.width - 2, this.height - 2);
+    this.renderer1.render( this.scene, this.camera1 );
+  }
+  
+  this.handleEvent = function(event) {
+    if (typeof this[event.type] == 'function')
+      this[event.type](event);
+  }
+  
+  this.init();
+});
 elation.extend('ui.widgets.atlas_controls', function(hud) {
   this.hud = hud;
   this.colors = this.hud.colors;
@@ -789,7 +845,7 @@ elation.extend('ui.widgets.overlay', function(hud) {
     
     elation.events.add(window, 'resize', this);
 
-    //this.hud.console.log('static overlay initialized.');
+    this.hud.console.log('static overlay:  initialized');
   }
   
   this.draw = function(fn, skip) {
@@ -830,14 +886,16 @@ elation.extend('ui.widgets.overlay', function(hud) {
 
 elation.extend('ui.widgets.radar', function(hud) {
   this.hud = hud;
-  this.range = 500;
-  this.width = 200;
-  this.height = 200;
+  this.mode = 'ALL';
+  this.range = 24000;
+  this.width = 400;
+  this.height = 400;
   this.odist = 0;
-  this.sweepspeed = .05;
+  this.sweepspeed = .06;
   this.sweepangle = Math.PI;
   this.contacts = [];
   this.colors = this.hud.colors;
+  this.alpha = .5;
   this.types = {
     drone: 'blip',
     planet: 'blip',
@@ -848,16 +906,17 @@ elation.extend('ui.widgets.radar', function(hud) {
   this.init = function() {
     this.setCamera(this.hud.controller.camera);
     this.container = this.hud.container('radar radar_background', true);
-    this.canvas = this.hud.container('radar radar_display', true);
-    this.ctx = this.canvas.getContext('2d');
+    //this.canvas = this.hud.container('radar radar_display', true);
+    this.ctx = this.container.getContext('2d');
     this.center = { x: (this.width / 2), y: (this.height / 2) };
+    
     this.outline();
     this.nextTarget();
     this.render();
     
-    elation.events.add(null,'select,deselect',this);
+    //elation.events.add(null,'select,deselect',this);
     
-    //this.hud.console.log('radar system initialized.');
+    this.hud.console.log('radar system:  initialized');
   }
   
   this.handleEvent = function(event) {
@@ -878,7 +937,7 @@ elation.extend('ui.widgets.radar', function(hud) {
   }
 
   this.rotate = function(X, Y, angle) {
-    var range = (this.range/2) + ((this.range/2) * (this.camera.position.y / (this.range/4))) || 8400,
+    var range = this.range,
         cx = this.center.x, 
         cy = this.center.y,
         rot = elation.transform.rotate(X, Y, angle),
@@ -895,8 +954,8 @@ elation.extend('ui.widgets.radar', function(hud) {
         angle = this.sweepangle + this.sweepspeed,
         angle = angle > (Math.PI * 2) ? 0 : angle,
         points = [
-          elation.transform.rotate(-7, 99, angle),
-          elation.transform.rotate(7, 99, angle)
+          elation.transform.rotate(-7, 198, angle),
+          elation.transform.rotate(7, 198, angle)
         ];
     
     ctx.beginPath();
@@ -923,35 +982,43 @@ elation.extend('ui.widgets.radar', function(hud) {
         cy = y + (this.height / 2),
         bgColor = hex2rgb(this.colors['background']),
         lnColor = hex2rgb(this.colors['lines']);
-        slayer = this.hud.container('radar radar_static', true);
-        ctx = slayer.getContext('2d');
-        ctxbg = this.container.getContext('2d');
+        ctx = this.ctx,//slayer.getContext('2d');
+        ctxbg = this.ctx,
+        alpha = this.alpha;
     
-    ctxbg.beginPath();  
-    ctxbg.fillStyle = "rgba("+bgColor[0]+", "+bgColor[1]+", "+bgColor[2]+", .7)";  
-    ctxbg.arc(cx,cy,98,0,Math.PI*2,true);
-    ctxbg.fill();
     ctx.beginPath();  
-    ctx.arc(cx,cy,100,0,Math.PI*2,true);  
+    //ctx.fillStyle = "rgba("+bgColor[0]+", "+bgColor[1]+", "+bgColor[2]+", 1)";
+    ctx.fillStyle = "rgba(33,0,0, 1)";
+    ctx.rect(0,0,this.width,this.height);  
+    ctx.fill();
+    ctx.beginPath();  
+    ctx.fillStyle = "rgba("+bgColor[0]+", "+bgColor[1]+", "+bgColor[2]+", 1)";
+    ctx.arc(cx,cy,200,0,Math.PI*2,true);
+    ctx.fill();
+    
+    this.drawText(ctx);
+    
+    ctx.beginPath();  
+    ctx.arc(cx,cy,200,0,Math.PI*2,true);  
     ctx.clip();
     ctx.beginPath();
     ctx.lineWidth = 2;
     ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .1)";
     ctx.moveTo(x+0,y+0);
-    ctx.lineTo(x+100,y+101);
-    ctx.lineTo(x+200,y+0);  
+    ctx.lineTo(x+200,y+202);
+    ctx.lineTo(x+400,y+0);  
     ctx.fill();
     ctx.beginPath();
     ctx.moveTo(x+0,y+0);
-    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .3)";
-    ctx.lineTo(x+100,y+101);
-    ctx.moveTo(x+200,y+0);
-    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .3)";
-    ctx.lineTo(x+100,y+101);  
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", "+this.alpha+")";
+    ctx.lineTo(x+200,y+202);
+    ctx.moveTo(x+400,y+0);
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", "+this.alpha+")";
+    ctx.lineTo(x+200,y+202);  
     ctx.stroke();
     ctx.beginPath();  
-    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .3)";
-    ctx.arc(cx,cy,99,0,Math.PI*2,true);
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", "+this.alpha+")";
+    ctx.arc(cx,cy,198,0,Math.PI*2,true);
     ctx.stroke(); 
   }
   
@@ -969,8 +1036,9 @@ elation.extend('ui.widgets.radar', function(hud) {
     this.hud.clear(this.ctx, this.width, this.height);
     this.event = e;
   
+    //this.outline();
     ctx.beginPath();  
-    ctx.arc(cx,cy,100,0,Math.PI*2,true);  
+    ctx.arc(cx,cy,200,0,Math.PI*2,true);  
     ctx.clip();
     ctx.beginPath();
     ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .1)";  
@@ -978,16 +1046,24 @@ elation.extend('ui.widgets.radar', function(hud) {
     ctx.fill();
     ctx.beginPath();  
     ctx.lineWidth = 2;
-    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .5)";
+    ctx.strokeStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", "+this.alpha+")";
     ctx.arc(cx,cy,altitude,0,Math.PI*2,true); 
     ctx.stroke();
     ctx.lineWidth = 1;
 
-    this.sweep(ctx, cx, cy, bgColor, lnColor);
+    //this.sweep(ctx, cx, cy, bgColor, lnColor);
     this.draw(ctx, cx, cy);
     //this.flicker();
     
-    this.paintTarget();
+    //this.paintTarget();
+  }
+  
+  this.drawText = function(ctx) {
+    var fgColor = hex2rgb(this.colors['target_hilight']),
+        fgColor = "rgba("+fgColor[0]+","+fgColor[1]+","+fgColor[2]+",.6)";
+    
+    elation.canvas.text(ctx, this.range+'m', [this.width-8,2], fgColor, '15pt sans-serif', 'right');
+    elation.canvas.text(ctx, this.mode, [this.width-8,22], fgColor, '10pt sans-serif', 'right');
   }
   
   this.paintTarget = function() {
@@ -1039,8 +1115,8 @@ elation.extend('ui.widgets.radar', function(hud) {
       target = contacts[0];
     
     if (target.type) {
-      this.hud.targeting.label.innerHTML = target.type;
-      this.hud.targeting.name.innerHTML = target.thing.args.name;
+      this.hud.target.label = target.type;
+      this.hud.target.name = target.thing.args.name;
     }
     
     this.updateTargetDistance(target);
@@ -1051,11 +1127,13 @@ elation.extend('ui.widgets.radar', function(hud) {
         pos = target.position,
         scale = target.scale || [ 0, 0, 0 ];
     
-    this.hud.targeting.drawRotation(target,pos,rot);
+    this.hud.ops.drawRotation(target,pos,rot);
     
+    this.updateTargetInfo(target);
     
     target.target = true;
     this.current_target = target;
+    console.log('CURRENT TARGET', this.current_target);
   }
   
   this.getTarget = function() {
@@ -1075,13 +1153,54 @@ elation.extend('ui.widgets.radar', function(hud) {
     return false;
   }
   
+  this.updateTargetInfo = function(target) { return;
+    if (target.thing && target.thing.expose && target.thing.expose.length > 0) {
+      var expose = target.thing.expose;
+      var logObj = {};
+      var thing = target.thing;
+      
+      for (var item,key,i=0; i<expose.length; i++) {
+        key = expose[i];
+        item = elation.utils.arrayget(thing, key);
+        
+        if (typeof item == 'string' || typeof item == 'number') {
+          logObj[key] = item;
+        } else if (typeof item == 'object') {
+            if (item instanceof THREE.Vector3) {
+              var value = '';
+              
+              for (var tkey in item) {
+                if (typeof item[tkey] == 'number') {
+                  if (key == 'rotation')
+                    var num = (item[tkey]).toFixed(2);
+                  else
+                    var num = (item[tkey]).toFixed(0);
+                  
+                  value += !value ? num : ', ' + num;
+                }
+              }
+              
+              logObj[key] = value;
+            } else {
+              for (var tkey in item) {
+                logObj[tkey] = item[tkey];
+            }
+          }
+        }
+      }
+      
+      if (logObj)
+        this.hud.debug.log(logObj);
+    } else {
+      this.hud.debug.log('');
+    }
+  }
+  
   this.updateTargetDistance = function(target) {
-    var A = [ target.position.x, target.position.y, target.position.z ],
-        B = [ this.camera.position.x, this.camera.position.y, this.camera.position.z ],
-        dist = Math.round(elation.vector3.distance(A, B));
+    var dist = Math.round(this.camera.position.distanceTo(target.thing.position) || 0);
     
-    if (dist && dist != this.odist) {
-      this.hud.targeting.distance.innerHTML = dist+'m';
+    if (dist != this.odist) {
+      this.hud.target.distance = dist;
       this.odist = dist;
     }
   }
@@ -1100,11 +1219,11 @@ elation.extend('ui.widgets.radar', function(hud) {
       390, 391, 392, 393, 394, 395, 396, 397, 398, 399, 
     ];
     
-    this.canvas.style.opacity = 1;
+    this.container.style.opacity = 1;
     
     for (var i=0; i<timings.length; i++) {
       if (this.hud.ticks % timings[i] == 0)
-        this.canvas.style.opacity = .85;
+        this.container.style.opacity = .85;
       else if (this.hud.ticks > 500)
         this.hud.ticks = 0;
     }
@@ -1115,7 +1234,7 @@ elation.extend('ui.widgets.radar', function(hud) {
   }
 
   this.draw = function(ctx, cx, cy) {
-    var campos = this.camera.matrixWorld.decompose(),
+    var campos = this.camera.matrix.decompose(),
         angle = elation.utils.quat2euler(campos[1]),
         heading = angle[0],
         bank = angle[1],
@@ -1137,18 +1256,27 @@ elation.extend('ui.widgets.radar', function(hud) {
             ctx.lineTo(x, y+3);
             ctx.stroke();          
           } else {
-            var physical = contact.thing.properties.physical;
+            var physical = contact.thing.properties.physical, w;
             
-            var w = (physical && physical.radius ? Math.ceil((parent.width / 2) * (physical.radius / parent.range)) : 2);
-            
+            switch (contact.thing.type) {
+              case 'roidfield': w = 0; break;
+              case 'debris': w = 1; break;
+              case 'planet': w = 6; break;
+              default: 
+                w = (physical && physical.radius ? Math.ceil((parent.width / 2) * (physical.radius / parent.range)) : 2);
+            }
             
             //console.log('radar',contact.thing.type);
             ctx.beginPath();
             if (contact.thing.type == 'spacedust')
-              ctx.fillStyle = "rgba(120, 120, 120, .5)";
+              ctx.fillStyle = "rgba(150, 150, 150, .6)";
             else
               ctx.fillStyle = "rgba("+blipColor[0]+", "+blipColor[1]+", "+blipColor[2]+", "+(.3 + a)+")";
+            
             ctx.arc(x,y,w,0,Math.PI*2,true);
+            
+            
+            
             ctx.fill();
           }
           
@@ -1211,13 +1339,13 @@ elation.extend('ui.widgets.radar', function(hud) {
           //break;
         
         default:
-          var cpos = contact.position,
+          var cpos = contact.thing.position,
               x = cpos.x - pos.x,
               y = cpos.z - pos.z,
               rot = this.rotate(x, y, heading), c = 0;
           
           //if (this.checkInBounds(x, y))
-          
+          /*
           var spos = [ this.sweeperpos.x, -this.sweeperpos.y, 0 ],
               cpos = [ rot.x-cx, cy-rot.y, 0 ],
               xpos = elation.vector3.normalize(elation.vector3.subtract(spos,cpos)),
@@ -1226,13 +1354,17 @@ elation.extend('ui.widgets.radar', function(hud) {
               c = a - b,
               c = c < 0 ? c + (Math.PI * 2) : c,
               c = (1 - ((c / 2) / Math.PI)) * 5,
-              c = (c * .1);
+              c = (c * .5);
           
           drawBlip(rot.x, rot.y, contact, this.event, c, type, this);
+          */
           
-          if (contact.target) {
+          //console.log(contact == this.current_target, contact, this.current_target);
+          if (contact == this.current_target) {
+            //console.log(contact);
+            this.updateTargetInfo(contact);
             this.updateTargetDistance(contact);
-            this.hud.targeting.drawRotation(contact,contact.position,contact.rotation);
+            this.hud.ops.drawRotation(contact,contact.position,contact.rotation);
           }
           
           break;
@@ -1313,19 +1445,21 @@ elation.extend('ui.widgets.aeronautics', function(hud) {
 
     this.resize();
     elation.events.add(window, 'resize', this);
+    
+    this.hud.console.log('aeronautics system:  initialized');
   }
   
   this.resize = function(event) {
     var wdim = elation.html.dimensions(window),
         cdim = elation.html.dimensions(this.container);
     
-    this.width = cdim.w;
-    this.height = cdim.h;
+    this.width = this.radius * 2;
+    this.height = this.radius * 2;
     this.container.setAttribute('width', this.width);
     this.container.setAttribute('height', this.height);
-    this.container.style.top = (wdim.h/2)-(cdim.h/2) + 'px';
-    this.container.style.left = (wdim.w/2)-(cdim.w/2) + 'px';
-    this.center = { x: (this.width / 2), y: (this.height / 2) };
+    this.container.style.top = (wdim.h/2) - this.radius + 'px';
+    this.container.style.left = (wdim.w/2) - this.radius + 'px';
+    this.center = { x: this.radius, y: this.radius };
   }
   
   this.render = function(event) {
@@ -1352,7 +1486,31 @@ elation.extend('ui.widgets.aeronautics', function(hud) {
     this.vector_old = B;
     this.delta = delta;
     this.speed = speed;
+    //console.log(speed);
     this.fps = fps;
+    
+    var txtColor = [0,255,255];
+    var player = this.hud.controller.objects.player.Player;
+    if (player.burner_on && player.fuel > 0) txtColor = [255,255,0];
+    if (player.booster_on && player.fuel > 0) txtColor = [255,0,255];
+    
+      
+    
+    this.ctx.fillStyle = "rgba("+txtColor[0]+", "+txtColor[1]+", "+txtColor[2]+", 1)";
+    this.ctx.font = '14pt impact';
+    this.ctx.textBaseline = 'bottom';
+    this.ctx.fillText('v'+Math.round(this.speed), 1, 20);
+    this.ctx.stroke();
+    this.ctx.fillStyle = "rgba("+txtColor[0]+", "+txtColor[1]+", "+txtColor[2]+", 1)";
+    this.ctx.font = '12pt impact';
+    this.ctx.textBaseline = 'bottom';
+    this.ctx.fillText('T:'+Math.round(player.throttle * 100)+'%', 1, 40);
+    this.ctx.stroke();
+    this.ctx.fillStyle = "rgba("+txtColor[0]+", "+txtColor[1]+", "+txtColor[2]+", 1)";
+    this.ctx.font = '12pt impact';
+    this.ctx.textBaseline = 'bottom';
+    this.ctx.fillText('F:'+Math.round(player.fuel * 100)+'%', 1, 60);
+    this.ctx.stroke();
   }
   
   this.setFPV = function(event, cpos, opos) {
@@ -1400,7 +1558,7 @@ elation.extend('ui.widgets.aeronautics', function(hud) {
     ctx.stroke();
   }
   
-  this.setPitch = function(event, cpos, opos) {
+  this.setPitch = function(event, cpos, opos) { return;
     var ctx = this.ctx,
         angle = this.angle,
         yaw = angle[0],
@@ -1424,7 +1582,7 @@ elation.extend('ui.widgets.aeronautics', function(hud) {
             return;
           
           ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", 1)";
-          ctx.font = '15pt system';
+          ctx.font = '12pt impact';
           
           var metrics = ctx.measureText(key);
           var v1 = elation.transform.rotate(nx<0?nx-metrics.width-4:nx+4, ny + 10, bank);
@@ -1497,7 +1655,6 @@ elation.extend('ui.widgets.aeronautics', function(hud) {
           break;
       }
     }
-    ctx.stroke();
   }
 
   this.handleEvent = function(event) {
@@ -1508,67 +1665,296 @@ elation.extend('ui.widgets.aeronautics', function(hud) {
   this.init();
 });
 
-elation.extend('ui.widgets.targeting', function(hud) {
+elation.extend('canvas.text', function(ctx, text, pos, color, font, alignment) {
+  var text = text || 'undefined',
+      color = color || "rgba(180,180,180,1)",
+      font = font || '12pt impact',
+      pos = pos || [0,0],
+      alignment = alignment || 'left';
+    
+  ctx.fillStyle = color;
+  ctx.font = font;
+  ctx.textBaseline = 'top';
+  ctx.textAlign = alignment;
+  ctx.fillText(text, pos[0], pos[1]);
+});
+
+elation.extend('ui.widgets.target', function(hud) {
   this.hud = hud;
-  this.range = 3500;
-  this.width = 300;
-  this.height = 300;
+  this.width = 400;
+  this.height = 400;
   this.colors = hud.colors;
-  this.opos = { x:0, y:0, z:0 };
-  
-  this.sdas = function(txt) {
-  
-  }
-  
+
   this.init = function() {
     this.camera = this.hud.controller.camera;
     
-    this.container = this.hud.container('target');
+    this.container = this.hud.container('target_test', true);
+    this.ctx = this.container.getContext('2d');
     
-    this.top = elation.html.create({
-      tag: 'div',
-      classname: 'target_top',
-      append: this.container
-    });
-    this.topleft = elation.html.create({
-      tag: 'div',
-      classname: 'target_topleft',
-      append: this.top
-    });    
-    this.label = elation.html.create({
-      tag: 'div',
-      classname: 'target_label',
-      append: this.topleft,
-      attributes: {
-        innerHTML: 'target'
-      }
-    });
-    this.name = elation.html.create({
-      tag: 'div',
-      classname: 'target_name',
-      append: this.topleft,
-      attributes: {
-        innerHTML: 'unknown'
-      }
-    });
-    this.distance = elation.html.create({
-      tag: 'div',
-      classname: 'target_distance',
-      append: this.top,
-      attributes: {
-        innerHTML: '0'
-      }
-    });
+    this.resize();
+    
+    this.hud.console.log('target display subsystem:  initialized');
+  }
+  
+  this.render = function(event) {
+    var ctx = this.ctx,
+        hud = this.hud,
+        color = hud.color('lines'),
+        color2 = hud.color('target_box'),
+        color3 = hud.color('target_hilight'),
+        target = hud.radar.getTarget();
+    
+    if (!target)
+      return;
+    
+    var format = function(str) { return (''+str).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"); },
+        dist = format(this.distance),
+        pos = target.position,
+        x = format(Math.round(pos.x)),
+        y = format(Math.round(pos.y)),
+        z = format(Math.round(pos.z)),
+        top = this.width / 12,
+        cx = this.center.x,
+        cy = this.center.y + (top/2),
+        lineWidth = Math.floor(this.width / 100),
+        bgcolor = "rgba("+color[0]+","+color[1]+","+color[2]+",.3)",
+        fgcolor = "rgba("+color[0]+","+color[1]+","+color[2]+",.6)",
+        gridcolor = "rgba("+color2[0]+","+color2[1]+","+color2[2]+",.4)",
+        hbgcolor = "rgba("+color3[0]+","+color3[1]+","+color3[2]+",.3)",
+        hfgcolor = "rgba("+color3[0]+","+color3[1]+","+color3[2]+",.6)",
+        lines = 3,
+        cross = 9;
+    
+    ctx.beginPath();  
+    ctx.fillStyle = "rgba(0,0,0,1)";
+    ctx.rect(0, 0, this.width, this.height);
+    ctx.fill();
+    
+    var w = this.width / lines,
+        tx = Math.round(pos.x),
+        ty = Math.round(pos.z),
+        stepx = -(tx - (Math.floor(tx / w) * w)),
+        stepy = -(ty - (Math.floor(ty / w) * w));
+    
+    for (var i=0; i<=lines; i++) {
+      var xx = (w * i) + stepx,
+          yy = top + 6;
+      
+      ctx.beginPath();
+      ctx.strokeStyle = gridcolor;
+      ctx.lineWidth = lineWidth/2;
+      ctx.moveTo(xx, yy);
+      ctx.lineTo(xx, this.height);
+      ctx.stroke();
+    }
+    
+    for (var i=1; i<=lines; i++) {
+      var xx = 0,
+          yy = 6 + (w * i) + stepy;
+      
+      ctx.beginPath();
+      ctx.strokeStyle = gridcolor;
+      ctx.lineWidth = lineWidth / 2;
+      ctx.moveTo(xx, yy);
+      ctx.lineTo(this.width, yy);
+      ctx.stroke();
+    }
+    
+    ctx.beginPath();  
+    ctx.fillStyle = "rgba(0,0,0,1)";
+    ctx.rect(0, 0, this.width, top);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.fillStyle = bgcolor;
+    ctx.rect(0, 0, this.width, top);  
+    ctx.fill();
+    ctx.beginPath();  
+    ctx.strokeStyle = fgcolor;
+    ctx.lineWidth = lineWidth;
+    ctx.moveTo(0, top+2);
+    ctx.lineTo(this.width, top);
+    ctx.stroke();
+
+    ctx.beginPath();  
+    ctx.strokeStyle = fgcolor;
+    ctx.lineWidth = 1;
+    ctx.moveTo(cx-cross, cy);
+    ctx.lineTo(cx+cross, cy);
+    ctx.moveTo(cx, cy-cross);
+    ctx.lineTo(cx, cy+cross);
+    ctx.stroke();
+
+    elation.canvas.text(ctx, this.label+': '+this.name, [2,2], null, (top/2)+'pt sans-serif');
+    elation.canvas.text(ctx, 'x:'+x, [2,top+7], hfgcolor, ((top/2)-lineWidth)+'pt sans-serif','left');
+    elation.canvas.text(ctx, 'y:'+y, [(this.width/2)-10,top+7], hfgcolor, ((top/2)-lineWidth)+'pt sans-serif','center');
+    elation.canvas.text(ctx, 'z:'+z, [this.width-10,top+7], hfgcolor, ((top/2)-lineWidth)+'pt sans-serif','right');
+    elation.canvas.text(ctx, dist+'m', [this.width-10,this.width-32], null, (top/2)+'pt sans-serif', 'right');
+  }
+  
+  this.resize = function(event) {
+    this.container.setAttribute('width', this.width);
+    this.container.setAttribute('height', this.height);
+    this.center = { x: (this.width / 2), y: (this.height / 2) };
+    this.container.style.width = this.width + 'px';
+    this.container.style.height = this.height + 'px';
+  }
+  
+  this.init();
+});
+elation.extend('ui.widgets.ops', function(hud) {
+  this.hud = hud;
+  this.colors = hud.colors;
+  this.width = 400;
+  this.height = 400;
+
+  this.init = function() {
+    this.camera = this.hud.controller.camera;
+    this.container = this.hud.container('ship_status', true);
+    this.ctx = this.container.getContext('2d');
+    
+    this.resize();
+
+    this.hud.console.log('operations display subsystem:  initialized');
+  }
+
+  this.drawRotation = function(target, position, angle) {
+    var c = this.hud.color('lines'),
+        bg = this.hud.color('target_box'),
+        fg = this.hud.color('target_blip'),
+        pad = this.width / 22,
+        angle = { x: this.hud.radar.angle[0] - (Math.PI/2), y: this.hud.radar.angle[1] + (Math.PI/2), z: this.hud.radar.angle[2] },
+        rot = [angle.x,angle.y,angle.z],
+        r = this.width / 10,
+        p = [[pad+r,r+pad],[(pad*2)+(r*3),r+pad],[(pad*3)+(r*5),r+pad],[(pad*4)+(r*7),r+pad]],
+        s = 1.5 * Math.PI,
+        a = .2,
+        l = 50,
+        sin = Math.sin, cos = Math.cos,
+        pos = [ sin(angle.y)*cos(angle.x), sin(angle.y)*sin(angle.x), cos(angle.y) ],
+        proj = new THREE.Projector(),
+        pos2 = proj.projectVector({x:pos[0],y:pos[1],z:pos[2]}, this.camera),
+        cx = this.width/2,
+        cy = this.height/2;
+    
+    this.ctx.beginPath();  
+    this.ctx.fillStyle = "rgba(0,0,0,1)";
+    this.ctx.rect(0,0,this.width,this.height);  
+    this.ctx.fill();
+    
+    for (var i=0; i<p.length; i++) {
+      var e = rot[i] + s,
+          t = p[i],
+          x = t[0],
+          y = t[1] + pad*1.5,
+          x2 = x - (pos[0]),
+          y2 = y + (pos[1]);
+      
+      this.ctx.beginPath();
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeStyle = "rgba("+fg[0]+", "+fg[1]+", "+fg[2]+", 1)";
+      this.ctx.arc(x,y,r,s,e);
+      this.ctx.stroke();
+      this.ctx.beginPath();
+      this.ctx.fillStyle = "rgba("+fg[0]+", "+fg[1]+", "+fg[2]+", .3)";
+      this.ctx.moveTo(x,y);
+      this.ctx.lineTo(x,y-r);
+      this.ctx.arc(x,y,r,s,e);
+      this.ctx.lineTo(x,y);
+      this.ctx.fill();
+      this.ctx.beginPath();
+      this.ctx.strokeStyle = "rgba("+c[0]+", "+c[1]+", "+c[2]+", .6)";
+      this.ctx.arc(x,y,r,0,Math.PI*2);
+      this.ctx.stroke();
+    }
+    
+    var x = cx,
+        r = this.width / 4,
+        y = (cy * 2) - r - pad,
+        x2 = x - (pos[0] * r),
+        y2 = y + (pos[1] * r),
+        s = r;
+        //bx = r*xax + cx,
+        //by = r*zaz + cy;
+    
+    this.ctx.beginPath();
+    this.ctx.strokeStyle = "rgba("+fg[0]+", "+fg[1]+", "+fg[2]+", 1)";
+    this.ctx.moveTo(x,y);
+    this.ctx.lineTo(x2,y2);
+    this.ctx.stroke();
+    this.ctx.beginPath();
+    this.ctx.fillStyle = "rgba("+bg[0]+", "+bg[1]+", "+bg[2]+", "+a+")";
+    this.ctx.arc(x,y,r,0,Math.PI*2);
+    this.ctx.fill();
+    this.ctx.beginPath();
+    this.ctx.lineWidth = 2;
+    this.ctx.strokeStyle = "rgba("+c[0]+", "+c[1]+", "+c[2]+", .6)";
+    this.ctx.arc(x,y,r,0,Math.PI*2);
+    this.ctx.stroke();
+    
+    var player = this.hud.controller.objects.player.Player,
+        width = this.width / 7,
+        height = r * 2,
+        x = pad;
+        h = (height * player.throttle),
+        dh = this.height - height - pad,
+        t = dh - h + height;
+    
+    this.ctx.beginPath();
+    this.ctx.strokeStyle = "rgba("+c[0]+", "+c[1]+", "+c[2]+", .6)";
+    this.ctx.rect(x,dh-2,width,height+4);
+    this.ctx.stroke();
+    this.ctx.beginPath();
+    this.ctx.fillStyle = "rgba(0,200,0,.6)";
+    this.ctx.rect(x+2,t,width-4,h);
+    this.ctx.fill();
+   
+    var h = (height * player.fuel),
+        x = this.width - pad - width;
+        t = dh - h + height;
+    
+    this.ctx.beginPath();
+    this.ctx.strokeStyle = "rgba("+c[0]+", "+c[1]+", "+c[2]+", .6)";
+    this.ctx.rect(x,dh-2,width,height+4);
+    this.ctx.stroke();
+    this.ctx.beginPath();
+    this.ctx.fillStyle = "rgba(200,200,0,.6)";
+    this.ctx.rect(x+2,t,width-4,h);
+    this.ctx.fill();
+  }
+  
+  this.resize = function(event) {
+    this.center = { x: (this.width / 2), y: (this.height / 2) };
+    this.container.setAttribute('width', this.width);
+    this.container.setAttribute('height', this.height);
+    this.container.style.width = this.width + 'px';
+    this.container.style.height = this.height + 'px';
+  }
+  
+  this.render = function(event) {
+
+  }
+    
+  this.init();
+});
+elation.extend('ui.widgets.targeting', function(hud) {
+  this.hud = hud;
+  this.range = 3500;
+  this.width = 500;
+  this.height = 500;
+  this.colors = hud.colors;
+  this.opos = { x:0, y:0, z:0 };
+
+  this.init = function() {
+    this.camera = this.hud.controller.camera;
+    
+    this.container = this.hud.container('target_info');
+    
     this.canvas_bg = elation.html.create({
       tag: 'canvas',
       classname: 'target_canvas',
       append: this.container
     });
-    this.canvas_fg = elation.html.create({
-      tag: 'canvas',
-      classname: 'target_canvas',
-      append: this.container
-    });
+
     this.canvas_hud = elation.html.create({
       tag: 'canvas',
       classname: 'targeting',
@@ -1576,7 +1962,6 @@ elation.extend('ui.widgets.targeting', function(hud) {
     });
     
     this.ctx = this.canvas_bg.getContext('2d');
-    this.ctx2 = this.canvas_fg.getContext('2d');
     this.canvas_hud_ctx = this.canvas_hud.getContext('2d');
 
     this.targetring();
@@ -1593,74 +1978,8 @@ elation.extend('ui.widgets.targeting', function(hud) {
     
     this.resize();
     elation.events.add(window, 'resize', this);
-    //elation.events.add(null, 'radar_blip', this);
-  }
-
-  this.drawRotation = function(target, position, angle) {
-    this.canvas_bg.width = this.width;
     
-    var c = this.hud.color('lines'),
-        pad = 5,
-        angle = { x: this.hud.radar.angle[0] - (Math.PI/2), y: this.hud.radar.angle[1] + (Math.PI/2), z: this.hud.radar.angle[2] },
-        rot = [angle.x,angle.y,angle.z],
-        r = 18,
-        p = [[pad+r,r+pad],[(pad*2)+(r*3),r+pad],[(pad*3)+(r*5),r+pad]],
-        s = 1.5 * Math.PI,
-        a = .4,
-        l = 50,
-        sin = Math.sin, cos = Math.cos,
-        pos = [ sin(angle.y)*cos(angle.x), sin(angle.y)*sin(angle.x), cos(angle.y) ],
-        proj = new THREE.Projector(),
-        pos2 = proj.projectVector({x:pos[0],y:pos[1],z:pos[2]}, this.camera),
-        cx = this.width/2,
-        cy = this.height/2;
-    
-    this.hud.debug.log({
-      id: target.thing.id,
-      rot: angle.x.toFixed(2) + ', ' +angle.y.toFixed(2) + ', ' +angle.z.toFixed(2),
-      pos1: pos[0].toFixed(2) + ', ' +pos[1].toFixed(2) + ', ' +pos[2].toFixed(2),
-      pos2: pos2.x.toFixed(2) + ', ' +pos2.y.toFixed(2) + ', ' +pos2.z.toFixed(2)
-    });
-    
-    for (var i=0; i<p.length; i++) {
-      var e = rot[i] + s,
-          t = p[i],
-          x = t[0],
-          y = t[1];
-      
-      this.ctx.beginPath();
-      this.ctx.fillStyle = "rgba("+c[0]+", "+c[1]+", "+c[2]+", "+a+")";
-      this.ctx.moveTo(x,y);
-      this.ctx.lineTo(x,y-r);
-      this.ctx.arc(x,y,r,s,e);
-      this.ctx.lineTo(x,y);
-      this.ctx.fill();
-      this.ctx.beginPath();
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeStyle = "rgba("+c[0]+", "+c[1]+", "+c[2]+", .8)";
-      this.ctx.arc(x,y,r,0,Math.PI*2);
-      this.ctx.stroke();
-    }
-    
-    var x = cx,
-        y = cy + 20,
-        r = 50,
-        x2 = x - (pos[0] * r),
-        y2 = y + (pos[1] * r),
-        s = r;
-        //bx = r*xax + cx,
-        //by = r*zaz + cy;
-    
-    this.ctx.beginPath();
-    this.ctx.strokeStyle = "rgba("+c[0]+", "+c[1]+", "+c[2]+", "+a+")";
-    this.ctx.moveTo(x,y);
-    this.ctx.lineTo(x2,y2);
-    this.ctx.stroke();
-    this.ctx.beginPath();
-    this.ctx.lineWidth = 2;
-    this.ctx.strokeStyle = "rgba("+c[0]+", "+c[1]+", "+c[2]+", .8)";
-    this.ctx.arc(x,y,r,0,Math.PI*2);
-    this.ctx.stroke();
+    this.hud.console.log('targeting system:  initialized');
   }
   
   this.handleEvent = function(event) {
@@ -1697,7 +2016,7 @@ elation.extend('ui.widgets.targeting', function(hud) {
     
     this.hud.overlay.draw((function(ctx, cx, cy) {
       ctx.beginPath();
-      ctx.fillStyle = "rgba("+lnColor[0]+", "+lnColor[1]+", "+lnColor[2]+", .05)";
+      ctx.fillStyle = "rgba(180,180,180,.1)";
       ctx.arc(cx,cy,30,0,Math.PI*2,true);
       ctx.fill();  
       ctx.beginPath();
@@ -1724,8 +2043,8 @@ elation.extend('ui.widgets.targeting', function(hud) {
       return (angle > (Math.PI/2) && angle < (Math.PI/2));
     };
     
-    var dim = elation.html.dimensions(window);
-    var ctx = this.canvas_hud_ctx,
+    var dim = elation.html.dimensions(window),
+        ctx = this.canvas_hud_ctx,
         hud = this.hud,
         blipColor = hud.color('target_blip'),
         lnColor = hud.color('radar_sweeper'),
@@ -1734,7 +2053,7 @@ elation.extend('ui.widgets.targeting', function(hud) {
         heading = angle[0],
         contact = hud.radar.getTarget();
     
-    if (!contact)
+    if (!contact || contact.type == 'player')
       return;
     
     var bpos = contact.position,
@@ -1782,10 +2101,8 @@ elation.extend('ui.widgets.targeting', function(hud) {
       rot2 = elation.transform.rotate(0, r-tbr, an);
     }
     
-    
     this.canvas_hud.width = this.canvas_hud_width;
-    //coords.x = coords.x + cx - (dim.w/2);
-//.x = coords.y + cy - (dim.h/2);
+    
     if (!t) {
       ctx.beginPath();
       ctx.strokeStyle = "rgba("+tgColor[0]+", "+tgColor[1]+", "+tgColor[2]+", 1)";
@@ -1837,7 +2154,6 @@ elation.extend('ui.widgets.targeting', function(hud) {
   this.init();
 });
 
-
 elation.extend('ui.widgets.rotacol', function(hud) {
   this.hud = hud;
   
@@ -1849,7 +2165,7 @@ elation.extend('ui.widgets.rotacol', function(hud) {
       append: document.body
     });
     
-    //this.hud.console.log('rotacol initialized.');
+    this.hud.console.log('rotacol subsystem:  initialized');
   }
   
   this.format = function(pos) {
@@ -1866,6 +2182,7 @@ elation.extend('ui.widgets.rotacol', function(hud) {
 
 elation.extend('ui.widgets.console', function(hud) {
   this.hud = hud;
+  this.height = 150;
   
   this.init = function() {
     this.camera = this.hud.controller.camera;
@@ -1893,7 +2210,28 @@ elation.extend('ui.widgets.console', function(hud) {
       }
     });
     
+    this.resize();
+    
+    elation.events.add(window, 'resize', this);
     //this.log('console initialized.');
+  }
+  
+  this.handleEvent = function(event) {
+    if (typeof this[event.type] == 'function')
+      this[event.type](event);
+  }
+  
+  this.resize = function(event) {
+    var wdim = elation.html.dimensions(window),
+        w = wdim.w / 2.5,
+        h = wdim.h / 5,
+        x = (wdim.w / 2) - (w / 2),
+        y = 10;
+    
+    this.center = { x: (this.width / 2), y: (this.height / 2) };
+    this.container.style.left = x + 'px';
+    this.container.style.top = y + 'px';
+    //this.container.style.height = h + 'px';
   }
   
   this.format = function(pos) {

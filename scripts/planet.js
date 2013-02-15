@@ -16,23 +16,27 @@ console.log('## PLANET ',this.radius);
   this.create = function() {
     var parameters = {
       map: THREE.ImageUtils.loadTexture(this.texture),
+      /*
       specular: 0x111111,
-      color: 0xffffff,
+      color: 0x111111,
       ambient: 0x222222,
-      shininess: 1,
+      shininess: .1,
       specular: 0x333333,
       normalScale: 0.5,
+      */
+      
       blending: THREE.AdditiveAlphaBlending
     };
     
-    if (this.normalMap != '/~lazarus/elation/index.php/images')
-      parameters.normalMap = THREE.ImageUtils.loadTexture(this.normalMap);
+    //if (this.normalMap != '/~lazarus/elation/index.php/images')
+    //  parameters.normalMap = THREE.ImageUtils.loadTexture(this.normalMap);
     
-    var material = new THREE.MeshPhongMaterial(parameters),
-        sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius,108,54),material);
+    var material = new THREE.MeshLambertMaterial(parameters),
+        sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius,64,32),material);
     
     this.add(sphere);
     
+    sphere.rotation.y = 1.5;
     sphere.geometry.computeTangents();
     sphere.geometry.computeVertexNormals();
   }
@@ -693,6 +697,6 @@ this.speed = 10;
 
   }
 });
-elation.space.meshes.planet.particlevis.search.prototype = new THREE.Line();
-elation.space.meshes.planet.particlevis.search.prototype.constructor = elation.space.meshes.planet.particlevis.search;
+//elation.space.meshes.planet.particlevis.search.prototype = new THREE.Line();
+//elation.space.meshes.planet.particlevis.search.prototype.constructor = elation.space.meshes.planet.particlevis.search;
 

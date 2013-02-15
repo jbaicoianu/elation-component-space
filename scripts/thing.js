@@ -10,14 +10,12 @@ elation.extend("space.thing", function(args, obj) {
   this.parts = {};
   this.collisionradius = 0;
   this.controller = elation.space.controller;
-      console.log('!!!!!  THING ',this.name, this.type);
 
   this.init = function() {
     this.name = this.args.name;
     this.parentname = this.args.parentname;
     this.type = this.args.type;
 
-    console.log('!!!!! NEW THING ',this.name, this.type);
     if (typeof this.preinit == 'function') {
       this.preinit();
     }
@@ -116,7 +114,7 @@ elation.extend("space.thing", function(args, obj) {
   }
   this.createDynamics = function() {
     if (!this.dynamics) {
-      console.log('### Creating Dynamics',this.type, this);
+      //console.log('### Creating Dynamics',this.type, this);
       var angular = elation.utils.arrayget(this.properties, 'physical.rotationalvelocity');
       if (!angular) angular = [0,0,0];
       this.dynamics = new elation.utils.physics.object({position: this.position, rotation: this.rotation, restitution: .8, radius: this.collisionradius, drag: .4257, friction: this.friction, mass: this.mass || 1, angular: new THREE.Vector3(angular[0] * Math.PI/180, angular[1] * Math.PI / 180, angular[2] * Math.PI / 180)});
@@ -126,7 +124,6 @@ elation.extend("space.thing", function(args, obj) {
 
       this.updateCollisionSize();
       elation.events.add([this.dynamics], "dynamicsupdate,bounce", this);
-      console.log('### Creating Dynamics END',this.dynamics);
     }
   }
   this.removeDynamics = function() {
@@ -168,13 +165,15 @@ elation.extend("space.thing", function(args, obj) {
     }
   }
   this.updateCollisionSize = function() {
-      //console.log(this, this.collisionradius, this.boundRadius);
+      //console.log('updateCollisionSize', this, this.collisionradius, this.boundRadius);
       var bounds = this.getBoundingBox();
       var dist = [(bounds.max.x - bounds.min.x) / 2, (bounds.max.y - bounds.min.y) / 2, (bounds.max.z - bounds.min.z) / 2];
       var center = [(bounds.max.x + bounds.min.x) / 2, (bounds.max.y + bounds.min.y) / 2, (bounds.max.z + bounds.min.z) / 2];
       var radius = Math.max(dist[0], dist[1], dist[2]);
 
       this.collisionradius = this.dynamics.radius = radius;
+      
+      //console.log('DYNAMICS',this,this.collisionradius,radius);
       if (this.collisionradius > 0) {
         if (this.collisionmesh) {
           this.remove(this.collisionmesh);
@@ -186,7 +185,7 @@ elation.extend("space.thing", function(args, obj) {
         this.collisionmesh.doubleSided = true;
         this.collisionmesh.material.depthWrite = false;
 
-        this.add(this.collisionmesh);
+        //this.add(this.collisionmesh);
       }
   }
   this.getBoundingBox = function(obj) {
@@ -209,7 +208,7 @@ elation.extend("space.thing", function(args, obj) {
     }
     if (obj.geometry) {
       obj.geometry.computeBoundingBox();
-      console.log(obj, obj.geometry.boundingSphere, obj.geometry.boundingBox);
+      //console.log(obj, obj.geometry.boundingSphere, obj.geometry.boundingBox);
       var geobbox = obj.geometry.boundingBox;
       if (geobbox) {
         if (geobbox.min.x < bbox.min.x) bbox.min.x = geobbox.min.x; 
@@ -221,7 +220,7 @@ elation.extend("space.thing", function(args, obj) {
         if (geobbox.max.z > bbox.max.z) bbox.max.z = geobbox.max.z; 
       }
     } else {
-      console.log('no geom', obj);
+      //console.log('no geom', obj);
     }
     /*
     if (obj != this) {
@@ -258,7 +257,8 @@ elation.extend("space.thing", function(args, obj) {
       if (this.properties.render && this.properties.render.scale) {
         radarcontact.scale = this.properties.render.scale;
       }
-      elation.ui.hud.radar.addContact(radarcontact);
+      if (radarcontact.type != 'sector')
+        elation.ui.hud.radar.addContact(radarcontact);
       this.radarcontact = radarcontact;
     }
   }
@@ -281,53 +281,11 @@ elation.extend("space.thing", function(args, obj) {
     if (this.controlcontext) {
       elation.space.controls(0).activateContext(this.controlcontext, this);
     }
-
-    var things = this.args.things,
-        cameras = [];
-    
-    for (var name in things) {
-      var thing = things[name];
-      
-      if (thing.type == 'camera') {
-        cameras.push(thing);
-      }
-    }
-    
-    //console.log('camera',cameras, this.camera);
-    if (cameras.length > 0) {
-      if (this.camera) {
-        for (var i=0; i<cameras.length; i++) {
-          var camera = cameras[i];
-          
-          if (this.camera == camera)  
-            var selected = i;
-        }
-      }
-      
-      //if (cameras[selected+1])
-      //  this.camera = cameras[selected+1]
-      //else
-        this.camera = cameras[0];
-      
-      //console.log('CAMERA',selected, cameras[selected+1], this.camera, typeof this.camera);
-      var thing = this.camera.properties.physical;
-      this.camera.position = new THREE.Vector3(thing.position[0],thing.position[1],thing.position[2]);
-      this.camera.rotation = new THREE.Vector3(thing.rotation[0],thing.rotation[1],thing.rotation[2]);
-    }
-
-    if (this.camera) {
-      //console.log('attach camera', selected, this.camera);
-      this.controller.attachCameraToObject(this.camera);
-    }
   }
   this.deselect = function(ev) {
     console.log("Thing deselected:", this);
     if (this.controlcontext) {
       elation.space.controls(0).deactivateContext(this.controlcontext);
-    }
-    
-    if (this.camera) {
-      this.controller.attachCameraToObject(false);
     }
   }
   this.bounce = function(ev) {

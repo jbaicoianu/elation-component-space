@@ -1,9 +1,6 @@
-* {
+* { 
   font-family: sans-serif;
   font-weight: bold;
-}
-div.main {
-  /*background: url('/~lazarus/elation/images/space/galaxy_starfield.png');*/
 }
 canvas {
   position: fixed;
