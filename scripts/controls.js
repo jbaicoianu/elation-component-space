@@ -366,6 +366,9 @@ elation.component.add("space.controls", {
     this.changes.push("mousewheel");
   },
   keydown: function(ev) {
+    if (ev.target.tagName.toLowerCase() == 'input')
+      return;
+    
     var keyname = this.getBindingName("keyboard", ev.keyCode);
     //console.log(keyname + ' down', ev.value);
     if (!this.state[keyname]) {
@@ -374,6 +377,9 @@ elation.component.add("space.controls", {
     this.state[keyname] = 1;
   },
   keyup: function(ev) {
+    if (ev.target.tagName.toLowerCase() == 'input')
+      return;
+    
     var keyname = this.getBindingName("keyboard", ev.keyCode);
     //console.log(keyname + ' up');
     this.state[keyname] = 0;

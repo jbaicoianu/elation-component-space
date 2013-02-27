@@ -43,12 +43,12 @@ elation.extend("space.meshes.ship", function(args) {
       console.log('@@@ ship LOADED MODEL', this.properties.render.shading, this.materials, meshShading); 
       (function(self, mesh) {
         var loader = new THREE.JSONLoader();
-        loader.load( { model: mesh, callback: function(geometry) { 
+        loader.load(mesh, function(geometry) { 
           if (shading == 'smooth') 
             geometry.computeVertexNormals();
           
           self.loadMesh(geometry); 
-        } });
+        });
       })(this, this.properties.render.mesh);
     }
     

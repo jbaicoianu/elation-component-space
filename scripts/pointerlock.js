@@ -7,6 +7,8 @@ elation.extend('pointerlock', function(controls) {
     console.log('pointerlock init',this);
     elation.events.add(this.container, 'click', this);
     elation.events.add(window, 'pointerlockchange,mozpointerlockchange,webkitpointerlockchange', this);
+    
+    elation.html.addclass(document.body, 'show_interface');
   }
   
   this.click = function(element) {
@@ -25,8 +27,10 @@ elation.extend('pointerlock', function(controls) {
   this.pointerlockchange = function(event) {
     if (document.pointerLockElement === this.container || document.mozPointerLockElement === this.container || document.webkitPointerLockElement === this.container) {
       this.locked = true;
+      elation.html.removeclass(document.body, 'show_interface');
     } else {
       this.locked = false;
+      elation.html.addclass(document.body, 'show_interface');
     }
     
     this.controls.state.mouse_x = 0;

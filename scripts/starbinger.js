@@ -5,12 +5,13 @@ elation.component.add('space.starbinger', {
   objects_array: [],
   objects: {},
   camerapos: new THREE.Vector3(0,0,0),
+  camnewpos: new THREE.Vector3(0,0,0),
 
   init: function() {
     this.dustCount = 1000;
     this.dustDiameter = 750;
     this.dustRadius = this.dustDiameter / 2;
-    this.dustSize = 2;
+    this.dustSize = 1.5;
     
     elation.space.controller = this;
     this.viewsize = this.getsize();
@@ -66,6 +67,10 @@ elation.component.add('space.starbinger', {
     
     this.addSkybox();
     this.addDust();
+    
+    elation.ui.hud.console.log('');
+    elation.ui.hud.console.log('-!- Movement: <p>W</p>,<p>S</p> | Strafing: <p>A</p>,<p>D</p>,<p>R</p>,<p>F</p> | Rolling: <p>Q</p>,<p>E</p> | Targeting: <p>SCROLL</p>');
+    elation.ui.hud.console.log('-!- Fire: <p>Mouse0</p> | Afterburner: <p>Mouse1</p> | Boost: <p>X</p>,<p>Mouse2</p> | Brake: <p>SHIFT</p>');
   },
   resize: function(event) {
     this.viewsize = this.getsize();
@@ -108,10 +113,10 @@ elation.component.add('space.starbinger', {
     
     //console.log('HEX COLOR!!@!',hexColor);
     var pMaterial = new THREE.ParticleBasicMaterial({
-          color: 0xFFFFFF,
+          color: 0x999999,
           size: this.dustSize,
           map: THREE.ImageUtils.loadTexture(
-            "/~lazarus/elation/images/space/particle_3.png"
+            "/~lazarus/elation/images/space/particle.png"
           ),
           blending: THREE.AdditiveBlending,
           transparent: true
@@ -159,7 +164,7 @@ elation.component.add('space.starbinger', {
     //this.controls.activateContext("default", this);
   },
   initRenderer: function() {
-    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({antialias: true, maxShadows: 1000}) : new THREE.CanvasRenderer());
+    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({ clearColor: 0x000000, clearAlpha: 1, antialias: true, maxShadows: 1000}) : new THREE.CanvasRenderer());
     this.renderer.setSize(this.viewsize[0], this.viewsize[1]);
 
     this.renderer.shadowMapEnabled = true;
@@ -175,9 +180,14 @@ elation.component.add('space.starbinger', {
     }
     return [window.innerWidth, window.innerHeight];
   },
-  loop: function() {
+  loop: function(ev) {
+    this.campos = new THREE.Vector3(
+      this.camera.position.x,
+      this.camera.position.y,
+      this.camera.position.z
+    );
     (function(self) {
-      requestAnimationFrame( function() { self.loop(); } );
+      requestAnimationFrame( function() { self.loop(ev); } );
     })(this);
   
     this.newsize = newsize = this.getsize();
@@ -185,7 +195,6 @@ elation.component.add('space.starbinger', {
     
     this.renderer.clear();
     this.renderer.setViewport(0, 0, this.newsize[0], this.newsize[1]);
-    
     this.lastupdatedelta = (ts - this.lastupdate) / 1000;
     
     elation.events.fire('renderframe_start', this);
@@ -239,6 +248,16 @@ elation.component.add('space.starbinger', {
 
     this.stats.update();
     this.lastupdate = ts;
+    this.camnewpos = new THREE.Vector3(
+      this.camera.position.x,
+      this.camera.position.y,
+      this.camera.position.z
+    );
+    var diff = this.camvector = new THREE.Vector3(
+      this.campos.x - this.camnewpos.x,
+      this.campos.y - this.camnewpos.y,
+      this.campos.z - this.camnewpos.z
+    );
   },
   clearScene: function(root) {
     root = root || this.scene;

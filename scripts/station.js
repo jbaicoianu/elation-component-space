@@ -32,10 +32,10 @@ elation.extend("space.meshes.station", function(args) {
       this.materials = [new THREE.MeshFaceMaterial({color: 0x444444, shading: THREE.FlatShading})];
       (function(self, mesh) {
         var loader = new THREE.JSONLoader();
-        loader.load( { model: mesh, callback: function(geometry) { 
-          geometry.computeVertexNormals();
+        loader.load(mesh, function(geometry) { 
+          //geometry.computeVertexNormals();
           self.loadMesh(geometry); 
-        } });
+        });
       })(this, this.properties.render.mesh);
     }
     

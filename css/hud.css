@@ -1,21 +1,44 @@
 * { 
   font-family: sans-serif;
-  font-weight: bold;
 }
 canvas {
   position: fixed;
+}
+body.show_interface div#stats,
+body.show_interface div.ui_widget {
+  opacity: 1;
+}
+body div#stats,
+div.ui_widget {
+  position: relative;
+  position: fixed;
+  padding: .6em;
+  background: #232627;
+  border-radius: .5em;
+  border: 0px solid #3b5c6b;
+  box-shadow: 0px 0px 30px 1px #232627 inset,0px 0px 15px 0px #232627;
+  z-index: 6;
+  color: #bbb;
+  font-size: .8em;
+  opacity: .7;
+}
+div.ui_widget strong {
+  font-weight: bold;
+  color: lightgreen;
+}
+div.ui_widget p {
+  font-weight: bold;
+  display: inline;
+  color: darkorange;
 }
 .rotacol {
   position: fixed;
   top: 10px;
   right: 10px;
-  padding: .3em .6em;
-  background: #121516;
-  font-size: .8em;
-  opacity: .7;
-  color: #7b9cab;
-  border-radius: .5em;
-  box-shadow: 0px 0px 20px 1px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
+}
+div.space_world_admin,
+canvas.radar {
+  display: none;
 }
 .console_display li {
   margin: -0.2em .4em;
@@ -25,7 +48,6 @@ canvas {
   border-radius: .3em;
   height: 5.9em;
   overflow: auto;
-  font-size: .8em;
   margin: 0;
 }
 .console_bottom {
@@ -33,30 +55,25 @@ canvas {
 }
 .console_input {
   border-top: 1px solid #252525;
-  padding: 0;
+  padding: 0 .3em;
   background: black;
   border-radius: .3em;
   display: block;
   height: 1.5em;
   border: none;
-  width: 100%;
-  margin-top: .2em;
   box-shadow: 0px 0px 1px 1px #3b5c6b inset;
+  color: #bbb;
+left: .4em;
+right: .3em;
+bottom: .5em;
+position: absolute;
 }
 .console {
   position: fixed;
   bottom: 10px;
   right: 10px;
-  height: 6em;
+  height: 8em;
   width: 40%;
-  padding: .3em;
-  background: #121516;
-  opacity: .7;
-  color: #7b9cab;
-  border-radius: .5em;
-  border: 2px solid #3b5c6b;
-  box-shadow: 0px 0px 30px 1px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
-  z-index: 6;
 }
 .altimeter {
   position: fixed;
@@ -130,38 +147,60 @@ div.target_distance {
   width: 200px;
   height: 170px;
 }
+div.status,
 div.target {
-  background: #121516;
-  box-shadow: 0px 0px 11px 6px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
-  border-radius: 25px;
-  left: 10px;
-  border: 2px solid #6B8C9B;
-  opacity: .7;
+  width: 256px;
+  height: 256px;
+  bottom: 2%;
+  opacity: .75;
 }
-.target,
-.radar {
-  position: fixed;
-  bottom: 10px;
-  left:  233px;
-  width: 200px;
-  height: 200px;
-  overflow: hidden;
+div.target {
+  left: 2%;
 }
-.radar_background {
-  box-shadow: 0px 0px 75px 35px #3b5c6b inset,0px 0px 15px 0px #3b5c6b;
-  border-radius: 100px;
-  -webkit-border-radius: 100px;
-  z-index: 1;
+div.status {
+  right: 2%;
 }
-.radar_display {
-  z-index: 2;
-  -webkit-transition: opacity 100ms ease 0;
+div.ui_widget div.ui_widget_label {
+  position: absolute;
+  background: #232627;
+  padding: .2em .6em;
+  font-family: impact;
+  font-size: 13pt;
+  color: #3b5c6b;
 }
-.radar_static {
-  z-index: 3;
+div.console div.ui_widget_label {
+  border-bottom-left-radius: .5em;
+  border-bottom-right-radius: .5em;
+  bottom: -1.4em;
+  left: 50%;
+  margin-left: -2.5em;
+  width: 3em;
+  text-align: center;
+}
+div.status div.ui_widget_label {
+  border-top-left-radius: .5em;
+  border-top-right-radius: .5em;
+  top: -1.4em;
+  right: 0;
+}
+div.target div.ui_widget_label {
+  border-top-left-radius: .5em;
+  border-top-right-radius: .5em;
+  top: -1.4em;
+  left: 0;
+}
+div.status canvas,
+div.target canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0px 0px 1px 1px #3b5c6b;
+  background: #000;
 }
 canvas.targeting {
   opacity: 1;
+  width: 100%;
+  height: 100%;
 }
 .targeting,
 .aeronautics {

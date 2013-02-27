@@ -257,9 +257,14 @@ elation.extend("space.thing", function(args, obj) {
       if (this.properties.render && this.properties.render.scale) {
         radarcontact.scale = this.properties.render.scale;
       }
-      if (radarcontact.type != 'sector')
+      
+      var exclude = {'sector':1,'roid':1};
+      
+      if (radarcontact.type && !exclude[radarcontact.type]) {
         elation.ui.hud.radar.addContact(radarcontact);
-      this.radarcontact = radarcontact;
+        
+        this.radarcontact = radarcontact;
+      }
     }
   }
   this.removeRadarContact = function() {

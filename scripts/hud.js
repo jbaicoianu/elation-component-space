@@ -845,7 +845,7 @@ elation.extend('ui.widgets.overlay', function(hud) {
     
     elation.events.add(window, 'resize', this);
 
-    this.hud.console.log('static overlay:  initialized');
+    this.hud.console.log('static overlay:  <strong>initialized</strong>');
   }
   
   this.draw = function(fn, skip) {
@@ -916,7 +916,7 @@ elation.extend('ui.widgets.radar', function(hud) {
     
     //elation.events.add(null,'select,deselect',this);
     
-    this.hud.console.log('radar system:  initialized');
+    this.hud.console.log('radar system:  <strong>initialized</strong>');
   }
   
   this.handleEvent = function(event) {
@@ -1446,7 +1446,7 @@ elation.extend('ui.widgets.aeronautics', function(hud) {
     this.resize();
     elation.events.add(window, 'resize', this);
     
-    this.hud.console.log('aeronautics system:  initialized');
+    this.hud.console.log('aeronautics system:  <strong>initialized</strong>');
   }
   
   this.resize = function(event) {
@@ -1688,12 +1688,21 @@ elation.extend('ui.widgets.target', function(hud) {
   this.init = function() {
     this.camera = this.hud.controller.camera;
     
-    this.container = this.hud.container('target_test', true);
-    this.ctx = this.container.getContext('2d');
-    
+    this.div = this.hud.container('ui_widget target');
+    this.label = elation.html.create({
+      tag: 'div',
+      classname: 'ui_widget_label',
+      append: this.div,
+      attributes: {
+        innerHTML: 'TARGET'
+      }
+    });
+    this.container = this.hud.container('target_display', true, true);
+    this.div.appendChild(this.container);
+    this.ctx = this.container.getContext('2d');   
     this.resize();
     
-    this.hud.console.log('target display subsystem:  initialized');
+    this.hud.console.log('target display subsystem:  <strong>initialized</strong>');
   }
   
   this.render = function(event) {
@@ -1725,10 +1734,12 @@ elation.extend('ui.widgets.target', function(hud) {
         lines = 3,
         cross = 9;
     
-    ctx.beginPath();  
-    ctx.fillStyle = "rgba(0,0,0,1)";
-    ctx.rect(0, 0, this.width, this.height);
-    ctx.fill();
+
+    //ctx.beginPath();  
+    //ctx.fillStyle = "rgba(0,0,0,1)";
+    //ctx.rect(0, 0, this.width, this.height);
+    //ctx.fill();
+    this.container.width = this.container.width;
     
     var w = this.width / lines,
         tx = Math.round(pos.x),
@@ -1795,8 +1806,8 @@ elation.extend('ui.widgets.target', function(hud) {
     this.container.setAttribute('width', this.width);
     this.container.setAttribute('height', this.height);
     this.center = { x: (this.width / 2), y: (this.height / 2) };
-    this.container.style.width = this.width + 'px';
-    this.container.style.height = this.height + 'px';
+    //this.container.style.width = this.cwidth + 'px';
+    //this.container.style.height = this.cheight + 'px';
   }
   
   this.init();
@@ -1806,15 +1817,25 @@ elation.extend('ui.widgets.ops', function(hud) {
   this.colors = hud.colors;
   this.width = 400;
   this.height = 400;
-
+  
   this.init = function() {
     this.camera = this.hud.controller.camera;
-    this.container = this.hud.container('ship_status', true);
+    this.div = this.hud.container('ui_widget status');
+    this.label = elation.html.create({
+      tag: 'div',
+      classname: 'ui_widget_label',
+      append: this.div,
+      attributes: {
+        innerHTML: 'STATUS'
+      }
+    });
+    this.container = this.hud.container('ship_status', true, true);
+    this.div.appendChild(this.container);
     this.ctx = this.container.getContext('2d');
     
     this.resize();
 
-    this.hud.console.log('operations display subsystem:  initialized');
+    this.hud.console.log('operations display subsystem:  <strong>initialized</strong>');
   }
 
   this.drawRotation = function(target, position, angle) {
@@ -1822,7 +1843,7 @@ elation.extend('ui.widgets.ops', function(hud) {
         bg = this.hud.color('target_box'),
         fg = this.hud.color('target_blip'),
         pad = this.width / 22,
-        angle = { x: this.hud.radar.angle[0] - (Math.PI/2), y: this.hud.radar.angle[1] + (Math.PI/2), z: this.hud.radar.angle[2] },
+        angle = { x: this.hud.radar.angle[0] - (Math.PI/2), y: this.hud.radar.angle[1] + (Math.PI/2), z: this.hud.radar.angle[2] + Math.PI },
         rot = [angle.x,angle.y,angle.z],
         r = this.width / 10,
         p = [[pad+r,r+pad],[(pad*2)+(r*3),r+pad],[(pad*3)+(r*5),r+pad],[(pad*4)+(r*7),r+pad]],
@@ -1836,10 +1857,11 @@ elation.extend('ui.widgets.ops', function(hud) {
         cx = this.width/2,
         cy = this.height/2;
     
-    this.ctx.beginPath();  
-    this.ctx.fillStyle = "rgba(0,0,0,1)";
-    this.ctx.rect(0,0,this.width,this.height);  
-    this.ctx.fill();
+    //this.ctx.beginPath();  
+    //this.ctx.fillStyle = "rgba(0,0,0,1)";
+    //this.ctx.rect(0,0,this.width,this.height);  
+    //this.ctx.fill();
+    this.container.width = this.container.width;
     
     for (var i=0; i<p.length; i++) {
       var e = rot[i] + s,
@@ -1926,8 +1948,8 @@ elation.extend('ui.widgets.ops', function(hud) {
     this.center = { x: (this.width / 2), y: (this.height / 2) };
     this.container.setAttribute('width', this.width);
     this.container.setAttribute('height', this.height);
-    this.container.style.width = this.width + 'px';
-    this.container.style.height = this.height + 'px';
+    //this.container.style.width = this.cwidth + 'px';
+    //this.container.style.height = this.cheight + 'px';
   }
   
   this.render = function(event) {
@@ -1970,16 +1992,11 @@ elation.extend('ui.widgets.targeting', function(hud) {
     this.height = 170;
     this.canvas_bg.setAttribute('width', this.width);
     this.canvas_bg.setAttribute('height', this.height);
-
-    this.canvas_hud_width = 300;
-    this.canvas_hud_height = 300;
-    this.canvas_hud.setAttribute('width', this.canvas_hud_width);
-    this.canvas_hud.setAttribute('height', this.canvas_hud_height);
     
     this.resize();
     elation.events.add(window, 'resize', this);
     
-    this.hud.console.log('targeting system:  initialized');
+    this.hud.console.log('targeting system:  <strong>initialized</strong>');
   }
   
   this.handleEvent = function(event) {
@@ -1988,13 +2005,14 @@ elation.extend('ui.widgets.targeting', function(hud) {
   }
   
   this.resize = function(event) {
-    var wdim = elation.html.dimensions(window),
-        x = (wdim.w / 2) - (this.canvas_hud_width / 2),
-        y = (wdim.h / 2) - (this.canvas_hud_height / 2);
-    
-    this.canvas_hud_center = { x: (this.canvas_hud_width / 2), y: (this.canvas_hud_height / 2) };
-    this.canvas_hud.style.left = x + 'px';
-    this.canvas_hud.style.top = y + 'px';
+    var wdim = elation.html.dimensions(window);
+    this.canvas_hud_width = wdim.w;
+    this.canvas_hud_height = wdim.h;
+    this.canvas_hud.setAttribute('width', this.canvas_hud_width);
+    this.canvas_hud.setAttribute('height', this.canvas_hud_height);
+    this.canvas_hud_center = { x: (wdim.w / 2), y: (wdim.h / 2) };
+    this.canvas_hud.style.width = wdim.w + 'px';
+    this.canvas_hud.style.height = wdim.h + 'px';
   }
   
   this.targetring = function() {
@@ -2161,11 +2179,11 @@ elation.extend('ui.widgets.rotacol', function(hud) {
     this.camera = this.hud.controller.camera;
     this.container = elation.html.create({
       tag: 'div',
-      classname: 'rotacol',
+      classname: 'ui_widget rotacol',
       append: document.body
     });
     
-    this.hud.console.log('rotacol subsystem:  initialized');
+    this.hud.console.log('rotacol subsystem:  <strong>initialized</strong>');
   }
   
   this.format = function(pos) {
@@ -2174,7 +2192,7 @@ elation.extend('ui.widgets.rotacol', function(hud) {
   
   this.render = function(pos) {
     var pos = this.camera.position;
-    this.container.innerHTML = 'x:' + this.format(pos.x) + ' y:' + this.format(pos.y) + ' z:' + this.format(pos.z);
+    this.container.innerHTML = 'x:<strong>' + this.format(pos.x) + '</strong> y:<strong>' + this.format(pos.y) + '</strong> z:<strong>' + this.format(pos.z) + '</strong>';
   }
   
   this.init();
@@ -2188,8 +2206,16 @@ elation.extend('ui.widgets.console', function(hud) {
     this.camera = this.hud.controller.camera;
     this.container = elation.html.create({
       tag: 'div',
-      classname: 'console',
+      classname: 'ui_widget console',
       append: document.body
+    });
+    this.label = elation.html.create({
+      tag: 'div',
+      classname: 'ui_widget_label',
+      append: this.container,
+      attributes: {
+        innerHTML: 'COMMS'
+      }
     });
     this.display = elation.html.create({
       tag: 'ul',
@@ -2213,7 +2239,7 @@ elation.extend('ui.widgets.console', function(hud) {
     this.resize();
     
     elation.events.add(window, 'resize', this);
-    //this.log('console initialized.');
+    //this.log('console <strong>initialized</strong>.');
   }
   
   this.handleEvent = function(event) {
@@ -2277,7 +2303,7 @@ elation.extend('ui.widgets.altimeter', function(hud) {
     this.center = { x: (this.width / 2), y: (this.height / 2) },
     this.render();
     
-    //this.hud.console.log('altimeter initialized.');
+    //this.hud.console.log('altimeter <strong>initialized</strong>.');
   }
   
   this.render = function() {
@@ -2317,7 +2343,7 @@ elation.extend('ui.widgets.debug', function(hud) {
       append: document.body
     });
     
-    //this.hud.console.log('debug initialized.');
+    //this.hud.console.log('debug <strong>initialized</strong>.');
   }
   
   this.format = function(pos) {
