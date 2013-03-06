@@ -82,6 +82,9 @@ elation.extend("space.meshes.player", function(args) {
     }
     
     this.setWeapons();
+    
+    this.ship_status = new elation.ui.widgets.ship_status(this, { center: [ 0, .8, -4.7 ], scale: 0.03 });
+    //this.target_status = new elation.ui.widgets.target_status(this);
   }
   
   this.setWeapons = function() {
@@ -121,7 +124,7 @@ elation.extend("space.meshes.player", function(args) {
       doubleSided: true,
       depthTest: true,
       depthWrite: false,
-      opacity: 0, 
+      opacity: .1, 
       color: 0x000000, 
       shading: THREE.SmoothShading}) 
     };
@@ -288,22 +291,22 @@ elation.extend("space.meshes.player", function(args) {
     
 		this.mwdelta = mwdelta;
     
-    if (elation.utils.arrayget(elation, 'ui.hud.radar')) {
+    if (elation.utils.arrayget(elation, 'ui.hud.target')) {
       if (mwdelta < 0)
-        elation.ui.hud.radar.prevTarget();
+        elation.ui.hud.target.list.prevTarget();
       else
-        elation.ui.hud.radar.nextTarget();
+        elation.ui.hud.target.list.nextTarget();
     }
   }
   
   this.next_target = function(event) {
     if (event > 0)
-      elation.ui.hud.radar.nextTarget();
+      elation.ui.hud.target.list.nextTarget();
   }
   
   this.prev_target = function(event) {
     if (event > 0)
-      elation.ui.hud.radar.prevTarget();
+      elation.ui.hud.target.list.prevTarget();
   }
   
   this.forward = function(event) {
@@ -415,6 +418,56 @@ elation.extend("space.meshes.player", function(args) {
     if (typeof this[ev.type] == 'function') {
       this[ev.type](ev);
     }
+  }
+  
+  this.init();
+});
+
+elation.extend('ui.widgets.ship_status', function(parent, args) {
+  this.parent = parent;
+  this.args = args;
+  this.hud = parent.hud;
+  this.center = args.center;
+  this.scale = args.scale || .03;
+  
+  this.init = function() {
+    elation.space.geometry.get('/~lazarus/elation/media/space/models/tau.js', this);
+    elation.events.add(null,'renderframe_start',this);
+  }
+
+  this.loadMesh = function(geometry) {
+    var material = elation.space.materials.getMaterial('shipstatus_wireframe', new THREE.MeshBasicMaterial({
+      color: 0x5b7c8b,
+      transparent: true, 
+      depthTest: true,
+      depthWrite: false,
+      wireframe: true,
+      opacity: .05,
+      shading: THREE.SmoothShading
+    }));
+    
+    this.mesh = mesh = new THREE.Mesh(geometry, material);
+    
+    this.geometry = geometry;
+    
+    this.mesh.position.set(this.center[0],this.center[1],this.center[2]);
+    this.mesh.useQuaternion = true;
+    this.mesh.quaternion.copy(this.parent.camera.quaternion);
+    this.mesh.rotation.set(Math.PI/2,0,0);
+    this.mesh.scale.set(this.scale,this.scale,this.scale);
+    this.mesh.renderDepth = -1.1;
+    this.mesh.depthTest = -1.1;
+    this.parent.add(mesh);
+    console.log('loadMesh complete');
+  }
+  
+  this.renderframe_start = function(event) {
+    if (this.mesh)
+      this.mesh.quaternion.copy(this.parent.camera.quaternion);
+  }
+  
+  this.handleEvent = function(event) {
+    this[event.type](event);
   }
   
   this.init();

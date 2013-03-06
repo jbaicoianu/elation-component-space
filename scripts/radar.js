@@ -14,7 +14,7 @@ elation.extend('ui.widgets.radar3d', function(hud) {
   this.init = function() { 
     this.initialized = true;
     this.camera = this.controller.camera;
-    this.contacts = elation.ui.hud.radar.contacts;
+    this.contacts = elation.ui.hud.target.visible_list;
     this.radar = radar = new THREE.Object3D();
     this.radar.useQuaternion = true;
     this.player.add(this.radar);
@@ -39,12 +39,12 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     //this.sphere.doubleSided = true;
     this.radar.add(this.sphere);
     
-    this.sphere_inner = this.makeSphere(this.width-.02, [0,0,0], new THREE.MeshBasicMaterial({
+    this.sphere_inner = this.makeSphere(this.width-.02, [0,0,0], new THREE.MeshPhongMaterial({
       color: 0x7b9cab,
       transparent: true, 
       depthTest: true,
-      depthWrite: true,
-      wireframe: true,
+      depthWrite: false,
+      //wireframe: true,
       opacity: .1,
       shading: THREE.SmoothShading
     }), 32, 16);
@@ -70,10 +70,10 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     var material = new THREE.MeshBasicMaterial({
         color: 0x7b9cab,
         depthTest: true,
-        depthWrite: true,
+        depthWrite: false,
         transparent: true,
-        wireframe: true,
-        opacity: .2
+        //wireframe: true,
+        opacity: .12
     });
     
     var cylinder = new THREE.Mesh(
@@ -84,7 +84,8 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     cylinder.position.set(this.center[0], this.center[1], this.center[2]);
     cylinder.renderDepth = -1.5;
     cylinder.depthWrite = -1.5;
-    //this.player.add(cylinder);
+    cylinder.alphaTest = 0.5;
+    this.player.add(cylinder);
     
     this.makeParticles();
   }
@@ -98,7 +99,8 @@ elation.extend('ui.widgets.radar3d', function(hud) {
       var quat = this.camera.quaternion;
       this.radar.quaternion.set(quat.x, quat.y, quat.z, quat.w * -1);
     }
-
+    
+    this.visible = [];
     this.draw();
   }
   
@@ -140,6 +142,11 @@ elation.extend('ui.widgets.radar3d', function(hud) {
         this.toggleBlip(contact, size);
       }
     }
+    
+    contact.name = name;
+    contact.type = type;
+    contact.distance = distance;
+    this.visible.push(contact);
   }
 
   this.draw = function() {
@@ -188,7 +195,7 @@ elation.extend('ui.widgets.radar3d', function(hud) {
       fragmentShader: document.getElementById('fragmentshader').textContent,
       blending: THREE.AdditiveBlending,
       depthTest: true,
-      depthWrite: true,
+      depthWrite: false,
       transparent:	true
     };
     
@@ -260,6 +267,8 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     var material = new THREE.MeshBasicMaterial({
         color: color,
         transparent: true,
+        depthWrite: false,
+        depthTest: true,
         linewidth: 40,
         opacity: .3
     });

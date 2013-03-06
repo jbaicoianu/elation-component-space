@@ -10,18 +10,39 @@ body.show_interface div.ui_widget {
 }
 body div#stats,
 div.ui_widget {
-  position: relative;
   position: fixed;
   padding: .6em;
   background: #232627;
   border-radius: .5em;
   border: 0px solid #3b5c6b;
-  box-shadow: 0px 0px 30px 1px #232627 inset,0px 0px 15px 0px #232627;
+  box-shadow: 0px 0px 15px 1px #111 inset,0px 0px 20px 2px #232627;
   z-index: 6;
   color: #bbb;
   font-size: .8em;
   opacity: .7;
+  cursor: move;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
 }
+
+ul.console_display::-webkit-scrollbar,
+div.target div.target_list_container::-webkit-scrollbar {
+  width: 6px;
+}
+ul.console_display::-webkit-scrollbar-thumb,
+div.target div.target_list_container::-webkit-scrollbar-thumb {
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+    border-radius: 10px;
+}
+ul.console_display::-webkit-scrollbar-track,
+div.target div.target_list_container::-webkit-scrollbar-track {
+	background-color: #999;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  border-radius: 10px;
+}
+
 div.ui_widget strong {
   font-weight: bold;
   color: lightgreen;
@@ -30,6 +51,117 @@ div.ui_widget p {
   font-weight: bold;
   display: inline;
   color: darkorange;
+}
+body.show_interface ul.ui_widget_menu {
+  display: block;
+}
+ul.ui_widget_menu {
+  display: none;
+  list-style-type: none;
+  padding: 0;
+  margin: -1.3em 0;
+}
+div.target_list_container ul.ui_widget_menu {
+  margin: 0;
+  border-bottom: 1px solid #555;
+  padding: .2em 0em .3em .3em;
+  display: block;
+  height: 1em;
+}
+div.target_list_container ul.ui_widget_menu li {
+  border-radius: 0;
+  border: none;
+  border-right: 1px solid #555;
+  border-left: 1px solid #555;
+  border-top: 1px solid #555;
+  background: transparent;
+  display: block;
+}
+ul.ui_widget_menu li {
+  float: right;
+  padding: .1em .4em;
+  border: 1px solid #555;
+  border-radius: .3em;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  font-size: .8em;
+  background: #333;
+  cursor: pointer;
+  opacity: .5;
+}
+ul.ui_widget_menu li.selected {
+  cursor: default;
+  opacity: 1;
+}
+ul.ui_widget_content {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+ul.ui_widget_content li {
+  display: none;
+}
+ul.ui_widget_content li.selected {
+  display: block;
+}
+div.target ul.ui_widget_content {
+  width: 256px;
+  height: 256px;
+}
+ul.target_list_ul {
+  margin: 0;
+  margin-top: -1px;
+  padding: 0;
+  overflow: hidden;
+}
+li.target_list_item p {
+  float: right;
+  margin: 0;
+}
+li.target_list_item span.type {
+  font-size: 9pt;
+}
+li.target_list_item div.target_list_item_container canvas {
+  height: 1em;
+  width: 5em;
+  float: right;
+}
+li.target_list_item div.target_list_item_container li {
+  margin-top: -.34em;
+  font-size: 23pt;
+  color: #777;
+  margin-left: .8em;
+  position: absolute;
+  list-style: normal;
+}
+li.target_list_item div.target_list_item_container li.target_type_ship {
+  color: #0a0;
+}
+li.target_list_item div.target_list_item_container li.target_type_station {
+  color: #cc0;
+}
+
+li.target_list_item div.target_list_item_container strong {
+  margin-left: 1em;
+}
+li.target_list_item div.target_list_item_container {
+  border-top: 1px dashed #555;
+  margin: 0;
+  padding: .8em 0.5em;
+}
+li.target_list_item {
+  display: block;
+  font-size: 11pt;
+  margin: 0;
+  padding: 0 1em;
+  box-shadow: 0 0 27px 0px rgba(0,0,0,1) inset;
+  border-radius: 1em;
+}
+li.target_list_item:hover {
+  background: #222;
+}
+li.target_list_item.target {
+  background: #224;
 }
 .rotacol {
   position: fixed;
@@ -167,6 +299,7 @@ div.ui_widget div.ui_widget_label {
   font-family: impact;
   font-size: 13pt;
   color: #3b5c6b;
+  box-shadow: 0px 0px 15px 1px #111 inset,0px 0px 20px 2px #232627;
 }
 div.console div.ui_widget_label {
   border-bottom-left-radius: .5em;
@@ -188,6 +321,17 @@ div.target div.ui_widget_label {
   border-top-right-radius: .5em;
   top: -1.4em;
   left: 0;
+}
+div.target div.target_list_container {
+  position: relative;
+  width: 256px;
+  height: 256px;
+  box-shadow: 0px 0px 1px 1px #3b5c6b;
+  background: #000;
+  display: inline-block;
+  overflow: auto;
+  border-radius: .5em;
+  cursor: default;
 }
 div.status canvas,
 div.target canvas {
