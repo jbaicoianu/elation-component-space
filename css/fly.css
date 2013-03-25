@@ -1,4 +1,14 @@
 body {
   margin: 0;
   overflow: hidden;
+  -webkit-perspective: 50px;
+  -webkit-perspective-origin: 50% 50%;
+  -moz-perspective: 50px;
+  -moz-perspective-origin: 50% 50%;
+
+}
+.elation_space_viewport {
+  -webkit-user-select: none;
+  min-height: 480px;
+  height: 100%;
 }
