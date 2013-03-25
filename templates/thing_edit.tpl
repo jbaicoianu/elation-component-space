@@ -5,11 +5,11 @@
   Add Property
   <input type="hidden" name="parentname" value="{$thing->parentname}" />
   <input type="hidden" name="name" value="{$thing->name}" />
-  <input name="addproperty[property]" /> :
-  <input name="addproperty[propertykey]" /> = 
-  <input name="addproperty[value]" />
-  {component name="ui.select" items="int;float;string;vector;json" selected=$prop->propertytype selectname="addproperty[propertytype]"}
-  <input type="submit" />
+  <input name="addproperty[property]" tabindex="1" /> :
+  <input name="addproperty[propertykey]" tabindex="2" /> = 
+  <input name="addproperty[value]" tabindex="3" />
+  {component name="ui.select" items="int;float;string;vector;json" selected=$prop->propertytype selectname="addproperty[propertytype]" tabindex="4"}
+  <input type="submit" tabindex="5" />
 </form>
 <form method="post">
   <input type="hidden" name="parentname" value="{$thing->parentname}" />
