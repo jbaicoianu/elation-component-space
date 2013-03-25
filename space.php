@@ -266,6 +266,21 @@ class Component_space extends Component {
     $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
     return $this->GetComponentResponse("./fly.tpl", $vars);
   }
+  function controller_fusion($args) {
+    $vars["root"] = any($args["root"], "/milky way/solar system/sol/earth/north america/stupidtown");
+    header("Access-Control-Allow-Origin: http://cdn.supcrit.com");
+    $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $vars["root"]), "data");
+    $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
+    return $this->GetComponentResponse("./fusion.tpl", $vars);
+  }
+  function controller_enginetest($args) {
+    $cfg->current["page"]["frame"] = "html.frame";
+    $vars["root"] = any($args["root"], "/milky way/solar system/sol/earth/north america/stupidtown");
+    header("Access-Control-Allow-Origin: http://cdn.supcrit.com");
+    $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $vars["root"]), "data");
+    $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
+    return $this->GetComponentResponse("./enginetest.tpl", $vars);
+  }
 
   function getUniqueThingTypes($thing) {
     $types = array();
@@ -314,7 +329,7 @@ class Component_space extends Component {
       foreach ($props as $prop) {
         switch ($prop->propertykey) {
           case 'texture':
-          case 'heightmap':
+          //case 'heightmap':
             $value = DependencyManager::$locations['imageswww'] . $this->castProperty($prop);
             break;
           default:
