@@ -29,7 +29,7 @@ elation.extend('ui.hud', new function() {
     altimeter: 4,
     console: 0,
     aeronautics: 1,
-    target: 60,
+    target: 1,
     targeting: 1,
     debug: 0
   };
@@ -77,6 +77,7 @@ elation.extend('ui.hud', new function() {
       var widget = this.widgets[i],
           timing = this.timings[widget];
       
+      e.ticks = this.ticks;
       if (timing !== 0 && this.ticks % (timing || 2) == 0) {
         this[widget].render(e);
       }
@@ -287,7 +288,7 @@ elation.extend('ui.widgets.aeronautics', function(hud) {
     this.speed = speed;
     //console.log(speed);
     this.fps = fps;
-    0x5b7c8b
+    //0x5b7c8b
     var txtColor = [123,156,171];
     var player = this.hud.controller.objects.player.Player;
     if (player.burner_on && player.fuel > 0) txtColor = [200,200,0];
@@ -666,7 +667,10 @@ elation.extend('ui.widgets.target_list', function(name, container, parent) {
       classname: 'target_list_item', 
       append: ul,
       attributes: {
-        innerHTML: '<div class="target_list_item_container"><li></li><strong>Scanning...</strong> <span class="type"></span><p></p></div>'
+        innerHTML: '<div class="target_list_item_container"><li></li>'+
+                   '<strong>Scanning...</strong> <span class="type"></span>'+
+                   '<p></p></div>'
+                   //'</div>'
       }
     });
     
@@ -680,6 +684,8 @@ elation.extend('ui.widgets.target_list', function(name, container, parent) {
     
     if (!tl)
       return;
+    
+    var fullupdate = (event && event.ticks % 60 == 0);
     
     // build a list after radar filtering
     for (var i=0,li; i<tl.length; i++) {
@@ -714,10 +720,10 @@ elation.extend('ui.widgets.target_list', function(name, container, parent) {
         itemtop, itemheight, inc = 0;
     
     list.sort(function(a, b) { return a.distance - b.distance; });
+    
     var current = this.current_target_data;
     if (!current) {
-          this.nextTarget();
-
+      this.nextTarget();
     }
     
     for (var i=0,li; i<list.length; i++) {
@@ -748,6 +754,7 @@ elation.extend('ui.widgets.target_list', function(name, container, parent) {
       else if (d.istarget)
         elation.html.removeclass(li, 'target');
       
+      if (fullupdate) {
       //if (d.name != item.name)
         strong.innerHTML = item.name;
       
@@ -759,6 +766,7 @@ elation.extend('ui.widgets.target_list', function(name, container, parent) {
       //if (Math.round(d.distance) != Math.round(item.distance)) {
         p.innerHTML = this.distanceFormat(item.distance);
       //}
+      }
       
       this.data[i] = {name:item.name,type:item.type,distance:item.distance,istarget:istarget};
     }
@@ -839,7 +847,7 @@ elation.extend('ui.widgets.target_list', function(name, container, parent) {
         pos = target.position,
         scale = target.scale || [ 0, 0, 0 ];
     
-    this.hud.ops.drawRotation(target,pos,rot);
+    //this.hud.ops.drawRotation(target,pos,rot);
     
     this.current_target_data = target;
     target.target = true;

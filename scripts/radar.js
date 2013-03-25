@@ -45,6 +45,7 @@ elation.extend('ui.widgets.radar3d', function(hud) {
       depthTest: true,
       depthWrite: false,
       //wireframe: true,
+      blending: THREE.AdditiveBlending,
       opacity: .1,
       shading: THREE.SmoothShading
     }), 32, 16);
@@ -72,6 +73,7 @@ elation.extend('ui.widgets.radar3d', function(hud) {
         depthTest: true,
         depthWrite: false,
         transparent: true,
+      blending: THREE.AdditiveBlending,
         //wireframe: true,
         opacity: .12
     });
@@ -127,7 +129,7 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     
     switch(type) {
       case 'player':    color = 0x44FF44; size = .13; break;
-      case 'roid':      color = 0x444444; size = .07; break;
+      case 'roid':      color = 0x333333; size = .07; break;
       case 'station':   color = 0xFFFF44; size = .13; break;
       case 'ship':      color = 0x44FFFF; size = .11; break;
       default:          color = 0xFF00FF; size = .11;
@@ -202,6 +204,8 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     var material = new THREE.ShaderMaterial(materialargs);
     
     for (var p = 0; p < this.pCount; p++) {
+      var radius = .6/2;
+      var diameter = .6;
       var ppos = new THREE.Vector3(0,0,0);
       
       particle = new THREE.Vertex(ppos);
@@ -212,8 +216,8 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     
     this.radarSystem.dynamic = true;
     this.radarSystem.sortParticles = true;
-    this.radarSystem.renderDepth = -1.5;
-    this.radarSystem.depthWrite = -1.5;
+    this.radarSystem.renderDepth = -1.1;
+    this.radarSystem.depthWrite = -1.1;
     
     var vertices = this.geometry.vertices;
     var values_size = this.attributes.size.value;
@@ -221,7 +225,7 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     
     for( var v = 0; v < vertices.length; v++ ) {
       values_size[ v ] = this.pSize;
-      values_color[ v ] = new THREE.Color( 0xFFFFFF );
+      values_color[ v ] = new THREE.Color( 0x333333 );
     }
     
     //console.log('Make Particles:', this.radarSystem, material);
@@ -267,10 +271,10 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     var material = new THREE.MeshBasicMaterial({
         color: color,
         transparent: true,
-        depthWrite: false,
         depthTest: true,
-        linewidth: 40,
-        opacity: .3
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        opacity: .4
     });
     
     var geometry = new THREE.Geometry();

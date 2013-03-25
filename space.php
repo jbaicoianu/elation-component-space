@@ -337,7 +337,7 @@ class Component_space extends Component {
       quantity=>1,
       properties=>array(
         'generated'=>$s,
-        'physical'=>array("position"=>array(0,0,-1111570000),"radius"=>$s['radius']),
+        'physical'=>array("position"=>array(0,0,-11570000),"radius"=>$s['radius']),
         'render'=>array("color"=>$s['color'])
       )
     );

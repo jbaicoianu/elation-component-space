@@ -163,6 +163,25 @@ li.target_list_item:hover {
 li.target_list_item.target {
   background: #224;
 }
+/*
+div.ui_widget.target div.ui_widget_label,
+div.ui_widget.target div.target_list_container,
+div.ui_widget.target {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  width: auto;
+  height: auto;
+  max-height: 100%;
+  overflow: hidden;
+}
+div.ui_widget.target {
+  top: 10em;
+  max-height: 50%;
+}
+*/
 .rotacol {
   position: fixed;
   top: 10px;

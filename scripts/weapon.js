@@ -38,6 +38,20 @@ elation.extend('space.player.weapon', function(options) {
       
       this.bullets.push(bullet);
       
+      /*
+      var lfn = function(x,y,z,l) {
+        var light = new THREE.SpotLight(0xFFFFFF, 1, 1);
+        //light.position.set(x,y,z);
+        //light.shadowCameraVisible = true;
+        //light.shadowDarkness = 0.90;
+        light.castShadow = true;
+        //console.log('!!! STARLIGHT LUX:',l, lum, p);
+        return light;
+      }
+      var light = lfn(0,0,0,1);
+      */
+      //bullet.add(light);
+      bullet.add(this.makeParticles());
       this.controller.scene.add(bullet);
     }
   }
@@ -59,6 +73,7 @@ elation.extend('space.player.weapon', function(options) {
                           .addSelf(ship.dynamics.vel),
         bullet = this.getBullet();
     
+    //console.log(bullet);
     bullet.fire({ 
       radius: 1, 
       mass: 1, 
@@ -142,8 +157,8 @@ elation.extend('space.player.weapon', function(options) {
   }
 
   this.loadMesh = function(geometry) {
-    var material = elation.space.materials.getMaterial('dg_lambert', new THREE.MeshLambertMaterial({
-      color: 0x333333, 
+    var material = elation.space.materials.getMaterial('dg_lambert_wp', new THREE.MeshPhongMaterial({
+      color: 0xaaaaaa, 
       shading: THREE.FlatShading
     }));
     
@@ -182,6 +197,86 @@ elation.extend('space.player.weapon', function(options) {
     }
   }
   
+  this.makeParticles = function(bullet) { 
+    // create the particles
+    var pCount = 1;
+    var pSize = 15;
+    var geometry = new THREE.Geometry();
+    
+    this.attributes = {
+      size: {	type: 'f', value: [] },
+      customColor: { type: 'c', value: [] }
+    };
+
+    uniforms = {
+      amplitude: { type: "f", value: 1 },
+      color:     { type: "c", value: new THREE.Color( 0xFFFFFF ) }//,
+      //texture:   { type: "t", value: THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/particle.png" ) },
+    };
+    
+    /* 
+    var materialargs = {
+          color: this.color,
+          size: pSize,
+          map: THREE.ImageUtils.loadTexture(
+            "/~lazarus/elation/images/space/lensflare0.png"
+          ),
+      blending: THREE.AdditiveBlending,
+          depthTest: true,
+          depthWrite: false,
+          transparent: true
+    };
+    
+    var material = new THREE.ParticleBasicMaterial(materialargs);
+    
+    for (var p = 0; p < pCount; p++) {
+      var ppos = new THREE.Vector3(0,0,0);
+      
+      particle = new THREE.Vertex(ppos);
+      geometry.vertices.push(particle);
+    }
+
+    var projectileSystem = new THREE.ParticleSystem(geometry, material);
+    projectileSystem.sortParticles = true;
+ 
+ 
+    this.projectileSystem.dynamic = true;
+    this.projectileSystem.sortParticles = true;
+    this.projectileSystem.renderDepth = -1.5;
+    this.projectileSystem.depthWrite = -1.5;
+  
+    var vertices = this.projectiles = this.geometry.vertices;
+    var values_size = this.attributes.size.value;
+    var values_color = this.attributes.customColor.value;
+
+    for( var v = 0; v < vertices.length; v++ ) {
+      values_size[ v ] = this.pSize;
+      values_color[ v ] = new THREE.Color( 0xFFFFFF );
+    }*/
+    
+    //projectileSystem.position.set(0,0,0);
+    
+    //console.log('Make Particles:', this.radarSystem, material);
+  
+    var texture = THREE.ImageUtils.loadTexture("/~lazarus/elation/images/space/lensflare0.png");
+    var sprite = new THREE.Sprite({ 
+      map: texture, 
+      useScreenCoordinates: false, 
+      blending: THREE.AdditiveBlending,
+      depthTest: true,
+      depthWrite: false,
+      transparent: true,
+      size: .012,
+      color: this.color 
+    });
+    
+    sprite.renderDepth = -1.1;
+    sprite.depthWrite = -1.1;
+    sprite.scale.set( 0.013, 0.013 );
+    sprite.position.set( 0, 0, 0 );
+    return sprite;
+  }
+  
   this.init();
 });
 
@@ -205,7 +300,7 @@ elation.extend("space.meshes.turret_bullet", function(args) {
     this.mesh.quaternion.set(q.x, q.y, q.z, q.w);
     
     (function(self) {
-      setTimeout(function() { self.cleanup(); }, 1250);
+      setTimeout(function() { self.cleanup(); }, 2250);
     })(this);
   }
   
@@ -247,65 +342,6 @@ elation.extend("space.meshes.turret_bullet", function(args) {
     this.position.set(0,0,0);
 
     //this.scene.remove(this);
-  }
-  
-  this.makeParticles = function() { return;
-    // create the particles
-    this.pCount = 1000;
-    this.pSize = 1;
-    this.geometry = new THREE.Geometry();
-    
-    this.attributes = {
-      size: {	type: 'f', value: [] },
-      customColor: { type: 'c', value: [] }
-    };
-
-    uniforms = {
-      amplitude: { type: "f", value: 1 },
-      color:     { type: "c", value: new THREE.Color( 0xFFFFFF ) },
-      texture:   { type: "t", value: THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/particle.png" ) },
-    };
-    
-    var materialargs = {
-      uniforms: uniforms,
-      attributes: this.attributes,
-      vertexShader: document.getElementById('vertexshader').textContent,
-      fragmentShader: document.getElementById('fragmentshader').textContent,
-      blending: THREE.AdditiveBlending,
-      depthTest: true,
-      depthWrite: true,
-      transparent:	true
-    };
-    
-    var material = new THREE.ShaderMaterial(materialargs);
-    
-    for (var p = 0; p < this.pCount; p++) {
-      var ppos = new THREE.Vector3(0,0,0);
-      
-      particle = new THREE.Vertex(ppos);
-      this.geometry.vertices.push(particle);
-    }
-
-    this.projectileSystem = new THREE.ParticleSystem(this.geometry, material);
-    
-    this.projectileSystem.dynamic = true;
-    this.projectileSystem.sortParticles = true;
-    this.projectileSystem.renderDepth = -1.5;
-    this.projectileSystem.depthWrite = -1.5;
-    
-    var vertices = this.projectiles = this.geometry.vertices;
-    var values_size = this.attributes.size.value;
-    var values_color = this.attributes.customColor.value;
-    
-    for( var v = 0; v < vertices.length; v++ ) {
-      values_size[ v ] = this.pSize;
-      values_color[ v ] = new THREE.Color( 0xFFFFFF );
-    }
-    
-    this.projectileSystem.position.set(0,0,0);
-    
-    console.log('Make Particles:', this.radarSystem, material);
-    this.controller.scene.add(this.projectileSystem);
   }
   
   this.init();

@@ -37,7 +37,6 @@
 
 		</script>
 
-
 {component name="space.threejs"}
 {dependency type="component" name="utils.sylvester"}
 
@@ -51,6 +50,7 @@
 {dependency name="space.geometry"}
 {dependency name="space.meshparts"}
 {dependency name="space.admin"}
+{dependency name="space.ShaderGodRays"}
 
 {*
 {dependency name="space.OBJMTLLoader"}

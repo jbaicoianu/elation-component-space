@@ -45,7 +45,10 @@ elation.extend("space.meshes.star", function(args, controller) {
       specular: 0x333333,
       normalScale: 0.5,
       */
-      
+      transparent: true, 
+      depthTest: true,
+      depthWrite: false,
+      fog: false,
       blending: THREE.AdditiveAlphaBlending
     };
     
@@ -53,8 +56,27 @@ elation.extend("space.meshes.star", function(args, controller) {
     var material = new THREE.MeshBasicMaterial(parameters),
         sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(r2,64,32),material);
     
-    this.add(sphere);
-
+    //this.add(sphere);
+    var texture = THREE.ImageUtils.loadTexture("/~lazarus/elation/images/space/lensflare0.png");
+    var sprite = new THREE.Sprite({ 
+      map: texture, 
+      useScreenCoordinates: false, 
+      blending: THREE.AdditiveBlending,
+      depthTest: true,
+      depthWrite: false,
+      transparent: true,
+      size: 1,
+      color: this.color 
+    });
+    
+    var r2 = r2 / 720;
+    console.log(radius, r2,r2/80000, pos);
+    sprite.renderDepth = -1.1;
+    sprite.depthWrite = -1.1;
+    sprite.scale.set(r2,r2, r2);
+    sprite.position.set(pos[0],pos[1],pos[2]);
+    this.controller.scene.add(sprite);
+    
 				var textureFlare0 = THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/lensflare0.png" );
 				var textureFlare1 = THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/sun_halo.png" );
 				var textureFlare2 = THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/lensflare2.png" );
@@ -64,21 +86,23 @@ elation.extend("space.meshes.star", function(args, controller) {
 					flareColor.copy( this.light.color );
 					THREE.ColorUtils.adjustHSV( flareColor, 0, -0.8, 0.5 );
           
-					var lensFlare = new THREE.LensFlare( textureFlare0, 6, 0.0, THREE.AdditiveBlending, flareColor );
+					var lensFlare = new THREE.LensFlare( textureFlare3, .5, 0.6, THREE.AdditiveBlending, flareColor );
 
-					lensFlare.add( textureFlare1, 0.8, 0.0, THREE.AdditiveBlending );
-					lensFlare.add( textureFlare2, 7.0, 0.0, THREE.AdditiveBlending );
-					lensFlare.add( textureFlare3, .3, 0.6, THREE.AdditiveBlending );
+					//lensFlare.add( textureFlare1, 0.8, 0.0, THREE.AdditiveBlending );
+					//lensFlare.add( textureFlare2, 11.0, 0.0, THREE.AdditiveBlending );
+					//lensFlare.add( textureFlare3, .3, 0.6, THREE.AdditiveBlending );
 					lensFlare.add( textureFlare3, .4, 0.7, THREE.AdditiveBlending );
 					lensFlare.add( textureFlare3, .8, 0.9, THREE.AdditiveBlending );
 					lensFlare.add( textureFlare3, .3, 1.0, THREE.AdditiveBlending );
 
 					lensFlare.customUpdateCallback = this.lensFlareUpdateCallback;
-					lensFlare.position.set(pos[0],pos[1],pos[2]);
+				lensFlare.position.set(0,0,0);
           //lensFlare.size = r2 / 50;
 
-					this.add( lensFlare );
-/*
+    lensFlare.position.set(pos[0],pos[1],pos[2]+1200000);
+    this.controller.scene.add(lensFlare);
+    
+    /*
     var gyro=new THREE.Gyroscope();
     this.add(gyro);
     this.gyro=gyro;*/
@@ -90,17 +114,22 @@ elation.extend("space.meshes.star", function(args, controller) {
     var flare;
     var vecX = -object.positionScreen.x * 2;
     var vecY = -object.positionScreen.y * 2;
-    var size = r2/2;
+    var size = 80;
 
     var camDistance = controller.camera.position.length();
+    var player = controller.objects.player.Player;
+    var star_position = new THREE.Vector3(pos[0],pos[1],pos[2]);
+    var player_position = player.position;
+    var direction = player.dynamics.vel;
     
-    for( f = 0; f < fl; f ++ ) {
+    //console.log(vecX, vecY, object);
+    for( f = 0; f < fl; f++ ) {
       flare = object.lensFlares[ f ];
 
       flare.x = object.positionScreen.x + vecX * flare.distance;
       flare.y = object.positionScreen.y + vecY * flare.distance;
 
-      flare.scale = size / camDistance;
+      flare.scale = size;
       flare.wantedRotation = flare.x * Math.PI * 0.05;
       flare.rotation += ( flare.wantedRotation - flare.rotation ) * 0.25;
     }
@@ -109,6 +138,13 @@ elation.extend("space.meshes.star", function(args, controller) {
       
   this.init();
 });
+function is_in_front(camera_position, target_position, camera_direction) {
+    var product = (target_position.x - camera_position.x) * camera_direction.x
+                     + (target_position.y - camera_position.y) * camera_direction.y
+                     + (target_position.z - camera_position.z) * camera_direction.z;
+    
+    return (product > 0.0);
+}
 elation.space.meshes.star.prototype = new elation.space.thing()
 //elation.space.meshes.star.prototype.constructor = elation.space.meshes.star;
 

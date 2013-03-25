@@ -19,7 +19,8 @@ elation.extend("space.meshes.roid", function(args) {
     
     elation.events.add(null, 'renderframe_start', this);
     
-    //this.dynamics.radius = 0;
+    this.dynamics.skip = true;
+    this.dynamics.radius = 0;
   }
   
   this.loadMesh = function(geometry) {
@@ -41,7 +42,6 @@ elation.extend("space.meshes.roid", function(args) {
     this.mesh = mesh;
     this.addToController();
     this.controller.scene.add(mesh);
-    
     //this.updateCollisionSize();
   }
   

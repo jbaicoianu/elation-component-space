@@ -24,7 +24,7 @@ elation.extend("space.materials", new function() {
     if (typeof material.map == 'string') {
       material.map = this.getTexture(material.map);
     }
-
+    
     this.materials[name] = material;
     
     return this.materials[name];

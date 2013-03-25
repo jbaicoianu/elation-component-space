@@ -2,7 +2,7 @@ elation.extend("space.meshes.player", function(args) {
   elation.space.thing.call( this, args, this );
   this.strength = 36800;
   this.mass = 4;
-  this.drag = .378;
+  this.drag = 0.378;
   this.burner = 2.0;
   this.booster = 10;
   this.throttle = 0;
@@ -22,6 +22,7 @@ elation.extend("space.meshes.player", function(args) {
   this.tmpQuaternion = new THREE.Quaternion();
   this.args = args;
   this.displays = {};
+  this.weapons = [];
   this.expose = [ 'id', 'position', 'rotation' ];
 
   this.postinit = function() {
@@ -91,10 +92,10 @@ elation.extend("space.meshes.player", function(args) {
     var w = elation.space.player.weapon;
     
     this.weapons = [
-      new w({parent:this,position:[-2,-3,-6],speed:2200,delay:.6,color:0x00FF44}),
-      new w({parent:this,position:[2,-3,-6],speed:2200,delay:.6,color:0x00FF44}),
-      new w({parent:this,position:[-6,-1,-8],speed:2200,delay:.6,color:0x00FF44}),
-      new w({parent:this,position:[6,-1,-8],speed:2200,delay:.6,color:0x00FF44})
+      new w({parent:this,position:[-2,-3,-6],speed:900,delay:.6,color:0x00FF44}),
+      new w({parent:this,position:[2,-3,-6],speed:900,delay:.6,color:0x00FF44}),
+      new w({parent:this,position:[-6,-1,-8],speed:900,delay:.6,color:0x00FF44}),
+      new w({parent:this,position:[6,-1,-8],speed:900,delay:.6,color:0x00FF44})
     ];
   }
   
@@ -432,7 +433,7 @@ elation.extend('ui.widgets.ship_status', function(parent, args) {
   
   this.init = function() {
     elation.space.geometry.get('/~lazarus/elation/media/space/models/tau.js', this);
-    elation.events.add(null,'renderframe_start',this);
+    elation.events.add(null,'renderframe_end',this);
   }
 
   this.loadMesh = function(geometry) {
@@ -452,8 +453,8 @@ elation.extend('ui.widgets.ship_status', function(parent, args) {
     
     this.mesh.position.set(this.center[0],this.center[1],this.center[2]);
     this.mesh.useQuaternion = true;
-    this.mesh.quaternion.copy(this.parent.camera.quaternion);
-    this.mesh.rotation.set(Math.PI/2,0,0);
+    //this.mesh.quaternion.copy(this.parent.camera.quaternion);
+    //this.mesh.rotation.set(Math.PI/2,0,0);
     this.mesh.scale.set(this.scale,this.scale,this.scale);
     this.mesh.renderDepth = -1.1;
     this.mesh.depthTest = -1.1;
@@ -461,9 +462,34 @@ elation.extend('ui.widgets.ship_status', function(parent, args) {
     console.log('loadMesh complete');
   }
   
-  this.renderframe_start = function(event) {
-    if (this.mesh)
-      this.mesh.quaternion.copy(this.parent.camera.quaternion);
+  this.renderframe_end = function(event) {
+    if (this.mesh) {
+      var q = new THREE.Quaternion();
+      var vel = this.parent.dynamics.vel;
+      var v = new THREE.Vector3(vel.x, vel.y, vel.z);
+      
+      q.copy(this.parent.camera.quaternion);
+      q.multiplyVector3(v);
+      this.mesh.quaternion = q;
+      return;
+      //this.mesh.quaternion.copy(this.parent.camera.quaternion); return;
+      var target = elation.ui.hud.target.list.current_target_data;
+      if (target) {
+        var inverse = new THREE.Matrix4().getInverse(this.parent.matrixWorld)
+        //var mypos = this.parent.position;
+        //var tpos = target.position;
+        //var tpos = new THREE.Vector3(tpos.x,tpos.y,tpos.z);
+        //var relpos = inverse.multiplyVector3().subSelf(this.mesh.matrixWorld.getPosition());
+        var dvel = this.parent.dynamics.vel;
+        //var relpos = new THREE.Vector3(dvel.x, dvel.y, dvel.z);
+        this.mesh.quaternion.multiplySelf(dvel);
+        //console.log(tpos.subSelf(mypos).normalize());
+        //console.log(mypos,' :: ',targetpos);
+        //this.mesh.quaternion.setFromAxisAngle(tpos.subSelf(mypos).normalize(), Math.PI / 2)
+        //this.mesh.lookAt(target.position);
+      }
+      //this.rotation.setRotationFromMatrix( this.matrix );
+    }
   }
   
   this.handleEvent = function(event) {

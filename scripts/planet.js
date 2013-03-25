@@ -11,17 +11,18 @@ elation.extend("space.meshes.planet", function(args, controller) {
     
     this.create();
     elation.events.fire('planet', this);
+    elation.events.add(null, 'renderframe_start', this);
+    this.dynamics.radius = 0;
   }
-console.log('## PLANET ',this.radius);
+  
   this.create = function() {
     var parameters = {
       map: THREE.ImageUtils.loadTexture(this.texture),
       /*
-      specular: 0x111111,
-      color: 0x111111,
-      ambient: 0x222222,
-      shininess: .1,
-      specular: 0x333333,
+      specular: 0x555555,
+      color: 0xEEEEEE,
+      ambient: 0x111111,
+      shininess: 1,
       normalScale: 0.5,
       */
       
@@ -31,7 +32,7 @@ console.log('## PLANET ',this.radius);
     //if (this.normalMap != '/~lazarus/elation/index.php/images')
     //  parameters.normalMap = THREE.ImageUtils.loadTexture(this.normalMap);
     
-    var material = new THREE.MeshLambertMaterial(parameters),
+    var material = new THREE.MeshPhongMaterial(parameters),
         sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius,64,32),material);
     
     this.add(sphere);
@@ -89,6 +90,10 @@ console.log('## PLANET ',this.radius);
     console.log('out',tmp.length);
     
     return bitmap;
+  }
+  
+  this.renderframe_start = function(event) {
+    this.rotation.y += 0.0001;
   }
   
   this.init();
