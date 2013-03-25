@@ -1,5 +1,8 @@
 elation.component.add('space.admin', {
-  init: function() {
+  init: function(name, container, args) {
+    this.args = args;
+    this.controller = args.controller || elation.space.fly(0);
+    
     this.projector = new THREE.Projector();
     this.mouse = [0,0];
     this.tmpvec = new THREE.Vector3(0,0,.5);
@@ -11,9 +14,9 @@ elation.component.add('space.admin', {
 
     this.inspector = elation.space.admin.inspector("space_admin_inspector", elation.html.create());
     this.container.appendChild(this.inspector.container);
-
-    // FIXME - dumb
-    this.renderelement = elation.space.fly(0).renderer.domElement;
+    this.renderelement = this.controller.renderer.domElement;
+    
+    console.log(args, name, container, this.renderelement, this.controller);
     elation.events.add(this.renderelement, 'mousedown,mouseup,mousemove,click', this);
     elation.events.add(null, 'select', this);
 
@@ -74,7 +77,7 @@ elation.component.add('space.admin', {
   },
   updateScene: function(root, el) {
     if (!root) {
-      root = elation.space.fly(0).scene;
+      root = this.controller.scene;
     }
     if (!el) {
       if (!this.scenelist) {
@@ -134,7 +137,7 @@ elation.component.add('space.admin', {
     var thing = new elation.space.meshes[type]({name: name, type: type, physical: {position: [0,0,0]}});
     //thing.init();
     console.log('made the new thing', thing);
-    elation.space.fly(0).scene.add(thing);
+    this.controller.scene.add(thing);
 
     this.updateScene();
     this.updateThingtypes();
@@ -222,7 +225,7 @@ elation.component.add('space.admin', {
     if (!mousepos) {
       mousepos = this.mouse;
     }
-    var camera = elation.space.fly(0).camera;
+    var camera = this.controller.camera;
     this.tmpvec.set(this.mouse[0], -this.mouse[1], -1);
     this.projector.unprojectVector( this.tmpvec, camera );
 
@@ -230,7 +233,7 @@ elation.component.add('space.admin', {
     camera.matrixWorld.multiplyVector3(this.tmpray.origin);
     this.tmpray.direction = this.tmpvec.subSelf(this.tmpray.origin).normalize();
     //console.log([this.tmpray.origin.x,this.tmpray.origin.y,this.tmpray.origin.z], [this.tmpray.direction.x,this.tmpray.direction.y,this.tmpray.direction.z]);
-    return this.tmpray.intersectScene(elation.space.fly(0).scene);
+    return this.tmpray.intersectScene(this.controller.scene);
   },
   updateHover: function() {
     var intersects = this.projectMousePosition();

@@ -7,14 +7,17 @@ elation.component.add('space.fly', {
 
   init: function() {
     this.viewsize = this.getsize();
+    console.log('### SECTOR', this);
 
+    var HUD = elation.utils.arrayget(this.args, 'sector.properties.render.hud').split(',');
+    
     this.initRenderer(); 
     this.initScene();
     this.initControls();
     this.initObserver();
     this.initLights();
 
-    elation.ui.hud.init();
+    elation.ui.hud.init(HUD);
 
     this.addObjects(this.args.sector, this.scene);
 
@@ -32,7 +35,7 @@ elation.component.add('space.fly', {
         elation.utils.physics.system.start();
 
         //elation.ui.hud.console.log('ready.');
-        elation.ui.hud.radar.nextTarget();
+        //elation.ui.hud.radar.nextTarget();
       }, 500);
     }
     

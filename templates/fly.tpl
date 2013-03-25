@@ -23,7 +23,17 @@
 {dependency name="space.fly"}
 {dependency name="space.hud"}
 
-<div class="elation_space_viewport" elation:component="space.fly">
+<script>
+// FIXME - this is retarded 
+var craters1 = {jsonencode var=$craters1};
+var craters2 = {jsonencode var=$craters2};
+var craters3 = {jsonencode var=$craters3};
+var craters4 = {jsonencode var=$craters4};
+</script>
+<div class="elation_space_viewport" elation:component="space.fly" class="main">
  <elation:args>{ldelim}"sector":{jsonencode var=$sector}{rdelim}</elation:args>
 </div>
-{set var="page.title"}WebGL World Viewer{if !empty($root)} - {$root}{/if}{/set}
+{* <div elation:component="space.flycontrols"></div> *}
+{set var="page.title"}Physics Flight Demo{/set}
+{dependency type="jstemplate" component="space.atlas_controls_top" name="atlas_controls_top"}
+{dependency type="jstemplate" component="space.atlas_controls_right" name="atlas_controls_right"}
