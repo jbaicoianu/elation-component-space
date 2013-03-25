@@ -124,8 +124,10 @@
 .spacecraft_thing_propertygroup {
   border: 1px solid black;
   border-radius: 6px;
+/*
   display: inline-block;
   max-width: 25em;
+*/
   padding: .5em;
   vertical-align: top;
 }
@@ -134,7 +136,7 @@
 }
 .spacecraft_thing_propertygroup label {
   display: inline-block;
-  width: 8em;
+  min-width: 12em;
 }
 
 #spacecraft_planet_render {
@@ -148,5 +150,10 @@
 }
 .spacecraft_controls p {
   padding-right: 10em;
+}
+
+.spacecraft_thing_create label {
+  min-width: 8em;
+  display: inline-block;
 }
 
