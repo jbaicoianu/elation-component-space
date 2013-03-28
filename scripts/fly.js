@@ -9,64 +9,32 @@ elation.component.add('space.fly', {
     elation.space.controller = this;
     this.viewsize = this.getsize();
     console.log('### SECTOR', this);
-
+    /*
     this.scene = this.args.scene || new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(0xCCE8FF, 0.000008);
 
     this.camera = new THREE.FirstPersonCamera(50, this.viewsize[0] / this.viewsize[1], 10, 1.5e15);
     this.camera.position = this.camerapos;
     this.scene.add(this.camera);
-    
+    */
     var HUD = elation.utils.arrayget(this.args, 'sector.properties.render.hud').split(',');
     
-    console.log('widgets', HUD);
-    elation.ui.hud.init(HUD);
-    
-    this.scene.add(this.camera);
-
-    // TODO - light should just be a property of the sun...
-    this.lights['white'] = new THREE.SpotLight( 0xffffff, 1, 50000);
-    this.lights['white'].position.x = -10000;
-    this.lights['white'].position.y = 10000;
-    this.lights['white'].position.z = 10000;
-    this.lights['white'].castShadow = true;
-
-    this.lights['white'].shadowCameraNear = 700;
-    this.lights['white'].shadowCameraFar = this.camera.far;
-    this.lights['white'].shadowCameraFov = this.camera.fov;
- 
-    this.lights['white'].shadowBias = 0.00000001;
-    this.lights['white'].shadowDarkness = 0.5;
-    this.lights['white'].shadowMapWidth = 8192;
-    this.lights['white'].shadowMapHeight = 8192;
- 
-    this.scene.add(this.lights['white']);
-
-    //this.createSky(true);
-
-    this.lights['ambient'] = new THREE.AmbientLight( 0x999999 );
-    this.scene.add(this.lights['ambient']);
-
     this.initRenderer(); 
+    this.initScene();
     this.initControls();
+    this.initObserver();
+    this.initLights();
+
+    elation.ui.hud.init(HUD);
 
     this.addObjects(this.args.sector, this.scene);
 
-    if (this.container) {
-      this.container.appendChild(this.renderer.domElement);
-    } else {
-      document.body.appendChild(this.renderer.domElement);
-    }
     this.stats = new Stats();
     this.stats.domElement.style.position = 'fixed';
     this.stats.domElement.style.top = '0px';
     this.stats.domElement.style.left = '0px';
     this.stats.domElement.style.zIndex = 100;
     this.container.appendChild( this.stats.domElement );
-
-    this.projector = new THREE.Projector();
-    this.mouse = [0,0];
-    elation.events.add(this.container, 'mousemove', this);
 
     this.lastupdate = new Date().getTime();
     this.loop();
@@ -82,21 +50,34 @@ elation.component.add('space.fly', {
     //elation.ui.hud.console.log('initializing, please wait...');
     this.createAdminTool();
   },
+  initScene: function() {
+    this.scene = this.args.scene || new THREE.Scene();
+    this.scene.fog = new THREE.FogExp2(0xCCE8FF, 0.000008);
+  },
+  initLights: function() {
+    // TODO - light should just be a property of the sun...
+    //this.lights['white'] = new THREE.SpotLight( 0xffffff, 1, 50000);
+    this.lights['white'] = new THREE.DirectionalLight( 0xffffff, 1, 50000);
+    this.lights['white'].position.x = -5000;
+    this.lights['white'].position.y = 50000;
+    this.lights['white'].position.z = 50000;
+    this.lights['white'].castShadow = true;
+
+    this.lights['white'].shadowCameraNear = 20;
+    this.lights['white'].shadowCameraFar = 1.5e15;
+    this.lights['white'].shadowCameraFov = 50;
+ 
+    this.lights['white'].shadowBias = 0;
+    this.lights['white'].shadowDarkness = 0.5;
+    this.lights['white'].shadowMapWidth = 4096;
+    this.lights['white'].shadowMapHeight = 4096;
+ 
+    this.scene.add(this.lights['white']);
+
+    this.lights['ambient'] = new THREE.AmbientLight( 0x999999 );
+    //this.scene.add(this.lights['ambient']);
+  },
   initControls: function() {
-    this.controlsenabled = true;
-    /*
-    this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
-    this.controls.rotateSpeed = -1.0;
-    this.controls.zoomSpeed = 4;
-    this.controls.panSpeed = 3;
-
-    this.controls.noZoom = false;
-    this.controls.noPan = false;
-
-    this.controls.staticMoving = true;
-    this.controls.dynamicDampingFactor = 0.3;
-    this.controls.keys = [ 65, 83, 68 ];
-    */
     this.controls = elation.space.controls(0, this.renderer.domElement);
 
     // TODO - define some top-level bindings for accessing menus, etc
@@ -104,14 +85,33 @@ elation.component.add('space.fly', {
     //this.controls.addBindings("default", {});
     //this.controls.activateContext("default", this);
   },
+  initObserver: function() {
+    /*
+    this.camera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 10, 1.5e15);
+    this.camera.position = this.camerapos;
+    this.scene.add(this.camera);
+    */
+    this.observer = new elation.space.meshes.observer();
+    this.observer.position.copy(this.camerapos);
+    this.scene.add(this.observer);
+    this.controls.activateContext("observer", this.observer);
+    this.attachCameraToObject(this.observer.camera);
+  },
   initRenderer: function() {
-    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({antialias: true, maxShadows: 10}) : new THREE.CanvasRenderer());
+    this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({antialias: true, maxShadows: 10, maxLights: 4}) : new THREE.CanvasRenderer());
     this.renderer.setSize(this.viewsize[0], this.viewsize[1]);
 
     this.renderer.shadowMapEnabled = true;
     this.renderer.shadowMapSoft = true;
+    this.renderer.shadowMapCullFrontFaces = true;
 
     this.renderer.autoClear = true;
+
+    if (this.container) {
+      this.container.appendChild(this.renderer.domElement);
+    } else {
+      document.body.appendChild(this.renderer.domElement);
+    }
   },
   getsize: function() {
     if (this.container) {
@@ -132,7 +132,7 @@ elation.component.add('space.fly', {
     
     elation.events.fire('renderframe_start', this);
     
-    if (this.controls && this.controlsenabled) {
+    if (this.controls) {
       this.controls.update();
     }
     if (elation.utils.physics) {
@@ -179,7 +179,6 @@ elation.component.add('space.fly', {
   },
   attachCameraToObject: function(thing, nosave) {
     //this.camera = this.followcamera;
-    //this.controlsenabled = false;
     if (thing instanceof THREE.Camera) {
       if (!nosave) {
         this.oldcamera = this.camera;
@@ -201,11 +200,6 @@ elation.component.add('space.fly', {
       elation.ui.hud.radar.setCamera(this.camera);
     }
   },
-  mousemove: function(ev) {
-    this.mouse[0] = ( ev.clientX / this.viewsize[0] ) * 2 - 1;
-    this.mouse[1] = ( ev.clientY / this.viewsize[1] ) * 2 - 1;
-  },
-  
   createAdminTool: function() {
     var div = elation.html.create({tag: 'div', classname: "space_world_admin"});
     var component = elation.space.admin("admin", div);

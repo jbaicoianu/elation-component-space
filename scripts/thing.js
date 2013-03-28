@@ -8,6 +8,7 @@ elation.extend("space.thing", function(args, obj) {
   this.materials = [];
   this.cameras = [];
   this.parts = {};
+  this.state = {};
   this.collisionradius = 0;
   this.controller = elation.space.controller;
 
@@ -25,6 +26,9 @@ elation.extend("space.thing", function(args, obj) {
     }
     if (this.properties.physical.exists === 0) 
       return;
+    if (!this.mass) {
+      this.mass = elation.utils.arrayget(this.properties, "physical.mass", 1);
+    }
     if (this.properties.physical.position) {
       this.position.x = this.properties.physical.position[0];
       this.position.y = this.properties.physical.position[1];
@@ -35,8 +39,16 @@ elation.extend("space.thing", function(args, obj) {
       this.rotation.y = this.properties.physical.rotation[1] * (Math.PI / 180);
       this.rotation.z = this.properties.physical.rotation[2] * (Math.PI / 180);
     }
-    if (this.properties.render && this.properties.render.scale) {
-      this.scale.set(this.properties.render.scale[0], this.properties.render.scale[1], this.properties.render.scale[2]);
+    if (this.properties.render) {
+      if (this.properties.render.scale) {
+        this.scale.set(this.properties.render.scale[0], this.properties.render.scale[1], this.properties.render.scale[2]);
+      }
+      if (this.properties.render.mesh) {
+        this.loadJSON(this.properties.render.mesh, this.properties.render.texturepath);
+      }
+      if (this.properties.render.collada) {
+        this.loadCollada(this.properties.render.collada);
+      }
     }
     if (this.autocreategeometry) {
       this.createMaterial();
@@ -46,9 +58,26 @@ elation.extend("space.thing", function(args, obj) {
     this.createRadarContact();
 
     elation.events.add([this], "select,deselect", this);
+    if (typeof this.loaded == 'function') {
+      elation.events.add([this], "loaded", this);
+    }
 
     if (typeof this.postinit == 'function') {
       this.postinit();
+    }
+  }
+  this.setState = function(state, value) {
+    this.state[state] = value;
+    if (typeof this.updateParts == 'function') {
+      this.updateParts();
+    }
+  }
+  this.setStates = function(states) {
+    for (var k in states) {
+      this.state[k] = states[k];
+    }
+    if (typeof this.updateParts == 'function') {
+      this.updateParts();
     }
   }
   this.createMaterial = function() {
@@ -56,20 +85,41 @@ elation.extend("space.thing", function(args, obj) {
   }
   this.createGeometry = function() {
   }
+  this.loadJSON = function(url, texturepath) {
+    if (typeof texturepath == 'undefined') {
+      texturepath = '/media/space/textures';
+    }
+    (function(self, mesh, texturepath) {
+      var loader = new THREE.JSONLoader();
+      loader.load( mesh, function(geometry) { self.processJSON(geometry); }, texturepath);
+    })(this, url, texturepath);
+  }
+  this.processJSON = function(geometry) {
+    geometry.computeFaceNormals();
+    geometry.computeVertexNormals();
+    var mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial());
+    mesh.doubleSided = false;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    this.add(mesh);
+    this.updateCollisionSize();
+    elation.events.fire({type: "loaded", element: this, data: mesh});
+  }
   this.loadCollada = function(url) {
     var loader = new THREE.ColladaLoader();
     (function(self) {
       loader.load(url, function(collada) {
-        self.createColladaScene(collada);
+        self.processCollada(collada);
       });
     })(this);
   }
-  this.createColladaScene = function(collada) {
+  this.processCollada = function(collada) {
     collada.scene.rotation.x = -Math.PI / 2;
     collada.scene.rotation.z = Math.PI;
     this.add(collada.scene);
     this.extractEntities(collada.scene);
     this.updateCollisionSize();
+    elation.events.fire({type: "loaded", element: this, data: collada.scene});
   }
   this.extractEntities = function(scene) {
     this.cameras = [];
@@ -80,6 +130,8 @@ elation.extend("space.thing", function(args, obj) {
           self.cameras.push(node);
         } else if (node instanceof THREE.Mesh) {
           self.parts[node.name || node.id] = node;
+          node.castShadow = true;
+          node.receiveShadow = true;
         }
       });
     })(this, scene);
@@ -87,6 +139,7 @@ elation.extend("space.thing", function(args, obj) {
     if (this.cameras.length > 0) {
       this.camera = this.cameras[0];
     }
+    this.updateCollisionSize();
   }
   this.createMesh = function(geometry, materials) {
     if (geometry) {
@@ -114,10 +167,23 @@ elation.extend("space.thing", function(args, obj) {
   }
   this.createDynamics = function() {
     if (!this.dynamics) {
-      //console.log('### Creating Dynamics',this.type, this);
+      var velocity = elation.utils.arrayget(this.properties, 'physical.velocity');
+      if (!velocity) velocity = [0,0,0];
       var angular = elation.utils.arrayget(this.properties, 'physical.rotationalvelocity');
       if (!angular) angular = [0,0,0];
-      this.dynamics = new elation.utils.physics.object({position: this.position, rotation: this.rotation, restitution: .8, radius: this.collisionradius, drag: .4257, friction: this.friction, mass: this.mass || 1, angular: new THREE.Vector3(angular[0] * Math.PI/180, angular[1] * Math.PI / 180, angular[2] * Math.PI / 180)});
+
+      this.dynamics = new elation.utils.physics.object({
+        position: this.position,
+        rotation: this.rotation,
+        restitution: .5,
+        radius: this.collisionradius,
+        drag: this.drag,
+        friction: this.friction,
+        mass: this.mass,
+        velocity: new THREE.Vector3(velocity[0], velocity[1], velocity[2]),
+        angular: new THREE.Vector3(angular[0] * Math.PI/180, angular[1] * Math.PI / 180, angular[2] * Math.PI / 180),
+        object: this
+      });
       //this.dynamics.setVelocity([0,0,5]);
       //this.dynamics.addForce("gravity", [0,-9800,0]);
       elation.utils.physics.system.add(this.dynamics);
@@ -133,7 +199,8 @@ elation.extend("space.thing", function(args, obj) {
   }
   this.createCamera = function(offset, rotation) {
     var viewsize = this.controller.viewsize;
-    this.camera = new THREE.PerspectiveCamera(50, viewsize[0] / viewsize[1], 1, 1.5e15);
+    this.cameras.push(new THREE.PerspectiveCamera(50, viewsize[0] / viewsize[1], 1, 1.5e15));
+    this.camera = this.cameras[this.cameras.length-1];
     if (offset) {
       this.camera.position.copy(offset)
     }
@@ -166,27 +233,56 @@ elation.extend("space.thing", function(args, obj) {
   }
   this.updateCollisionSize = function() {
       //console.log('updateCollisionSize', this, this.collisionradius, this.boundRadius);
-      var bounds = this.getBoundingBox();
-      var dist = [(bounds.max.x - bounds.min.x) / 2, (bounds.max.y - bounds.min.y) / 2, (bounds.max.z - bounds.min.z) / 2];
-      var center = [(bounds.max.x + bounds.min.x) / 2, (bounds.max.y + bounds.min.y) / 2, (bounds.max.z + bounds.min.z) / 2];
-      var radius = Math.max(dist[0], dist[1], dist[2]);
+      //var bounds = this.getBoundingBox();
+      //var dist = [(bounds.max.x - bounds.min.x) / 2, (bounds.max.y - bounds.min.y) / 2, (bounds.max.z - bounds.min.z) / 2];
+      //console.log(this, this.collisionradius, this.boundRadius);
+      //var bounds = this.getBoundingBox();
+/*
+      var bounds = this.computeBoundingBox();
+      var dims = [bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, bounds.max.z - bounds.min.z];
+      var diameter = Math.max(dims[0], dims[1], dims[2]);
 
-      this.collisionradius = this.dynamics.radius = radius;
+      var dist = [dims[0] / 2, dims[1] / 2, dims[2] / 2];
+      
+      
+      var center = [(bounds.max.x + bounds.min.x) / 2, (bounds.max.y + bounds.min.y) / 2, (bounds.max.z + bounds.min.z) / 2];
+
+      //this.collisionradius = this.dynamics.radius = radius;
       
       //console.log('DYNAMICS',this,this.collisionradius,radius);
+      this.collisionradius = this.dynamics.radius = diameter / 2;
+console.log(bounds, dims, center, diameter, this.dynamics.radius);
+*/
+      var sphere = this.computeBoundingSphere();
+      this.collisionradius = this.dynamics.radius = sphere.radius;
       if (this.collisionradius > 0) {
+        var scene = elation.space.fly(0).scene;
         if (this.collisionmesh) {
-          this.remove(this.collisionmesh);
+          scene.remove(this.collisionmesh);
         }
-        var collsphere = new THREE.OctahedronGeometry(this.dynamics.radius, 3);
-        this.collisionmesh = new THREE.Mesh(collsphere, new THREE.MeshBasicMaterial({color: 0x00ff00, blending: THREE.AdditiveAlphaBlending, wireframe: false}));
-        this.collisionmesh.position.set(center[0], center[1], center[2]);
-        this.collisionmesh.fuck = true;
-        this.collisionmesh.doubleSided = true;
+        //var collsphere = new THREE.OctahedronGeometry(this.dynamics.radius, 3);
+        //this.collisionmesh = new THREE.Mesh(collsphere, new THREE.MeshBasicMaterial({color: 0x00ff00, blending: THREE.AdditiveAlphaBlending, wireframe: false}));
+        //this.collisionmesh.position.set(center[0], center[1], center[2]);
+        //this.collisionmesh.fuck = true;
+        //this.collisionmesh.doubleSided = true;
+        var collisiongeom = new THREE.OctahedronGeometry(this.dynamics.radius, 3);
+        //var collisiongeom = new THREE.CubeGeometry(diameter, diameter, diameter);
+        //var collisiongeom = new THREE.CubeGeometry(dims[0], dims[1], dims[2]);
+        var offset = new THREE.Matrix4();
+        //offset.setPosition(new THREE.Vector3(center[0], center[1], center[2]));
+        //collisiongeom.applyMatrix(offset);
+        this.collisionmesh = new THREE.Mesh(collisiongeom, new THREE.MeshLambertMaterial({color: 0x00ff00, opacity: .1, transparent: true, blending: THREE.AdditiveAlphaBlending, wireframe: true}));
+        //this.collisionmesh.scale = this.scale;
+        //this.collisionmesh.doubleSided = true;
+        this.collisionmesh.ignoreCollider = true;
         this.collisionmesh.material.depthWrite = false;
 
         //this.add(this.collisionmesh);
       }
+  }
+/*
+  this.updateBoundingBox = function(obj) {
+    
   }
   this.getBoundingBox = function(obj) {
     var bbox = {max: new THREE.Vector3(), min: new THREE.Vector3()};
@@ -195,15 +291,31 @@ elation.extend("space.thing", function(args, obj) {
     
     if (obj.children) {
       for (var i = 0; i < obj.children.length; i++) {
-        var childbbox = this.getBoundingBox(obj.children[i]);
+        obj.children[i].updateMatrix();
+        if (obj.children[i] instanceof THREE.Mesh || obj.children[i].children.length > 0) {
+          var childbbox = this.getBoundingBox(obj.children[i]);
+          var min = childbbox.min.clone();
+          var max = childbbox.max.clone();
+          obj.children[i].matrix.multiplyVector3(min);
+          obj.children[i].matrix.multiplyVector3(max);
+  console.log("child:", obj.children[i], [min.x, min.y, min.z], [max.x, max.y, max.z]);
 
-        if (childbbox.min.x < bbox.min.x) bbox.min.x = childbbox.min.x; 
-        if (childbbox.min.y < bbox.min.y) bbox.min.y = childbbox.min.y; 
-        if (childbbox.min.z < bbox.min.z) bbox.min.z = childbbox.min.z; 
+          if (min.x < bbox.min.x) bbox.min.x = min.x; 
+          if (min.y < bbox.min.y) bbox.min.y = min.y; 
+          if (min.z < bbox.min.z) bbox.min.z = min.z; 
 
-        if (childbbox.max.x > bbox.max.x) bbox.max.x = childbbox.max.x; 
-        if (childbbox.max.y > bbox.max.y) bbox.max.y = childbbox.max.y; 
-        if (childbbox.max.z > bbox.max.z) bbox.max.z = childbbox.max.z; 
+          if (max.x < bbox.min.x) bbox.min.x = max.x; 
+          if (max.y < bbox.min.y) bbox.min.y = max.y; 
+          if (max.z < bbox.min.z) bbox.min.z = max.z; 
+
+          if (min.x > bbox.max.x) bbox.max.x = min.x; 
+          if (min.y > bbox.max.y) bbox.max.y = min.y; 
+          if (min.z > bbox.max.z) bbox.max.z = min.z; 
+
+          if (max.x > bbox.max.x) bbox.max.x = max.x; 
+          if (max.y > bbox.max.y) bbox.max.y = max.y; 
+          if (max.z > bbox.max.z) bbox.max.z = max.z; 
+        }
       }
     }
     if (obj.geometry) {
@@ -211,26 +323,22 @@ elation.extend("space.thing", function(args, obj) {
       //console.log(obj, obj.geometry.boundingSphere, obj.geometry.boundingBox);
       var geobbox = obj.geometry.boundingBox;
       if (geobbox) {
-        if (geobbox.min.x < bbox.min.x) bbox.min.x = geobbox.min.x; 
-        if (geobbox.min.y < bbox.min.y) bbox.min.y = geobbox.min.y; 
-        if (geobbox.min.z < bbox.min.z) bbox.min.z = geobbox.min.z; 
+        var min = geobbox.min.clone();
+        var max = geobbox.max.clone();
+        if (min.x < bbox.min.x) bbox.min.x = min.x; 
+        if (min.y < bbox.min.y) bbox.min.y = min.y; 
+        if (min.z < bbox.min.z) bbox.min.z = min.z; 
 
-        if (geobbox.max.x > bbox.max.x) bbox.max.x = geobbox.max.x; 
-        if (geobbox.max.y > bbox.max.y) bbox.max.y = geobbox.max.y; 
-        if (geobbox.max.z > bbox.max.z) bbox.max.z = geobbox.max.z; 
+        if (max.x > bbox.max.x) bbox.max.x = max.x; 
+        if (max.y > bbox.max.y) bbox.max.y = max.y; 
+        if (max.z > bbox.max.z) bbox.max.z = max.z; 
       }
     } else {
       //console.log('no geom', obj);
     }
-    /*
-    if (obj != this) {
-      this.matrix.multiplyVector3(bbox.max);
-      this.matrix.multiplyVector3(bbox.min);
-    }
-    */
     return bbox;
   }
-      
+  */
   this.createRadarContact = function() {
     // Add contact to radar, if available
     if (elation.ui.hud && elation.ui.hud.radar) {

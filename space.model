@@ -4,11 +4,11 @@
     "ThingType":{
       "table":"spacecraft.thing_types",
       "props":{
-        "type":        ["type", "varchar(50)", {"pk":true, "notnull":true}],
-        "property":    ["property", "varchar(50)", {"pk":true, "notnull": true}],
-        "propertykey": ["propertykey", "varchar(255)", {"pk":true, "notnull": true}],
-        "propertytype":["propertytype", "varchar(16)", {"notnull": true}],
-        "value":       ["value", "bigint(20)", {"notnull": true}]
+        "type":        ["type", "string", {"pk":true, "notnull":true}],
+        "property":    ["property", "string", {"pk":true, "notnull": true}],
+        "propertykey": ["propertykey", "string", {"pk":true, "notnull": true}],
+        "propertytype":["propertytype", "string", {"notnull": true}],
+        "value":       ["value", "int64", {"notnull": true}]
       },
       "associations":[
         ["many-to-one", "Thing", {"key":"type"}]
@@ -17,10 +17,10 @@
     "Thing":{
       "table":"spacecraft.things",
       "props":{
-        "parentname": ["parentname", "varchar(255)", {"pk": true, "default":""}],
-        "name":       ["name", "varchar(50)", {"pk": true, "default":""}],
-        "type":       ["type", "varchar(50)", {"notnull":true}],
-        "quantity":   ["quantity", "bigint(20)", {"notnull":true, "default": 0}]
+        "parentname": ["parentname", "string", {"pk": true, "default":""}],
+        "name":       ["name", "string", {"pk": true, "default":""}],
+        "type":       ["type", "string", {"notnull":true}],
+        "quantity":   ["quantity", "int64", {"notnull":true, "default": 0}]
       },
       "associations":[
         ["one-to-many", "ThingType", {"key":"type"}],
@@ -32,12 +32,12 @@
       "table":"spacecraft.thing_properties",
       "plural":"ThingProperties",
       "props":{
-        "parentname":  ["parentname", "varchar(255)", {"pk": true}],
-        "name":        ["name", "varchar(50)", {"pk": true}],
-        "property":    ["property", "varchar(50)", {"pk": true, "notnull": true}],
-        "propertykey": ["propertykey", "varchar(255)", {"pk": true, "notnull": true}],
-        "propertytype":["propertytype", "varchar(16)", {"notnull": true}],
-        "value":       ["value", "varchar(255)", {"notnull": true}]
+        "parentname":  ["parentname", "string", {"pk": true}],
+        "name":        ["name", "string", {"pk": true}],
+        "property":    ["property", "string", {"pk": true, "notnull": true}],
+        "propertykey": ["propertykey", "string", {"pk": true, "notnull": true}],
+        "propertytype":["propertytype", "string", {"notnull": true}],
+        "value":       ["value", "string", {"notnull": true}]
       },
       "associations":[
         ["many-to-one", "Thing", {"key":"parentname,name"}]
@@ -46,10 +46,10 @@
     "ThingLink":{
       "table":"spacecraft.thing_links",
       "props":{
-        "parentname": ["parentname", "varchar(255)", {"pk": true, "default":""}],
-        "name":       ["name", "varchar(50)", {"pk": true, "notnull":true}],
-        "linkto":     ["linkto", "varchar(255)", {"pk": true, "notnull":true}],
-        "linktype":   ["linktype", "varchar(50)", {"notnull":true}]
+        "parentname": ["parentname", "string", {"pk": true, "default":""}],
+        "name":       ["name", "string", {"pk": true, "notnull":true}],
+        "linkto":     ["linkto", "string", {"pk": true, "notnull":true}],
+        "linktype":   ["linktype", "string", {"notnull":true}]
       },
       "associations":[
         ["many-to-one", "Thing", {"key":"parentname,name"}]

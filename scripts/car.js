@@ -12,7 +12,7 @@ elation.extend("space.meshes.car", function(args) {
   this.currentcamera = 0;
   this.collisionradius = 20;
 
-  this.enginetorque = 39200000;
+  this.enginetorque = 39200000 * 2;
   
   this.mass = 1000;
   this.drag = .5;
@@ -21,7 +21,7 @@ elation.extend("space.meshes.car", function(args) {
   this.steermax = Math.PI / 4;
   this.wheelbase = 60;
   this.wheelradius = 10;
-  this.friction = 12.8;
+  this.friction = .25;
 
   this.currentgear = 1;
   this.gears = [0, 2.66, 1.78, 1.30, 1.0, 0.74, 0.50];
@@ -58,6 +58,7 @@ elation.extend("space.meshes.car", function(args) {
       'steer_left': function(ev) { this.steer("left", ev.value); },
       'steer_right': function(ev) { this.steer("right", ev.value); },
       'camera': function(ev) { if (ev.value) this.cycleCamera(); },
+      'foh': function(ev) { console.log(ev.type, ev.value); }
     });
     elation.space.controls(0).addBindings("vehicle_car", {
       'keyboard_w': 'accelerate',
@@ -273,6 +274,10 @@ elation.extend("space.meshes.car", function(args) {
     this.parts['chassis'].add(this.parts['lights_front']);
     this.parts['chassis'].add(this.parts['lights_back']);
     
+    this.parts['wheel_front_left'].castShadow = true;
+    this.parts['wheel_front_right'].castShadow = true;
+    this.parts['wheel_back'].castShadow = true;
+
     this.createCamera(this.camerapositions[0][0], this.camerapositions[0][1]);
     this.currentcamera = -1;
     this.cycleCamera();
@@ -291,23 +296,28 @@ elation.extend("space.meshes.car", function(args) {
     // FIXME - hack...removing the meshpartsloaded event doesn't seem to work right
     if (!this.parts['wheel_steering']) {
       var chassis = new THREE.Mesh(ev.data.chassis, new THREE.MeshFaceMaterial());
-      console.log(chassis);
+      //console.log(chassis);
       chassis.scale.set(10,10,10);
       chassis.rotation.y = Math.PI / 2;
       chassis.position.y = 18;
+      chassis.castShadow = true;
+      chassis.receiveShadow = false;
+      chassis.doubleSided = true;
 
       this.parts['wheel_steering'] = new THREE.Mesh(ev.data.steeringwheel, new THREE.MeshFaceMaterial());
       this.parts['wheel_steering'].position.x = -.14;
       this.parts['wheel_steering'].position.y = .7;
       this.parts['wheel_steering'].position.z = -1.05;
       chassis.add(this.parts['wheel_steering']);
+      this.parts['wheel_steering'].castShadow = true;
+      this.parts['wheel_steering'].receiveShadow = false;
 
       this.add(chassis);
       this.updateCollisionSize();
     }
   }
   this.dynamicsupdate = function(ev) {
-    if (this.position.y < 0) this.position.y = 0;
+    if (this.position.y < 6) this.position.y = 6;
     this.getAngleFromSteer();
     this.updateParts();
   }

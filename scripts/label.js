@@ -3,7 +3,7 @@ elation.extend("space.meshes.label", function(args) {
 
   this.createGeometry = function() {
     var geometry = new THREE.TextGeometry( this.properties.content.text, {
-      size: 50,
+      size: 20,
       height: 5,
       curveSegments: 6,
 
@@ -15,6 +15,12 @@ elation.extend("space.meshes.label", function(args) {
       bevelSize: 1,
       bevelEnabled: true
     });                                                
+    geometry.computeBoundingBox();
+    var bbox = geometry.boundingBox;
+    var diff = new THREE.Vector3().sub(bbox.max, bbox.min).multiplyScalar(-.5);
+    var geomod = new THREE.Matrix4();
+    geomod.setPosition(diff);
+    geometry.applyMatrix(geomod);
     this.createMesh(geometry, new THREE.MeshPhongMaterial({color: 0xcccccc}));
   }
   this.init();

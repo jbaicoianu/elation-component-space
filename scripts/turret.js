@@ -1,14 +1,16 @@
 elation.extend("space.meshes.turret", function(args) {
   elation.space.thing.call(this, args);
 
-  this.state = {
+  this.collisionradius = 100;
+  this.setStates({
     turn_left: 0,
     turn_right: 0,
     pitch_up: 0,
     pitch_down: 0,
     firing: 0
-  };
-  this.collisionradius = 100;
+  });
+  this.firetime = 500;
+  this.firetimer = false;
 
   this.postinit = function() {
     if (!this.properties.turret) {
@@ -26,7 +28,6 @@ elation.extend("space.meshes.turret", function(args) {
       this.properties.turret.minpitch = this.properties.turret.minpitchdegrees * Math.PI / 180;
       this.properties.turret.maxpitch = this.properties.turret.maxpitchdegrees * Math.PI / 180;
     }
-    this.loadCollada('/media/space/models/turret/A1 Turret.dae');
 
     elation.space.controls(0).addContext("vehicle_turret", {
       "fire": function(ev) { this.setState("firing", ev.value); },
@@ -77,27 +78,37 @@ elation.extend("space.meshes.turret", function(args) {
       this.parts['Turret_gun'].quaternion.setFromEuler(this.parts['Turret_gun'].rotation.clone().multiplyScalar(180/Math.PI));
     }
 
-    var now = new Date().getTime();
-    if (this.state['firing'] && (!this.lastfire || now > this.lastfire + 500)) {
-      this.fire();
-      this.lastfire = now;
-    }
-  }
-  this.setState = function(state, value) {
-    this.state[state] = value;
-    this.updateParts();
+    this.fire();
   }
   this.fire = function() {
-    var pos = new THREE.Vector3(0,2,.4);
-    var dir = pos.clone();
-    dir.y += 1;
-    this.parts['Turret_gun'].matrixWorld.multiplyVector3(dir);
-    this.parts['Turret_gun'].matrixWorld.multiplyVector3(pos);
-    dir.subSelf(pos).normalize();
-    console.log("BANG", [pos.x, pos.y, pos.z], [dir.x, dir.y, dir.z]);
-    var parent = elation.space.fly(0).scene;
-    var bullet = new elation.space.meshes.turret_bullet({radius: 5, mass: 1, position: pos, direction: dir, speed: 1500, scene: parent});
-    parent.add(bullet);
+    var now = new Date().getTime();
+    if (this.state['firing']) {
+      if (!this.lastfire || now > this.lastfire + this.firetime) {
+        var pos = new THREE.Vector3(0,2,.4);
+        var dir = pos.clone();
+        dir.y += 1;
+        this.parts['Turret_gun'].matrixWorld.multiplyVector3(dir);
+        this.parts['Turret_gun'].matrixWorld.multiplyVector3(pos);
+        dir.subSelf(pos).normalize();
+        //console.log("BANG", [pos.x, pos.y, pos.z], [dir.x, dir.y, dir.z]);
+        var parent = elation.space.fly(0).scene;
+        var bullet = new elation.space.meshes.turret_bullet({radius: 5, mass: 1, position: pos, direction: dir, speed: 2500, scene: parent});
+        parent.add(bullet);
+        this.lastfire = now;
+
+        (function(self) {
+          self.firetimer = setTimeout(function() { self.fire(); }, self.firetime);
+        })(this);
+
+      } else if (!this.firetimer) {
+        (function(self) {
+          self.firetimer = setTimeout(function() { self.fire(); }, self.firetime - (now - self.lastfire));
+        })(this);
+      }
+    } else if (!this.state['firing'] && this.firetimer) {
+      clearTimeout(this.firetimer);
+      this.firetimer = false;
+    }
   }
   this.dynamicsupdate = function(ev) {
     //this.getAngleFromSteer();
@@ -112,7 +123,7 @@ elation.extend("space.meshes.turret_bullet", function(args) {
   elation.space.thing.call(this, args);
 
   this.postinit = function() {
-    console.log('pew pew', this);
+    //console.log('pew pew', this);
     this.position.copy(this.args.position);
     this.dynamics.setVelocity(this.args.direction.multiplyScalar(this.args.speed));
     this.dynamics.addForce('gravity', [0,-9800*2,0]);
@@ -123,7 +134,7 @@ elation.extend("space.meshes.turret_bullet", function(args) {
     //this.createGeometry();
   }
   this.createGeometry = function() {
-    console.log('new bullet', this);
+    //console.log('new bullet', this);
     this.createMesh(new THREE.SphereGeometry(5, 6, 6), new THREE.MeshPhongMaterial({color: 0x999999}));
     (function(self) {
       setTimeout(function() { self.cleanup(); }, 5000);
@@ -139,7 +150,10 @@ elation.extend("space.meshes.turret_bullet", function(args) {
     this.removeRadarContact();
     if (this.scene) {
       this.scene.remove(this);
-      console.log('bye bullet', this);
+      if (this.collisionmesh) {
+        this.scene.remove(this.collisionmesh);
+      }
+      //console.log('bye bullet', this);
     } else {
       console.log("couldn't remove", this);
     }

@@ -1260,7 +1260,7 @@ elation.extend('ui.widgets.rotacol', function(hud) {
   }
   
   this.render = function(pos) {
-    var pos = this.camera.position;
+    var pos = this.camera.matrixWorld.getPosition();
     this.container.innerHTML = 'x:<strong>' + this.format(pos.x) + '</strong> y:<strong>' + this.format(pos.y) + '</strong> z:<strong>' + this.format(pos.z) + '</strong>';
   }
   
