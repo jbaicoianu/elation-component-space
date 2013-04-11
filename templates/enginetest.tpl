@@ -4,7 +4,10 @@
 {dependency name="utils.template"}
 {dependency name="utils.math"}
 
+{dependency name="ui.button"}
+{dependency name="ui.buttonbar"}
 {dependency name="ui.slider"}
+{dependency name="ui.select"}
 {dependency name="ui.tabs"}
 {dependency name="ui.treeview"}
 {dependency name="ui.window"}
@@ -59,6 +62,8 @@
 {dependency name="engine.things.terrain"}
 {dependency name="engine.things.turret"}
 {dependency name="engine.things.gridhelper"}
+{dependency name="engine.things.label"}
+{dependency name="engine.things.planet"}
 
 {*
 {foreach from=$types key=type item=typecount}
