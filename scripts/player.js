@@ -1,22 +1,22 @@
 elation.extend("space.meshes.player", function(args) {
   elation.space.thing.call( this, args, this );
-  this.strength = 36800;
-  this.mass = 4;
-  this.drag = 0.378;
-  this.burner = 2.0;
+  this.strength = 60000;
+  this.mass = 2.25;
+  this.drag = 0.325;//0.378;
+  this.burner = 4.0;
   this.booster = 10;
   this.throttle = 0;
-  this.throttle_mode = 'analog';
+  this.throttle_mode = 'Momentary';
   this.throttle_old = 0;
   this.throttle_sensitivity = .01;
   this.throttle_up = false;
   this.throttle_down = false;
   this.braking = false;
-  this.brakes = .4;
+  this.brakes = .8;
   this.fuel = 1;
   this.fuel_consumption = .00003;
   this.fuel_booster_multiplier = 10;
-  this.moveState = { up: 0, down: 0, left: 0, right: 0, forward: 0, back: 0, pitchUp: 0, pitchDown: 0, yawLeft: 0, yawRight: 0, rollLeft: 0, rollRight: 0 };
+  this.moveState = { up: 0, down: 0, left: 0, right: 0, forward: 0, backward: 0, pitchUp: 0, pitchDown: 0, yawLeft: 0, yawRight: 0, rollLeft: 0, rollRight: 0 };
   this.moveVector = new THREE.Vector3(0,0,0);
   this.rotationVector = new THREE.Vector3(0,0,0);
   this.tmpQuaternion = new THREE.Quaternion();
@@ -24,7 +24,8 @@ elation.extend("space.meshes.player", function(args) {
   this.displays = {};
   this.weapons = [];
   this.expose = [ 'id', 'position', 'rotation' ];
-
+  this.hardpoints = [ [-6,-1,-8], [-3.5,-3,-6], [3.5,-3,-6], [6,-1,-8] ];
+  
   this.postinit = function() {
     this.useQuaternion = true;
 
@@ -49,28 +50,10 @@ elation.extend("space.meshes.player", function(args) {
     this.dynamics.mass = this.mass;
     this.dynamics.drag = this.drag;
     
-    this.dynamics.addForce("gravity", [0,-.00001,0]);
+    this.dynamics.addForce("gravity", [0,0,-105.1]);
     
-    var lfn = function(x,y,z) {
-      var light = new THREE.SpotLight('0xFFFFFF', 0.4, 1300000);
-      //console.log('!!! LIGHTS', x,y,z);
-      light.position.set(x,y,z);
-      light.useQuaternion = true;
-      light.castShadow = true;
-      /*
-      var sphereGeometry = new THREE.SphereGeometry( 10000, 16, 80 );
-      var darkMaterial = new THREE.MeshBasicMaterial( { color: 0x000000 } );
-      var wireframeMaterial = new THREE.MeshBasicMaterial( { color: 0xffff00, wireframe: true, transparent: true } ); 
-      var shape = THREE.SceneUtils.createMultiMaterialObject( sphereGeometry, [ darkMaterial, wireframeMaterial ] );
-      */
-      //shape.position = light.position;
-        
-      return {light:light};
-    }
-    
-    this.headlight = lfn(this.camera.position.x,this.camera.position.y,this.camera.position.z)
-    //this.add(this.headlight.shape);
-    this.add(this.headlight.light);
+    this.headlight = new THREE.SpotLight('0xFFFFFF', 0.3,1300000)
+    this.add(this.headlight);
     
     if (this.properties.render && this.properties.render.mesh) {
       (function(self, mesh) {
@@ -89,17 +72,22 @@ elation.extend("space.meshes.player", function(args) {
   }
   
   this.setWeapons = function() {
-    var w = elation.space.player.weapon;
+    this.capacitor = new elation.space.equipment.capacitor('standard', this);
     
     this.weapons = [
-      new w({parent:this,position:[-2,-3,-6],speed:900,delay:.6,color:0x00FF44}),
-      new w({parent:this,position:[2,-3,-6],speed:900,delay:.6,color:0x00FF44}),
-      new w({parent:this,position:[-6,-1,-8],speed:900,delay:.6,color:0x00FF44}),
-      new w({parent:this,position:[6,-1,-8],speed:900,delay:.6,color:0x00FF44})
+      new elation.space.equipment.gun('Cannon', this, this.hardpoints[0]),
+      new elation.space.equipment.gun('Gatling', this, this.hardpoints[1]),
+      new elation.space.equipment.gun('Gatling', this, this.hardpoints[2]),
+      new elation.space.equipment.gun('Cannon', this, this.hardpoints[3]),
     ];
+    
+    this.weapconf = [];
+    
+    for (var i=0; i<this.weapons.length; i++)
+      this.weapconf.push(this.weapons[i]);
   }
   
-  this.display = function(name, canvas) {
+  this.display = function(name, canvas, transparency) {
     var display = {
       name: name,
       canvas: canvas,
@@ -107,7 +95,16 @@ elation.extend("space.meshes.player", function(args) {
       texture: new THREE.Texture(canvas)
     };
     
-    display.material = new THREE.MeshBasicMaterial({ map: display.texture });
+    var material = { map: display.texture };
+    
+    if (transparency) {
+      material.transparent = true;
+      material.blending = THREE.AdditiveBlending,
+      material.opacity = 1;
+    }
+    
+    display.material = new THREE.MeshBasicMaterial(material);
+    
     this.displays[name] = display;
     
     return display;
@@ -116,33 +113,81 @@ elation.extend("space.meshes.player", function(args) {
   this.loadMesh = function(geometry) {
     var material = new THREE.MeshFaceMaterial({color: 0x222222, shading: THREE.FlatShading});
     var displays = {};
+    /*
+    var vertShader = document.getElementById('imagemixer_vertex').innerHTML;
+    var fragShader = document.getElementById('imagemixer_fragment').innerHTML;
+    var target_display = this.display('target_overlay', elation.ui.hud.target_overlay.container);
 
-    displays[0] = { material: new THREE.MeshPhongMaterial({shininess: 1, color: 0x323238, shading: THREE.FlatShading}) };
-    displays[1] = { material: new THREE.MeshPhongMaterial({
+    var attributes = {}; // custom attributes
+
+    var uniforms = {    // custom uniforms (your textures)
+      tOne: { type: "t", value: this.controller.altrenderer },
+      tSec: { type: "t", value: target_display.texture }
+    };
+    */
+    displays[2] = { material: new THREE.MeshPhongMaterial({
+      shininess: 5.0,
+      specular: 0x222222,
+      emmisive: 0xffffff,
+      color: 0x111111, 
+      blending: THREE.AdditiveBlending,
+      shading: THREE.FlatShading
+    })};
+    displays[0] = { material: new THREE.MeshPhongMaterial({
+      shininess: 4.0,
+      specular: 0x002200,
+      emmisive: 0xffffff,
+      color: 0x000000, 
+      blending: THREE.AdditiveBlending,
+      shading: THREE.FlatShading
+    })};
+    displays[3] = { material: new THREE.MeshPhongMaterial({
       shininess: 25.0,
       specular: 0xffffff,
       transparent: true, 
-      doubleSided: true,
-      depthTest: true,
       depthWrite: false,
-      opacity: .1, 
+      opacity: .13, 
       color: 0x000000, 
-      shading: THREE.SmoothShading}) 
-    };
-    //displays[3] = this.display('target', elation.ui.hud.target.container);
-    //displays[3] = this.display('radar', elation.ui.hud.radar.container);
-    //displays[2] = this.display('ops', elation.ui.hud.ops.container);
+      blending: THREE.AdditiveBlending,
+      shading: THREE.SmoothShading
+    })};
+    displays[5] = { material: new THREE.MeshPhongMaterial({
+      shininess: 15.0,
+      specular: 0x005500,
+      transparent: true, 
+      depthWrite: false,
+      opacity: .14, 
+      color: 0x003300, 
+      blending: THREE.AdditiveBlending,
+      shading: THREE.SmoothShading
+    })};
+    displays[4] = this.display('ops', elation.ui.hud.ops.container);
+    displays[6] = { material: new THREE.MeshBasicMaterial({
+      map: this.controller.altrenderer 
+    })};
+    displays[7] = this.display('target_overlay', elation.ui.hud.target_overlay.container, true);
+    displays[1] = { material: new THREE.MeshPhongMaterial({
+      shininess: 5.0,
+      specular: 0x222222,
+      emmisive: 0xffffff,
+      color: 0x111111, 
+      blending: THREE.AdditiveBlending,
+      shading: THREE.SmoothShading
+    })};
+
     
     for (var key in displays) {
       geometry.materials[key] = displays[key].material;
     }
     
-    mesh = new THREE.Mesh(geometry, material);
+    //console.log(geometry);
+    
+    this.mesh = mesh = new THREE.Mesh(geometry, material);
     mesh.position.z = -2;
     mesh.position.y = -1.8;
     //mesh.castShadow = true;
     //mesh.receiveShadow = true;
-    //mesh.renderDepth = -1.1;
+    mesh.renderDepth = 1;
     //mesh.depthTest = -1.1;
     
     if (this.properties && this.properties.physical && this.properties.physical.scale) 
@@ -150,7 +195,7 @@ elation.extend("space.meshes.player", function(args) {
     
     this.geometry = geometry;
     this.add(mesh);
-    this.updateCollisionSize();
+    //this.updateCollisionSize();
   }
   
   this.renderframe_start = function(ev) {
@@ -158,9 +203,8 @@ elation.extend("space.meshes.player", function(args) {
       this.displays[key].material.map.needsUpdate = true;
     }
     
-    
     // All this shit should really be framerate independant and based on time
-    if (this.throttle_mode == 'analog') {
+    if (this.throttle_mode == 'Analog') {
       if (this.throttle_up)
         this.throttle += this.throttle_sensitivity;
       if (this.throttle_down)
@@ -170,18 +214,18 @@ elation.extend("space.meshes.player", function(args) {
         this.throttle = 1;
       if (this.throttle < 0)
         this.throttle = 0;
-      
-      if (this.burner_on && this.fuel > 0)
-        this.fuel -= this.fuel_consumption;
-      
-      if (this.booster_on && this.fuel > 0)
-        this.fuel -= (this.fuel_consumption * this.fuel_booster_multiplier);
     } else {
       if (this.throttle_up || this.throttle_down)
         this.throttle = 1;
       else
         this.throttle = 0;
     }
+    
+    if (this.burner_on && this.fuel > 0)
+      this.fuel -= this.fuel_consumption;
+    
+    if (this.booster_on && this.fuel > 0)
+      this.fuel -= (this.fuel_consumption * this.fuel_booster_multiplier);
     
     if (this.braking) {
       this.throttle = 0;
@@ -215,11 +259,22 @@ elation.extend("space.meshes.player", function(args) {
     }
     
     if (this.firing) {
-      //console.log('fired');
+      var guns = [];
+      var fired = false;
       
       for (var i=0; i<this.weapons.length; i++) {
-        this.weapons[i].trigger();
+        var gun = this.weapons[i];
+        
+        if (gun.trigger()) {
+          var fired = true;
+          guns.push(gun);
+        } else {
+          guns.splice(0,0,gun);
+        }
       }
+      
+      if (fired)
+        this.weapons = guns;
     }
   }
   
@@ -233,7 +288,6 @@ elation.extend("space.meshes.player", function(args) {
   }
   
   this.updateMovementVector = function() {
-    if (this.throttle_mode == 'analog') {
       if (this.throttle > 0)
         this.moveState.forward = 1;
       else
@@ -248,15 +302,16 @@ elation.extend("space.meshes.player", function(args) {
           forward *= this.burner;
       }
       
+    if (this.throttle_mode == 'Analog') {
       forward = -forward * this.throttle;
     } else {
-      var forward = (-this.moveState.forward + this.moveState.backward);
+      forward = (-forward + this.moveState.backward);
     }
     
     this.moveVector.x = ( -this.moveState.left    + this.moveState.right );
     this.moveVector.y = ( -this.moveState.down    + this.moveState.up );
     //this.moveVector.z = ( -this.moveState.forward    + this.moveState.backward );
-    this.moveVector.z = ( forward );
+    this.moveVector.z = ( forward + this.moveState.backward );
     
     if (this.moveVector.length() > 0) {
       this.dynamics.addForce("thrusters", this.matrix.multiplyVector3(this.moveVector.multiplyScalar(this.strength)).subSelf(this.position));
@@ -328,12 +383,25 @@ elation.extend("space.meshes.player", function(args) {
     if (event == 0)
       return;
     
-    console.log(this);
     var old = this.throttle_mode;
     
-    this.throttle_mode = this.throttle_mode == 'analog' ? 'momentary' : 'analog';
+    this.throttle_mode = this.throttle_mode == 'Analog' ? 'Momentary' : 'Analog';
     
-    elation.ui.hud.console.log('-!- Switched throttle mode from ' + old + ' to ' + this.throttle_mode + '.');
+    elation.ui.hud.console.log('-!- Switched throttle mode from ' + old + ' to ' + this.throttle_mode);
+  }
+  
+  this.change_fire_mode = function(event) {
+    if (event == 0)
+      return;
+    
+    this.capacitor.toggleMode();
+  }
+  
+  this.change_gun = function(event, num) {
+    if (event == 0)
+      return;
+    
+    this.capacitor.setWeapon(num);
   }
   
   this.braking_thrusters = function(event) {
@@ -385,7 +453,12 @@ elation.extend("space.meshes.player", function(args) {
       'braking_thrusters': function(ev) { this.braking_thrusters(ev.value); },
       'wheel_target': function(ev) { this.mwheel(ev); },
       'next_target': function(ev) { this.next_target(ev.value); },
-      'prev_target': function(ev) { this.prev_target(ev.value); }
+      'prev_target': function(ev) { this.prev_target(ev.value); },
+      'change_gun_1': function(ev) { this.change_gun(ev.value, 0); },
+      'change_gun_2': function(ev) { this.change_gun(ev.value, 1); },
+      'change_gun_3': function(ev) { this.change_gun(ev.value, 2); },
+      'change_gun_4': function(ev) { this.change_gun(ev.value, 3); },
+      'fire_mode': function(ev) { this.change_fire_mode(ev.value); }
       //'jump': function(ev) { this.jump(ev.value); }
     });
     
@@ -408,7 +481,12 @@ elation.extend("space.meshes.player", function(args) {
       'mouse_button_1': 'move_booster',
       'keyboard_c': 'throttle_mode',
       'keyboard_shift': 'braking_thrusters',
-      'keyboard_x': 'move_booster'
+      'keyboard_1': 'change_gun_1',
+      'keyboard_2': 'change_gun_2',
+      'keyboard_3': 'change_gun_3',
+      'keyboard_4': 'change_gun_4',
+      'keyboard_x': 'move_booster',
+      'keyboard_g': 'fire_mode'
       //'keyboard_j': 'jump'
     });
     
@@ -452,17 +530,41 @@ elation.extend('ui.widgets.ship_status', function(parent, args) {
     this.geometry = geometry;
     
     this.mesh.position.set(this.center[0],this.center[1],this.center[2]);
-    this.mesh.useQuaternion = true;
+    //this.mesh.useQuaternion = true;
     //this.mesh.quaternion.copy(this.parent.camera.quaternion);
-    //this.mesh.rotation.set(Math.PI/2,0,0);
+    this.mesh.rotation.set(Math.PI/2,0,0);
     this.mesh.scale.set(this.scale,this.scale,this.scale);
     this.mesh.renderDepth = -1.1;
     this.mesh.depthTest = -1.1;
     this.parent.add(mesh);
-    console.log('loadMesh complete');
   }
   
   this.renderframe_end = function(event) {
+    var target = elation.ui.hud.target.list.current_target_data,
+        parent = this.parent,
+        camera = parent.controller.targetcam
+    
+    if (target) {
+      var a = new THREE.Vector3().copy(parent.position),
+          b = new THREE.Vector3().copy(target.position),
+          d = a.distanceTo(b);
+          q = new THREE.Vector3().sub(a, b),
+          r = target.mesh.boundRadius * target.mesh.boundRadiusScale,
+          br = parent.mesh.boundRadius * parent.mesh.boundRadiusScale * 3.333,
+          s = r * 3.333;
+          
+      var s = s > d ? d : s;
+      
+      //console.log(parent);
+      camera.far = s + r;
+      camera.near = s - r < br ? br : s - r;
+      camera.updateProjectionMatrix();
+      camera.position.set(b.x, b.y, b.z).subSelf(q.normalize().multiplyScalar(-s));
+      camera.lookAt(target.position);
+    }
+    
+    return;
+    
     if (this.mesh) {
       var q = new THREE.Quaternion();
       var vel = this.parent.dynamics.vel;
@@ -471,7 +573,7 @@ elation.extend('ui.widgets.ship_status', function(parent, args) {
       q.copy(this.parent.camera.quaternion);
       q.multiplyVector3(v);
       this.mesh.quaternion = q;
-      return;
+      
       //this.mesh.quaternion.copy(this.parent.camera.quaternion); return;
       var target = elation.ui.hud.target.list.current_target_data;
       if (target) {

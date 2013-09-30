@@ -88,12 +88,12 @@ elation.component.add("space.controls", {
     elation.events.add(window, "keydown,keyup,WebkitGamepadConnected,WebkitGamepadDisconnected,MozGamepadConnected,MozGamepadDisconnected,gamepadconnected,gamepaddisconnected", this);
   },
   addContext: function(context, actions) {
-    console.log('Add control context ' + context, actions);
+    console.log('-!- Engine.Controls: Add control context ' + context, actions);
     this.contexts[context] = actions;
   },
   activateContext: function(context, target) {
     if (this.activecontexts.indexOf(context) == -1) {
-      console.log('Activate control context ' + context);
+      console.log('-!- Engine.Controls: Activate control context ' + context);
       this.activecontexts.unshift(context);
     }
     if (target) {
@@ -265,9 +265,13 @@ elation.component.add("space.controls", {
     if (this.pointerlock) {
       var w = this.container.offsetWidth / 2,
           h = this.container.offsetHeight / 2,
-          x = this.state["mouse_x"] + (event.webkitMovementX / w),
-          y = this.state["mouse_y"] + (event.webkitMovementY / h);
-
+          x = ev && typeof ev.mozMovementX != 'undefined'
+              ? this.state["mouse_x"] + (ev.mozMovementX / w)
+              : this.state["mouse_x"] + (event.webkitMovementX / w),
+          y = ev && typeof ev.mozMovementY != 'undefined'
+              ? this.state["mouse_y"] + (ev.mozMovementY / h)
+              : this.state["mouse_y"] + (event.webkitMovementY / h);
+      
       mpos[0] = x;
       mpos[1] = y;
       

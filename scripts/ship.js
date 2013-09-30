@@ -40,11 +40,11 @@ elation.extend("space.meshes.ship", function(args) {
       }
       
       this.materials = [new THREE.MeshFaceMaterial({color: 0xffffff, shading: meshShading})];
-      console.log('@@@ ship LOADED MODEL', this.properties.render.shading, this.materials, meshShading); 
+      
       (function(self, mesh) {
         var loader = new THREE.JSONLoader();
         loader.load(mesh, function(geometry) { 
-          if (shading == 'smooth') 
+         // if (shading == 'smooth') 
             geometry.computeVertexNormals();
           
           self.loadMesh(geometry); 
@@ -67,6 +67,8 @@ elation.extend("space.meshes.ship", function(args) {
   this.loadMesh = function(geometry) {
     var material = new THREE.MeshFaceMaterial({color: 0xaaaaff});
     this.mesh = mesh = new THREE.Mesh(geometry, material);
+    
+    console.log(this.name, geometry);
     
     mesh.castShadow = true;
     mesh.receiveShadow = true;

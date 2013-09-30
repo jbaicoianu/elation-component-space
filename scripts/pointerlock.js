@@ -4,7 +4,6 @@ elation.extend('pointerlock', function(controls) {
   this.mainmenu = elation.space.menu.main;
   
   this.init = function() {
-    console.log('pointerlock init',this);
     elation.events.add(this.container, 'click', this);
     elation.events.add(window, 'pointerlockchange,mozpointerlockchange,webkitpointerlockchange', this);
     
@@ -17,11 +16,20 @@ elation.extend('pointerlock', function(controls) {
   }
   
   this.request = function(element) {
-    this.container.webkitRequestPointerLock();
+    if (typeof this.container.webkitRequestPointerLock != 'undefined')
+      this.container.webkitRequestPointerLock();
+    if (typeof this.container.mozRequestPointerLock != 'undefined')
+      this.container.mozRequestPointerLock();
+      
+    console.log('-!- PointerLock: Locked mouse cursor, hit ESC to unlock');
   }
 
   this.exit = function() {
-    document.webkitExitPointerLock();
+    console.log('-!- PointerLock: Returning cursor control to OS');
+    if (typeof document.webkitExitPointerLock != 'undefined')
+      document.webkitExitPointerLock();
+    if (typeof document.mozExitPointerLock != 'undefined')
+      document.mozExitPointerLock();
   }
 
   this.pointerlockchange = function(event) {

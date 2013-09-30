@@ -13,9 +13,10 @@ elation.extend("space.meshes.star", function(args, controller) {
   this.createGeometry = function() {
     var color = elation.utils.arrayget(this.args, 'properties.render.color') || '0xFFFFFF',
         physical = this.get(args, 'properties.physical'),
-        pos = physical.position,
+        generated = g = this.get(args, 'properties.generated'),
+        pos = this.pos = physical.position,
         radius = physical.radius * 2,
-        lum = args.properties.generated.lum,
+        lum = generated.lum,
         lum = lum > 15 ? 15 : lum,
         p = lum / 15,
         intensity_min = 2,
@@ -23,28 +24,23 @@ elation.extend("space.meshes.star", function(args, controller) {
         lux = intensity_min + ((intensity_max - intensity_min) * p);
     
         r2 = radius;
-    //console.log('### STAR GENERATED',color,this, args);
+    
+    console.log('-!- Star: Generated type('+g.type+') color('+color+') lux('+lux.toFixed(5)+') mass('+g.mass+') temp('+g.temp+')');
+    
     var lfn = function(x,y,z,l) {
       var light = new THREE.SpotLight(color, l, 0);
       light.position = {x:x,y:y,z:z};
       light.shadowCameraVisible = true;
       light.shadowDarkness = 0.90;
       light.castShadow = true;
-      console.log('!!! STARLIGHT LUX:',l, lum, p);
       return light;
     }
     this.light = lfn(0,0,0,lux);
     this.add(this.light);
+    /*
     var parameters = {
       map: THREE.ImageUtils.loadTexture('/~lazarus/elation/images/space/star2.jpg'),
       color: color,
-      /*
-      specular: 0x111111,
-      ambient: 0x222222,
-      shininess: .1,
-      specular: 0x333333,
-      normalScale: 0.5,
-      */
       transparent: true, 
       depthTest: true,
       depthWrite: false,
@@ -55,7 +51,7 @@ elation.extend("space.meshes.star", function(args, controller) {
     //var geom = new THREE.SphereGeometry(r2 || 1000, 24, 24);
     var material = new THREE.MeshBasicMaterial(parameters),
         sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(r2,64,32),material);
-    
+    */
     //this.add(sphere);
     var texture = THREE.ImageUtils.loadTexture("/~lazarus/elation/images/space/lensflare0.png");
     var sprite = new THREE.Sprite({ 
@@ -69,17 +65,18 @@ elation.extend("space.meshes.star", function(args, controller) {
       color: this.color 
     });
     
-    var r2 = r2 / 720;
-    console.log(radius, r2,r2/80000, pos);
+    var r2 = r2 / 850;
+    //console.log(radius, r2,r2/80000, pos);
     sprite.renderDepth = -1.1;
     sprite.depthWrite = -1.1;
     sprite.scale.set(r2,r2, r2);
     sprite.position.set(pos[0],pos[1],pos[2]);
     this.controller.scene.add(sprite);
     
-				var textureFlare0 = THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/lensflare0.png" );
-				var textureFlare1 = THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/sun_halo.png" );
-				var textureFlare2 = THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/lensflare2.png" );
+    return;
+				//var textureFlare0 = THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/lensflare0.png" );
+				//var textureFlare1 = THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/sun_halo.png" );
+				//var textureFlare2 = THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/lensflare2.png" );
 				var textureFlare3 = THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/lensflare3.png" );
 
 					var flareColor = new THREE.Color( 0xffffff );
@@ -96,7 +93,7 @@ elation.extend("space.meshes.star", function(args, controller) {
 					lensFlare.add( textureFlare3, .3, 1.0, THREE.AdditiveBlending );
 
 					lensFlare.customUpdateCallback = this.lensFlareUpdateCallback;
-				lensFlare.position.set(0,0,0);
+				   //lensFlare.position.set(0,0,0);
           //lensFlare.size = r2 / 50;
 
     lensFlare.position.set(pos[0],pos[1],pos[2]+1200000);
@@ -115,10 +112,11 @@ elation.extend("space.meshes.star", function(args, controller) {
     var vecX = -object.positionScreen.x * 2;
     var vecY = -object.positionScreen.y * 2;
     var size = 80;
+    var pos = this.pos;
 
     var camDistance = controller.camera.position.length();
     var player = controller.objects.player.Player;
-    var star_position = new THREE.Vector3(pos[0],pos[1],pos[2]);
+    //var star_position = new THREE.Vector3(pos[0],pos[1],pos[2]);
     var player_position = player.position;
     var direction = player.dynamics.vel;
     

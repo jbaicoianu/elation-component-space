@@ -4,30 +4,42 @@ elation.extend('ui.widgets.radar3d', function(hud) {
   this.range = 32000;
   this.width = .6;
   this.inner = .55;
-  this.center = [ 0, -1.3, -4.7 ];
+  this.center = [ 0, -1.65, -4.6 ];
   this.controller = hud.controller;
   this.contacts = [];
   this.oldtime = Date.now() * .005;
   this.colors = this.hud.colors;
   this.inc = 0;
   
-  this.init = function() { 
-    this.initialized = true;
+  this.init = function() {
+    !function(self) {
+      self.particleTexture = THREE.ImageUtils.loadTexture("/~lazarus/elation/images/space/lensflare0.png", false, function() {
+        console.log('image loaded');
+        self.megainit();
+      });
+    }(this);
+  }
+  this.megainit = function() {
+    this.player = this.controller.objects.player.Player;
     this.camera = this.controller.camera;
     this.contacts = elation.ui.hud.target.visible_list;
-    this.radar = radar = new THREE.Object3D();
+    this.radpar = radpar = new THREE.Object3D();  // radar parent - wont be affected by rotation
+    this.radar = radar = new THREE.Object3D(); // rotated radar sphere
     this.radar.useQuaternion = true;
-    this.player.add(this.radar);
+    this.player.add(this.radpar);
+    this.radpar.add(this.radar);
+    
+    this.radar.alphaTest = 1.5;
     
     this.radar.position.x = this.center[0];
     this.radar.position.y = this.center[1];
     this.radar.position.z = this.center[2];
 
-    this.sphere = this.makeSphere(this.width, [0,0,0], new THREE.MeshLambertMaterial({
-      color: 0x000000,
-      shininess: 25.0,
+    this.sphere = this.makeSphere(this.width, [0,0,0], new THREE.MeshBasicMaterial({
+      color: 0x001100,
+      shininess: 11.0,
       ambient: 0xffffff,
-      specular: 0xffffff,
+      specular: 0x001100,
       transparent: true, 
       depthTest: true,
       depthWrite: false,
@@ -46,30 +58,31 @@ elation.extend('ui.widgets.radar3d', function(hud) {
       depthWrite: false,
       //wireframe: true,
       blending: THREE.AdditiveBlending,
+      specular: 0x001100,
+      emmisive: 0xffffff,
       opacity: .1,
       shading: THREE.SmoothShading
     }), 32, 16);
-    this.sphere_inner.flipSided = true;
-    this.sphere_inner.renderDepth = -1.5;
-    this.sphere_inner.depthWrite = -1.5;
+    this.sphere_inner.flipSided = false;
+    this.sphere_inner.renderDepth = -1;
     this.radar.add(this.sphere_inner);
     
-    var line = this.makeLine([0,0,-this.inner], 0x5b7c8b);
+    var line = this.makeLine([0,0,-this.width], 0x004400);
     line.position.set(this.center[0], this.center[1], this.center[2]);
     line.rotation.y = .8;
-    this.player.add(line);
+    this.radpar.add(line);
     
-    var line = this.makeLine([0,0,-this.inner], 0x5b7c8b);
+    var line = this.makeLine([0,0,-this.width], 0x004400);
     line.position.set(this.center[0], this.center[1], this.center[2]);
     line.rotation.y = -.8;
-    this.player.add(line);
+    this.radpar.add(line);
     
-    var line = this.makeLine([0,0,this.inner], 0x5b7c8b);
+    var line = this.makeLine([0,0,this.width], 0x004400);
     line.position.set(this.center[0], this.center[1], this.center[2]);
-    this.player.add(line);
+    this.radpar.add(line);
     
     var material = new THREE.MeshBasicMaterial({
-        color: 0x7b9cab,
+        color: 0x004400,
         depthTest: true,
         depthWrite: false,
         transparent: true,
@@ -85,23 +98,18 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     
     cylinder.position.set(this.center[0], this.center[1], this.center[2]);
     cylinder.renderDepth = -1.5;
-    cylinder.depthWrite = -1.5;
     cylinder.alphaTest = 0.5;
-    this.player.add(cylinder);
+    this.radpar.add(cylinder);
     
     this.makeParticles();
+    
+    elation.events.add(this, 'renderframe_start', this);
   }
   
-  this.render = function(e) { 
-    this.player = this.controller.objects.player.Player;
-    
-    if (!this.initialized && this.player) {
-      this.init();
-    } else {
-      var quat = this.camera.quaternion;
-      this.radar.quaternion.set(quat.x, quat.y, quat.z, quat.w * -1);
-    }
-    
+  this.renderframe_start = function(e) {
+    var quat = this.camera.quaternion;
+    this.radar.quaternion.set(quat.x, quat.y, quat.z, quat.w * -1);
+   
     this.visible = [];
     this.draw();
   }
@@ -128,11 +136,11 @@ elation.extend('ui.widgets.radar3d', function(hud) {
         color,size;
     
     switch(type) {
-      case 'player':    color = 0x44FF44; size = .13; break;
-      case 'roid':      color = 0x333333; size = .07; break;
-      case 'station':   color = 0xFFFF44; size = .13; break;
-      case 'ship':      color = 0x44FFFF; size = .11; break;
-      default:          color = 0xFF00FF; size = .11;
+      case 'player':    color = 0x44FF44; size = .08; break;
+      case 'roid':      color = 0x333333; size = .05; break;
+      case 'station':   color = 0xFF8800; size = .10; break;
+      case 'ship':      color = 0xFF0000; size = .09; break;
+      default:          color = 0xFF00FF; size = .07;
     }
     
     if (!contact.particle) {
@@ -173,6 +181,30 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     }
   }
   
+  this.toggleBlip = function(contact, size) {
+    contact.blipsize = this.attributes.customSize.value[contact.blipindex] = size;
+    this.attributes.customSize.needsUpdate = true;
+  }
+  
+  this.makeBlip = function(contact, size, coords, color, debug) {
+    var particle = this.geometry.vertices[this.inc];
+    
+    //if (debug) console.log(particle, contact, size, coords);
+    
+    if (particle) {
+      particle.position.set(coords[0],coords[1],coords[2]);
+      contact.blipindex = this.inc;
+      contact.blipsize = this.attributes.customSize.value[this.inc] = size;
+      this.attributes.customColor.value[this.inc] = new THREE.Color(color);
+      this.attributes.customSize.needsUpdate = true;
+      this.attributes.customColor.needsUpdate = true;
+    }
+    
+    this.inc++;
+    
+    return particle;
+  }
+  
   this.makeParticles = function() {
     // create the particles
     this.pCount = 1000;
@@ -180,25 +212,21 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     this.geometry = new THREE.Geometry();
     
     this.attributes = {
-      size: {	type: 'f', value: [] },
+      customSize: {	type: 'f', value: [] },
       customColor: { type: 'c', value: [] }
     };
 
     uniforms = {
       amplitude: { type: "f", value: 1 },
       color:     { type: "c", value: new THREE.Color( 0xFFFFFF ) },
-      texture:   { type: "t", value: THREE.ImageUtils.loadTexture( "/~lazarus/elation/images/space/particle.png" ) },
+      texture:   { type: "t", value: this.particleTexture },
     };
     
     var materialargs = {
       uniforms: uniforms,
       attributes: this.attributes,
-      vertexShader: document.getElementById('vertexshader').textContent,
-      fragmentShader: document.getElementById('fragmentshader').textContent,
-      blending: THREE.AdditiveBlending,
-      depthTest: true,
-      depthWrite: false,
-      transparent:	true
+      vertexShader: document.getElementById('alphasize_particles_vertex').textContent,
+      fragmentShader: document.getElementById('alphasize_particles_fragment').textContent
     };
     
     var material = new THREE.ShaderMaterial(materialargs);
@@ -214,13 +242,11 @@ elation.extend('ui.widgets.radar3d', function(hud) {
 
     this.radarSystem = new THREE.ParticleSystem(this.geometry, material);
     
-    this.radarSystem.dynamic = true;
     this.radarSystem.sortParticles = true;
-    this.radarSystem.renderDepth = -1.1;
-    this.radarSystem.depthWrite = -1.1;
+    this.radarSystem.renderDepth = -5;
     
     var vertices = this.geometry.vertices;
-    var values_size = this.attributes.size.value;
+    var values_size = this.attributes.customSize.value;
     var values_color = this.attributes.customColor.value;
     
     for( var v = 0; v < vertices.length; v++ ) {
@@ -230,29 +256,6 @@ elation.extend('ui.widgets.radar3d', function(hud) {
     
     //console.log('Make Particles:', this.radarSystem, material);
     this.radar.add(this.radarSystem);
-  }
-  
-  this.toggleBlip = function(contact, size) {
-    contact.blipsize = this.attributes.size.value[contact.blipindex] = size;
-    this.attributes.size.needsUpdate = true;
-  }
-  
-  this.makeBlip = function(contact, size, coords, color, debug) {
-    var particle = this.geometry.vertices[this.inc];
-    
-    //if (debug) console.log(particle, contact, size, coords);
-    
-    if (particle) {
-      particle.position.set(coords[0],coords[1],coords[2]);
-      contact.blipindex = this.inc;
-      contact.blipsize = this.attributes.size.value[this.inc] = size;
-      this.attributes.customColor.value[this.inc] = new THREE.Color(color);
-      this.attributes.size.needsUpdate = true;
-    }
-    
-    this.inc++;
-    
-    return particle;
   }
   
   this.makeSphere = function(width, coords, material, cols, rows) {
@@ -268,13 +271,8 @@ elation.extend('ui.widgets.radar3d', function(hud) {
   }
   
   this.makeLine = function(l, color) {
-    var material = new THREE.MeshBasicMaterial({
+    var material = new THREE.LineBasicMaterial({
         color: color,
-        transparent: true,
-        depthTest: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        opacity: .4
     });
     
     var geometry = new THREE.Geometry();
@@ -287,8 +285,10 @@ elation.extend('ui.widgets.radar3d', function(hud) {
   this.handleEvent = function(event) {
     this[event.type](event);
   }
+  
+  this.init();
 });
-
+/*
 elation.space.materials.addShader('radar_blip', {
 		uniforms:  THREE.UniformsUtils.merge([
       {
@@ -326,7 +326,7 @@ elation.space.materials.addShader('radar_blip', {
 			"}"
 		].join("\n")
 });
-
+*/
 /* bullshit
   sphere.geometry.applyMatrix( new THREE.Matrix4().setTranslation( 0,+this.center[1],+this.center[2] ) );
   

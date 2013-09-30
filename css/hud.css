@@ -1,32 +1,52 @@
 * { 
-  font-family: sans-serif;
+  font-family: Arial;
 }
 canvas {
   position: fixed;
 }
+div.main canvas {
+  -webkit-transition: -webkit-filter 300ms ease-in-out;
+}
+body.show_interface img,
+body.show_interface canvas.static_overlay,
+body.show_interface canvas.targeting,
+body.show_interface canvas.aeronautics,
+body.show_interface div.main canvas {
+  -webkit-filter: sepia(100%) blur(3px) brightness(.8);
+}
+body.show_interface div.ui_widget_label {
+  opacity: 1;
+}
+body.show_interface .console_display {
+  overflow: auto;
+}
 body.show_interface div#stats,
 body.show_interface div.ui_widget {
+  border-color: #3b5c6b;
+  background: #232627;
+  box-shadow: 0px 0px 15px 1px #111 inset,0px 0px 20px 2px #232627;
   opacity: 1;
 }
 body div#stats,
 div.ui_widget {
   position: fixed;
   padding: .6em;
-  background: #232627;
   border-radius: .5em;
-  border: 0px solid #3b5c6b;
-  box-shadow: 0px 0px 15px 1px #111 inset,0px 0px 20px 2px #232627;
+  border: 0px solid transparent;
   z-index: 6;
   color: #bbb;
   font-size: .8em;
-  opacity: .7;
+  opacity: .9;
   cursor: move;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
+  -webkit-transition: all 300ms ease-in-out;
 }
-
+div.ui_widget_label {
+  opacity: 0;
+}
 ul.console_display::-webkit-scrollbar,
 div.target div.target_list_container::-webkit-scrollbar {
   width: 6px;
@@ -127,12 +147,15 @@ li.target_list_item div.target_list_item_container canvas {
   float: right;
 }
 li.target_list_item div.target_list_item_container li {
-  margin-top: -.34em;
-  font-size: 23pt;
-  color: #777;
-  margin-left: .8em;
+  color: #777777;
+  list-style: none outside none;
+  margin-top: -0.5em;
   position: absolute;
-  list-style: normal;
+}
+li.target_list_item div.target_list_item_container li:before { 
+  content: "\2022"; 
+  font-size: 2em;
+  vertical-align: middle;
 }
 li.target_list_item div.target_list_item_container li.target_type_ship {
   color: #0a0;
@@ -154,14 +177,17 @@ li.target_list_item {
   font-size: 11pt;
   margin: 0;
   padding: 0 1em;
-  box-shadow: 0 0 27px 0px rgba(0,0,0,1) inset;
-  border-radius: 1em;
 }
 li.target_list_item:hover {
   background: #222;
 }
 li.target_list_item.target {
-  background: #224;
+  background: #420;
+}
+div.target canvas.ship_targetlist {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 /*
 div.ui_widget.target div.ui_widget_label,
@@ -198,26 +224,31 @@ canvas.radar {
   padding: 0;
   border-radius: .3em;
   height: 5.9em;
-  overflow: auto;
+  overflow: hidden;
   margin: 0;
 }
 .console_bottom {
   margin: 0;
 }
+body.show_interface .console_input {
+  background: black;
+  box-shadow: 0px 0px 1px 1px #3b5c6b inset;
+}
 .console_input {
   border-top: 1px solid #252525;
   padding: 0 .3em;
-  background: black;
   border-radius: .3em;
   display: block;
+  background: transparent;
   height: 1.5em;
   border: none;
-  box-shadow: 0px 0px 1px 1px #3b5c6b inset;
   color: #bbb;
-left: .4em;
-right: .3em;
-bottom: .5em;
-position: absolute;
+  left: .4em;
+  right: .3em;
+  bottom: .5em;
+  position: absolute;
+  margin: 0 auto;
+  width: 95%;
 }
 .console {
   position: fixed;
@@ -225,6 +256,7 @@ position: absolute;
   right: 10px;
   height: 8em;
   width: 40%;
+  min-width: 34em;
 }
 .altimeter {
   position: fixed;
@@ -301,14 +333,15 @@ div.target_distance {
 div.status,
 div.target {
   width: 256px;
-  height: 256px;
-  bottom: 2%;
+  /*height: 256px;*/
+  top: 2%;
   opacity: .75;
 }
 div.target {
-  left: 2%;
+  right: 2%;
 }
 div.status {
+  display: none;
   right: 2%;
 }
 div.ui_widget div.ui_widget_label {
@@ -320,13 +353,13 @@ div.ui_widget div.ui_widget_label {
   color: #3b5c6b;
   box-shadow: 0px 0px 15px 1px #111 inset,0px 0px 20px 2px #232627;
 }
+div.target div.ui_widget_label,
 div.console div.ui_widget_label {
   border-bottom-left-radius: .5em;
   border-bottom-right-radius: .5em;
   bottom: -1.4em;
   left: 50%;
   margin-left: -2.5em;
-  width: 3em;
   text-align: center;
 }
 div.status div.ui_widget_label {
@@ -335,43 +368,52 @@ div.status div.ui_widget_label {
   top: -1.4em;
   right: 0;
 }
+/*
 div.target div.ui_widget_label {
   border-top-left-radius: .5em;
   border-top-right-radius: .5em;
   top: -1.4em;
   left: 0;
+}*/
+body.show_interface div.target div.target_list_container {
+  box-shadow: 0px 0px 1px 1px #3b5c6b;
+  background: #000;
 }
 div.target div.target_list_container {
   position: relative;
-  width: 256px;
-  height: 256px;
-  box-shadow: 0px 0px 1px 1px #3b5c6b;
-  background: #000;
+  width: 100%;
+  height: 100%;
+  background: transparent;
   display: inline-block;
   overflow: auto;
-  border-radius: .5em;
   cursor: default;
+}
+body.show_interface div.status canvas,
+body.show_interface div.target canvas {
+  background: #000;
+  box-shadow: 0px 0px 1px 1px #3b5c6b;
 }
 div.status canvas,
 div.target canvas {
   position: relative;
   width: 100%;
   height: 100%;
-  box-shadow: 0px 0px 1px 1px #3b5c6b;
-  background: #000;
+  background: transparent;
 }
 canvas.targeting {
   opacity: 1;
-  width: 100%;
-  height: 100%;
+  /*width: 100%;
+  height: 100%;*/
 }
 .targeting,
 .aeronautics {
   position: fixed;
   width: 300px;
   height: 300px;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  margin-top: -150px;
+  margin-left: -150px;
   opacity: .55;
   z-index: 5;
   pointer-events: none;

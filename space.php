@@ -19,7 +19,7 @@ class Component_space extends Component {
       $vars["view"] = "thinglinks";
     }
 */
-    return $this->GetComponentResponse("./space.tpl", $vars);
+    return '';
   }
   function controller_thingtypes($args) {
     $datatype = any($args["datatype"], "tree");
@@ -310,9 +310,9 @@ class Component_space extends Component {
       '95'=>'O'
     );
     
-    $seed = 1;//any($args["seed"],rand());
+    $seed = any($args["seed"],rand());
     srand($seed);
-    $vars["random"] = $rand = rand(0,100);
+    $vars["random"] = $rand = 60;//rand(0,100);
     $vars["type"] = 'M';
     $star = $stars['M'];
     

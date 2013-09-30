@@ -8,11 +8,10 @@ elation.component.add('space.starbinger', {
   camnewpos: new THREE.Vector3(0,0,0),
 
   init: function() {
-    this.dustCount = 1000;
-    this.dustDiameter = 750;
+    this.dustCount = 5000;
+    this.dustDiameter = 2200;
     this.dustRadius = this.dustDiameter / 2;
-    this.dustSize = 1.5;
-    this.postprocessing = { enabled: false };
+    this.dustSize = 2;
     
     elation.space.controller = this;
     this.viewsize = this.getsize();
@@ -20,16 +19,19 @@ elation.component.add('space.starbinger', {
     this.scene = this.args.scene || new THREE.Scene();
     this.sceneCube = new THREE.Scene();
     //this.scene.fog = new THREE.FogExp2(0xCCE8FF, 0.0000008);
-
-    this.camera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 3, 1.5e15);
+    
+    this.camera = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 1, 1.5e15);
+    this.tcamsize = [ 512, 512 ];
+    //this.targetcam = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, -256, 512);
+    this.targetcam = new THREE.PerspectiveCamera(30, this.tcamsize[0] / this.tcamsize[1], .1, 256);
     this.cameraCube = new THREE.PerspectiveCamera(50, this.viewsize[0] / this.viewsize[1], 1, 100);
     elation.events.add(window,'resize',this);
     this.camera.position = this.camerapos;
     this.scene.add(this.camera);
+    this.scene.add(this.targetcam);
     this.sceneCube.add(this.cameraCube);    
     
     this.initRenderer(); 
-    this.initPostprocessing();
     this.initControls();
     
     var HUD = elation.utils.arrayget(this.args, 'sector.properties.render.hud').split(',');
@@ -42,9 +44,10 @@ elation.component.add('space.starbinger', {
     } else {
       document.body.appendChild(this.renderer.domElement);
     }
+    
     this.stats = new Stats();
     this.stats.domElement.style.position = 'fixed';
-    this.stats.domElement.style.top = '0px';
+    this.stats.domElement.style.bottom = '0px';
     this.stats.domElement.style.left = '0px';
     this.stats.domElement.style.zIndex = 100;
     this.container.appendChild( this.stats.domElement );
@@ -64,21 +67,24 @@ elation.component.add('space.starbinger', {
     }
     
     //elation.ui.hud.console.log('initializing, please wait...');
-    this.createAdminTool();
-    elation.space.thing.setController = this;
+    //this.createAdminTool();
+    //elation.space.thing.setController = this;
     
     this.addSkybox();
     this.addDust();
     
     elation.ui.hud.console.log('');
     elation.ui.hud.console.log('Movement: <p>W</p>,<p>S</p> | Strafing: <p>A</p>,<p>D</p>,<p>R</p>,<p>F</p> | Rolling: <p>Q</p>,<p>E</p> | Targeting: <p>SCROLL</p>');
-    elation.ui.hud.console.log('Fire: <p>Mouse0</p> | Afterburner: <p>Mouse1</p> | Boost: <p>X</p>,<p>Mouse2</p> | Brake: <p>SHIFT</p>');
+    elation.ui.hud.console.log('Fire: <p>Mouse0</p> | Afterburner: <p>X</p>,<p>Mouse2</p> | Boost: <p>Mouse1</p> | Brake: <p>SHIFT</p>');
+    elation.ui.hud.console.log('Firing Mode: <p>G</p> | Change Weapon: <p>1-4</p> | Switch Flight Mode: <p>C</p>');
   },
   resize: function(event) {
     this.viewsize = this.getsize();
 		this.camera.aspect = this.viewsize[0] / this.viewsize[1];
+		this.targetcam.aspect = this.tcamsize[0] / this.tcamsize[1];
 		this.cameraCube.aspect = this.viewsize[0] / this.viewsize[1];
 		this.camera.updateProjectionMatrix();
+		this.targetcam.updateProjectionMatrix();
 		this.cameraCube.updateProjectionMatrix();
 
 		this.renderer.setSize( this.viewsize[0], this.viewsize[1] );
@@ -111,11 +117,8 @@ elation.component.add('space.starbinger', {
   addDust: function() {
     // create the particles
     this.dustParticles = new THREE.Geometry();
-    //var hexColor = '0x'+this.r(0,9)+this.r(0,9)+this.r(0,9)+this.r(0,9)+this.r(0,9)+this.r(0,9);
     
-    //console.log('HEX COLOR!!@!',hexColor);
     var pMaterial = new THREE.ParticleBasicMaterial({
-          color: 0x999999,
           size: this.dustSize,
           map: THREE.ImageUtils.loadTexture(
             "/~lazarus/elation/images/space/particle.png"
@@ -123,6 +126,8 @@ elation.component.add('space.starbinger', {
           blending: THREE.AdditiveBlending,
           depthTest: true,
           depthWrite: false,
+          vertexColors: true,
+          opacity: .85,
           transparent: true
         });
     
@@ -138,28 +143,19 @@ elation.component.add('space.starbinger', {
         this.dustParticles.vertices.push(particle);
       }
     }
-
-    this.dustSystem = new THREE.ParticleSystem(this.dustParticles, pMaterial);
-    //this.dustSystem.position.copy(this.camera.position);
-    this.dustSystem.sortParticles = false;
     
-    // add it to the scene
+    for(var colors=[],i=0; i < this.dustParticles.vertices.length; i++) {
+      colors[i] = new THREE.Color();
+      colors[i].setHSV(Math.random(), .4, 1);
+    }
+    
+    this.dustParticles.colors = colors;
+    this.dustSystem = new THREE.ParticleSystem(this.dustParticles, pMaterial);
+    this.dustSystem.sortParticles = false;
     this.scene.add(this.dustSystem);
   },
   initControls: function() {
     this.controlsenabled = true;
-    /*
-    this.controls.rotateSpeed = -1.0;
-    this.controls.zoomSpeed = 4;
-    this.controls.panSpeed = 3;
-
-    this.controls.noZoom = false;
-    this.controls.noPan = false;
-
-    this.controls.staticMoving = true;
-    this.controls.dynamicDampingFactor = 0.3;
-    this.controls.keys = [ 65, 83, 68 ];
-    */
     this.controls = elation.space.controls(0, this.renderer.domElement);
 
     // TODO - define some top-level bindings for accessing menus, etc
@@ -170,90 +166,13 @@ elation.component.add('space.starbinger', {
   initRenderer: function() {
     this.renderer = (this.usewebgl ? new THREE.WebGLRenderer({ clearColor: 0x000000, clearAlpha: 1, antialias: true, maxShadows: 1000}) : new THREE.CanvasRenderer());
     this.renderer.setSize(this.viewsize[0], this.viewsize[1]);
-
+    this.altrenderer = new THREE.WebGLRenderTarget( this.tcamsize[0], this.tcamsize[1], { format: THREE.RGBFormat } );
     this.renderer.shadowMapEnabled = true;
     this.renderer.shadowMapSoft = true;
     this.renderer.shadowMapType = THREE.BasicShadowMap;
 
     //this.renderer.sortObjects = false;
-    this.renderer.autoClear = true;
-  },
-  initPostprocessing: function() {
-    if (!this.postprocessing.enabled)
-      return;
-    
-    this.screenSpacePosition = new THREE.Vector3();
-    this.projector2 = new THREE.Projector();
-    this.sunPosition = new THREE.Vector3( 0, 0, 168000 );
-    this.materialDepth = new THREE.MeshDepthMaterial();
-    this.postprocessing.scene = new THREE.Scene();
-    
-    var height = this.viewsize[1];
-    this.postprocessing.camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2,  height / 2, height / - 2, -10000, 10000 );
-    this.postprocessing.camera.position.z = 100;
-
-    this.postprocessing.scene.add( this.postprocessing.camera );
-
-    var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat };
-    this.postprocessing.rtTextureColors = new THREE.WebGLRenderTarget( window.innerWidth, height, pars );
-
-    // Switching the depth formats to luminance from rgb doesn't seem to work. I didn't
-    // investigate further for now.
-    // pars.format = THREE.LuminanceFormat;
-
-    // I would have this quarter size and use it as one of the ping-pong render
-    // targets but the aliasing causes some temporal flickering
-
-    this.postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget( window.innerWidth, height, pars );
-
-    // Aggressive downsize god-ray ping-pong render targets to minimize cost
-
-    var w = window.innerWidth / 4.0;
-    var h = height / 4.0;
-    this.postprocessing.rtTextureGodRays1 = new THREE.WebGLRenderTarget( w, h, pars );
-    this.postprocessing.rtTextureGodRays2 = new THREE.WebGLRenderTarget( w, h, pars );
-
-    // god-ray shaders
-
-    var godraysGenShader = THREE.ShaderGodRays[ "godrays_generate" ];
-    this.postprocessing.godrayGenUniforms = THREE.UniformsUtils.clone( godraysGenShader.uniforms );
-    this.postprocessing.materialGodraysGenerate = new THREE.ShaderMaterial( {
-
-      uniforms: this.postprocessing.godrayGenUniforms,
-      vertexShader: godraysGenShader.vertexShader,
-      fragmentShader: godraysGenShader.fragmentShader
-
-    } );
-
-    var godraysCombineShader = THREE.ShaderGodRays[ "godrays_combine" ];
-    this.postprocessing.godrayCombineUniforms = THREE.UniformsUtils.clone( godraysCombineShader.uniforms );
-    this.postprocessing.materialGodraysCombine = new THREE.ShaderMaterial( {
-
-      uniforms: this.postprocessing.godrayCombineUniforms,
-      vertexShader: godraysCombineShader.vertexShader,
-      fragmentShader: godraysCombineShader.fragmentShader
-
-    } );
-
-    var godraysFakeSunShader = THREE.ShaderGodRays[ "godrays_fake_sun" ];
-    this.postprocessing.godraysFakeSunUniforms = THREE.UniformsUtils.clone( godraysFakeSunShader.uniforms );
-    this.postprocessing.materialGodraysFakeSun = new THREE.ShaderMaterial( {
-
-      uniforms: this.postprocessing.godraysFakeSunUniforms,
-      vertexShader: godraysFakeSunShader.vertexShader,
-      fragmentShader: godraysFakeSunShader.fragmentShader
-
-    } );
-
-    this.postprocessing.godraysFakeSunUniforms.bgColor.value.setHex( 0x000000 );
-    this.postprocessing.godraysFakeSunUniforms.sunColor.value.setHex( 0xFFFFDD );
-
-    this.postprocessing.godrayCombineUniforms.fGodRayIntensity.value = 0.75;
-
-    this.postprocessing.quad = new THREE.Mesh( new THREE.PlaneGeometry( window.innerWidth, height ), this.postprocessing.materialGodraysGenerate );
-    this.postprocessing.quad.position.z = -9900;
-    this.postprocessing.scene.add( this.postprocessing.quad );
-
+    this.renderer.autoClear = false;
   },
   getsize: function() {
     if (this.container) {
@@ -275,7 +194,6 @@ elation.component.add('space.starbinger', {
     this.newsize = newsize = this.getsize();
     var ts = new Date().getTime();
     
-    //this.renderer.clear();
     this.renderer.setViewport(0, 0, this.newsize[0], this.newsize[1]);
     this.lastupdatedelta = (ts - this.lastupdate) / 1000;
     
@@ -289,7 +207,7 @@ elation.component.add('space.starbinger', {
       elation.utils.physics.system.iterate(this.lastupdatedelta);
     }
     
-    elation.events.fire('renderframe_middle', this);
+    //elation.events.fire('renderframe_middle', this);
     
     if (this.dustSystem) {
       var pCount = this.dustCount,
@@ -305,9 +223,9 @@ elation.component.add('space.starbinger', {
             Math.random() * this.dustDiameter - this.dustRadius,
             Math.random() * this.dustDiameter - this.dustRadius
           ));
+          
+          particle.color = '0xFFAA00';
         }
-        
-        //particle.position.addSelf(particle.velocity);
       }
       
       this.dustSystem.geometry.__dirtyVertices = true;
@@ -318,129 +236,18 @@ elation.component.add('space.starbinger', {
         this.viewsize = newsize;
         this.renderer.setSize(this.viewsize[0], this.viewsize[1]);
         this.camera.aspect = this.viewsize[0] / this.viewsize[1];
+        this.targetcam.aspect = this.tcamsize[0] / this.tcamsize[1];
         this.camera.updateProjectionMatrix();
+        this.targetcam.updateProjectionMatrix();
       }
       
 			this.cameraCube.quaternion.copy( this.camera.quaternion );
       
-      if (this.postprocessing.enabled && this.postprocessing.scene) {
-
-        // Find the screenspace position of the sun
-
-        this.screenSpacePosition.copy( this.sunPosition );
-        this.projector2.projectVector( this.screenSpacePosition, this.camera );
-
-        this.screenSpacePosition.x = ( this.screenSpacePosition.x + 1 ) / 2;
-        this.screenSpacePosition.y = ( this.screenSpacePosition.y + 1 ) / 2;
-
-        // Give it to the god-ray and sun shaders
-
-        this.postprocessing.godrayGenUniforms[ "vSunPositionScreenSpace" ].value.x = this.screenSpacePosition.x;
-        this.postprocessing.godrayGenUniforms[ "vSunPositionScreenSpace" ].value.y = this.screenSpacePosition.y;
-
-        this.postprocessing.godraysFakeSunUniforms[ "vSunPositionScreenSpace" ].value.x = this.screenSpacePosition.x;
-        this.postprocessing.godraysFakeSunUniforms[ "vSunPositionScreenSpace" ].value.y = this.screenSpacePosition.y;
-
-        // -- Draw sky and sun --
-
-        // Clear colors and depths, will clear to sky color
-
-        this.renderer.clearTarget( this.postprocessing.rtTextureColors, true, true, false );
-
-        // Sun render. Runs a shader that gives a brightness based on the screen
-        // space distance to the sun. Not very efficient, so i make a scissor
-        // rectangle around the suns position to avoid rendering surrounding pixels.
-        var height = this.viewsize[1];
-        var sunsqH = 0.74 * height; // 0.74 depends on extent of sun from shader
-        var sunsqW = 0.74 * height; // both depend on height because sun is aspect-corrected
-
-        this.screenSpacePosition.x *= window.innerWidth;
-        this.screenSpacePosition.y *= height;
-
-        this.renderer.setScissor( this.screenSpacePosition.x - sunsqW / 2, this.screenSpacePosition.y - sunsqH / 2, sunsqW, sunsqH );
-        this.renderer.enableScissorTest( true );
-
-        this.postprocessing.godraysFakeSunUniforms[ "fAspect" ].value = window.innerWidth / height;
-
-        this.postprocessing.scene.overrideMaterial = this.postprocessing.materialGodraysFakeSun;
-        this.renderer.render( this.postprocessing.scene, this.postprocessing.camera, this.postprocessing.rtTextureColors );
-
-        this.renderer.enableScissorTest( false );
-
-        // -- Draw scene objects --
-
-        // Colors
-
-        this.scene.overrideMaterial = null;
-        this.renderer.render( this.scene, this.camera, this.postprocessing.rtTextureColors );
-
-        // Depth
-
-        this.scene.overrideMaterial = this.materialDepth;
-        this.renderer.render( this.scene, this.camera, this.postprocessing.rtTextureDepth, true );
-
-        // -- Render god-rays --
-
-        // Maximum length of god-rays (in texture space [0,1]X[0,1])
-
-        var filterLen = 1.0;
-
-        // Samples taken by filter
-
-        var TAPS_PER_PASS = 6.0;
-
-        // Pass order could equivalently be 3,2,1 (instead of 1,2,3), which
-        // would start with a small filter support and grow to large. however
-        // the large-to-small order produces less objectionable aliasing artifacts that
-        // appear as a glimmer along the length of the beams
-
-        // pass 1 - render into first ping-pong target
-
-        var pass = 1.0;
-        var stepLen = filterLen * Math.pow( TAPS_PER_PASS, -pass );
-
-        this.postprocessing.godrayGenUniforms[ "fStepSize" ].value = stepLen;
-        this.postprocessing.godrayGenUniforms[ "tInput" ].value = this.postprocessing.rtTextureDepth;
-
-        this.postprocessing.scene.overrideMaterial = this.postprocessing.materialGodraysGenerate;
-
-        this.renderer.render( this.postprocessing.scene, this.postprocessing.camera, this.postprocessing.rtTextureGodRays2 );
-
-        // pass 2 - render into second ping-pong target
-
-        pass = 2.0;
-        stepLen = filterLen * Math.pow( TAPS_PER_PASS, -pass );
-
-        this.postprocessing.godrayGenUniforms[ "fStepSize" ].value = stepLen;
-        this.postprocessing.godrayGenUniforms[ "tInput" ].value = this.postprocessing.rtTextureGodRays2;
-
-        this.renderer.render( this.postprocessing.scene, this.postprocessing.camera, this.postprocessing.rtTextureGodRays1  );
-
-        // pass 3 - 1st RT
-
-        pass = 3.0;
-        stepLen = filterLen * Math.pow( TAPS_PER_PASS, -pass );
-
-        this.postprocessing.godrayGenUniforms[ "fStepSize" ].value = stepLen;
-        this.postprocessing.godrayGenUniforms[ "tInput" ].value = this.postprocessing.rtTextureGodRays1;
-
-        this.renderer.render( this.postprocessing.scene, this.postprocessing.camera , this.postprocessing.rtTextureGodRays2  );
-
-        // final pass - composite god-rays onto colors
-
-        this.postprocessing.godrayCombineUniforms["tColors"].value = this.postprocessing.rtTextureColors;
-        this.postprocessing.godrayCombineUniforms["tGodRays"].value = this.postprocessing.rtTextureGodRays2;
-
-        this.postprocessing.scene.overrideMaterial = this.postprocessing.materialGodraysCombine;
-
-        this.renderer.render( this.postprocessing.scene, this.postprocessing.camera );
-        this.postprocessing.scene.overrideMaterial = null;
-
-      } else {
-      
+      this.renderer.clear();
       this.renderer.render(this.sceneCube, this.cameraCube);
+      this.renderer.render(this.scene, this.targetcam, this.altrenderer, true);
       this.renderer.render(this.scene, this.camera);
-      }
+
     }
     
     elation.events.fire('renderframe_end', this);
@@ -469,9 +276,9 @@ elation.component.add('space.starbinger', {
     var currentobj = false;
     if (typeof elation.space.meshes[thing.type] == 'function') {
       currentobj = new elation.space.meshes[thing.type](thing, this);
-      console.log("Added new " + thing.type + ": " + thing.parentname + '/' + thing.name, currentobj);
-      this.objects_array.push(currentobj);
-      if (currentobj.properties && currentobj.properties.physical && currentobj.properties.physical.exists !== 0) {
+      if (elation.utils.arrayget(currentobj, 'properties.physical.exists') !== 0) {
+        console.log("-!- Engine.Objects: Added new " + thing.type + ": " + thing.parentname + '/' + thing.name);
+        this.objects_array.push(currentobj);
         root.add(currentobj);
 
         if (thing.things) {
@@ -479,14 +286,16 @@ elation.component.add('space.starbinger', {
             this.addObjects(thing.things[k], currentobj);
           }
         }
+        
+        if (!this.objects[thing.type])
+          this.objects[thing.type] = {};
+        
+        this.objects[thing.type][currentobj.name] = currentobj;
       }
-      
-      if (!this.objects[thing.type])
-        this.objects[thing.type] = {};
-      
-      this.objects[thing.type][currentobj.name] = currentobj;
     } else {
-      console.log("don't know how to handle thing type '" + thing.type + "'", thing);
+      if (elation.utils.arrayget(thing, 'properties.physical.exists') !== 0) {
+        console.log("-!- Engine.Objects: Unknown thing type '" + thing.type + "'", thing);
+      }
     }
   },
   attachCameraToObject: function(thing, nosave) {
@@ -518,33 +327,9 @@ elation.component.add('space.starbinger', {
     this.mouse[0] = ( ev.clientX / this.viewsize[0] ) * 2 - 1;
     this.mouse[1] = ( ev.clientY / this.viewsize[1] ) * 2 - 1;
   },
-  
   createAdminTool: function() {
     var div = elation.html.create({tag: 'div', classname: "space_world_admin"});
     var component = elation.space.admin("admin", div, { controller: this });
     this.container.appendChild(div);
   }
-});
-
-elation.extend('ui.widgets.starbinger', function(hud) {
-  this.hud = hud;
-  this.rotating = true;
-  this.delta = 0;
-  this.position = {x:0, y:0, z:0};
-  
-  this.init = function() {
-    this.controller = this.hud.controller;
-  }
-  
-  this.render = function(event) { return;
-    this.controller = this.hud.controller;
-    
-    var c = this.controller.camera,
-        s = this.controller.args.sector.things.Star.properties.generated;
-    
-    //console.log('stuff!!@#JIODJKLDJKLDKLJDJKLD');
-    this.hud.debug.log(s);
-  }
-  
-  this.init();
 });

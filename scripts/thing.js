@@ -44,7 +44,7 @@ elation.extend("space.thing", function(args, obj) {
         this.scale.set(this.properties.render.scale[0], this.properties.render.scale[1], this.properties.render.scale[2]);
       }
       if (this.properties.render.mesh) {
-        this.loadJSON(this.properties.render.mesh, this.properties.render.texturepath);
+        //this.loadJSON(this.properties.render.mesh, this.properties.render.texturepath);
       }
       if (this.properties.render.collada) {
         this.loadCollada(this.properties.render.collada);
@@ -231,7 +231,7 @@ elation.extend("space.thing", function(args, obj) {
       }
     }
   }
-  this.updateCollisionSize = function() {
+  this.updateCollisionSize = function() { return;
       //console.log('updateCollisionSize', this, this.collisionradius, this.boundRadius);
       //var bounds = this.getBoundingBox();
       //var dist = [(bounds.max.x - bounds.min.x) / 2, (bounds.max.y - bounds.min.y) / 2, (bounds.max.z - bounds.min.z) / 2];
