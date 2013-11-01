@@ -4,6 +4,7 @@ elation.component.add('space.starbinger', {
   materials: {},
   objects_array: [],
   objects: {},
+  haltrendering: false,
   camerapos: new THREE.Vector3(0,0,0),
   camnewpos: new THREE.Vector3(0,0,0),
 
@@ -188,7 +189,7 @@ elation.component.add('space.starbinger', {
       this.camera.position.z
     );
     (function(self) {
-      requestAnimationFrame( function() { self.loop(ev); } );
+      self.animation_id = requestAnimationFrame( function() { self.loop(ev); } );
     })(this);
   
     this.newsize = newsize = this.getsize();

@@ -2,6 +2,7 @@ elation.extend('pointerlock', function(controls) {
   this.controls = controls;
   this.container = this.controls.container;
   this.mainmenu = elation.space.menu.main;
+  this.parent = elation.space.starbinger(0);
   
   this.init = function() {
     elation.events.add(this.container, 'click', this);
@@ -26,6 +27,7 @@ elation.extend('pointerlock', function(controls) {
 
   this.exit = function() {
     console.log('-!- PointerLock: Returning cursor control to OS');
+    console.log('hi',this.container);
     if (typeof document.webkitExitPointerLock != 'undefined')
       document.webkitExitPointerLock();
     if (typeof document.mozExitPointerLock != 'undefined')
@@ -47,7 +49,9 @@ elation.extend('pointerlock', function(controls) {
     this.controls.state['mouse_drag_y'] = 0;
     this.controls.changes.push("mouse_drag_x");
     this.controls.changes.push("mouse_drag_y");
+
     this.controls.pointerlock = this.locked;
+    //this.parent.haltrendering = this.locked;
     this.mainmenu.toggle(this.locked);
   }
   

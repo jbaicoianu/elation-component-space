@@ -18,26 +18,38 @@ elation.extend("space.meshes.planet", function(args, controller) {
   this.create = function() {
     var parameters = {
       map: THREE.ImageUtils.loadTexture(this.texture),
-      /*
-      specular: 0x555555,
-      color: 0xEEEEEE,
-      ambient: 0x111111,
-      shininess: 1,
-      normalScale: 0.5,
-      */
-      
-      blending: THREE.AdditiveAlphaBlending
+      transparent: false, 
+      depthWrite: false,
+      depthTest: true,
+      specular: 0x050505,
+      color: 0xFFFFFF,
+      shininess: 100,
+      opacity: 1
     };
     
-    //if (this.normalMap != '/~lazarus/elation/index.php/images')
-    //  parameters.normalMap = THREE.ImageUtils.loadTexture(this.normalMap);
+    if (this.normalMap)
+      parameters.normalMap = THREE.ImageUtils.loadTexture(this.normalMap);
     
     var material = new THREE.MeshPhongMaterial(parameters),
-        sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius,64,32),material);
+        sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius,128,64),material),
+        atmosphere = this.atmosphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius+20000,128,64),new THREE.MeshPhongMaterial({
+          shininess: 20.0,
+          specular: 0x4444FF,
+          transparent: true, 
+          depthWrite: false,
+          depthTest: true,
+          opacity: .25, 
+          color: 0x4444FF,
+          blending: THREE.AdditiveBlending
+        }));
     
     this.add(sphere);
-    
-    sphere.rotation.y = 1.5;
+    sphere.add(atmosphere);
+    sphere.renderDepth = 0;
+    atmosphere.renderDepth = -1;
+    atmosphere.doubleSided = true;
+
+    sphere.rotation.y = 0.5;
     sphere.geometry.computeTangents();
     sphere.geometry.computeVertexNormals();
   }
@@ -93,7 +105,7 @@ elation.extend("space.meshes.planet", function(args, controller) {
   }
   
   this.renderframe_start = function(event) {
-    this.rotation.y += 0.0001;
+    this.rotation.y += 0.00005;
   }
   
   this.init();

@@ -1,5 +1,5 @@
 {set var="page.title"}Stella Imperia{/set}
-
+{*
 <script type="x-shader/x-fragment" id="imagemixer_fragment">
   #ifdef GL_ES
   precision highp float;
@@ -28,7 +28,7 @@
     gl_Position = projectionMatrix * mvPosition;
   }
 </script>
-
+*}
 <script type="x-shader/x-vertex" id="alphasize_particles_vertex">
   attribute vec3 customColor;
   attribute float customSize;
@@ -36,7 +36,7 @@
   varying float ps;
   void main() 
   {
-    vColor = customColor; // set color associated to vertex; use later in fragment shader
+    vColor = customColor;
     vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
     gl_PointSize = customSize * ( 300.0 / length( mvPosition.xyz ) );
     ps = gl_PointSize;

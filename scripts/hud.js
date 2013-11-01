@@ -51,7 +51,7 @@ elation.extend('ui.hud', new function() {
   
   this.init = function(widgets, controller) { 
     this.controller = elation.space.controller;
-    
+
     if (widgets && typeof widgets == 'object')
       this.widgets = widgets;
     
@@ -91,7 +91,7 @@ elation.extend('ui.hud', new function() {
       tag: canvas ? 'canvas' : 'div',
       classname: classname,
     });
-    
+
     if (!NoDOM)
       document.body.appendChild(container);
     
@@ -935,8 +935,12 @@ elation.extend('ui.widgets.ops', function(hud) {
     ctx.fill();
     
     for (var i=0; i<p.length; i++) {
-      var weapon = player.weapconf[i],
-          e = ((Math.PI * 2) * weapon.ready_display) + s,
+      var weapon = player.weapconf[i];
+
+      if (!weapon)
+        continue;
+
+      var e = ((Math.PI * 2) * weapon.ready_display) + s,
           t = p[i],
           x = t[0],
           y = t[1] - 5,
@@ -1054,7 +1058,7 @@ elation.extend('ui.widgets.target_overlay', function(hud) {
         innerHTML: 'TARGET INFO'
       }
     });
-    this.container = this.hud.container('target_overlay_convas', true, true);
+    this.container = this.hud.container('target_overlay_canvas', true, true);
     this.div.appendChild(this.container);
     this.ctx = this.container.getContext('2d');
     

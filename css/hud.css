@@ -12,7 +12,7 @@ body.show_interface canvas.static_overlay,
 body.show_interface canvas.targeting,
 body.show_interface canvas.aeronautics,
 body.show_interface div.main canvas {
-  -webkit-filter: sepia(100%) blur(3px) brightness(.8);
+  /*-webkit-filter: brightness(.8) contrast(1.2) grayscale(.75);*/
 }
 body.show_interface div.ui_widget_label {
   opacity: 1;
@@ -385,8 +385,9 @@ div.target div.target_list_container {
   height: 100%;
   background: transparent;
   display: inline-block;
-  overflow: auto;
+  overflow: hidden;
   cursor: default;
+  max-height: 256px;
 }
 body.show_interface div.status canvas,
 body.show_interface div.target canvas {

@@ -7,7 +7,7 @@ elation.extend('space.equipment.capacitors', new function(name) {
   this['standard']={
     capacity: 500,
     regeneration: 1000,
-    dissapation:  0.11
+    dissapation:  0.01
   };
   this['large']={
     capacity: 900,
@@ -127,15 +127,16 @@ elation.extend('space.equipment.capacitor', function(name, parent) {
 elation.extend('space.equipment.guns', new function(name) {
   this['Cannon']={
     model:'cannon',
+    bullet_model:'massdriver_bullet',
     recoil:.3,
     rotation:0,
     ammo:-1,
     energy:75,
     size:1.8,
-    speed:2000,
-    delay:.8,
-    flash:{duration:300,color:0x00FF44,position_y:-.02,position_z:2},
-    light:{duration:250,color:0x66FFAA,radius:35,position_z:3},
+    speed:3300,
+    delay:.25,
+    flash:{duration:300,color:0x00FF44,position_y:-.02,position_z:2.2},
+    light:{duration:250,color:0x66FFAA,radius:85,position_z:3},
     color:0x00FF44
   };
   this['Gatling']={
@@ -144,9 +145,9 @@ elation.extend('space.equipment.guns', new function(name) {
     rotation:(Math.PI/10),
     ammo:300,
     energy:25,
-    size:.5,
-    speed:2000,
-    delay:.2,
+    size:.4,
+    speed:2800,
+    delay:.15,
     winddown: 1000,
     flash:{duration:200,color:0xFFFFFF,size:0.01,position_z:2.2,image:'muzzleflash0'},
     light:{duration:0},
@@ -184,7 +185,8 @@ elation.extend('space.equipment.gun', function(name, container, hardpoint) {
     this.winddown = options.winddown || 0;
     this.ammo = options.ammo || 'infinity';
     this.model = options.model || 'massdriver';
-    
+    this.bullet_model = options.bullet_model || false;
+
     this.flash = {
       duration: get(options, 'flash.duration')  || 200,
       size:     get(options, 'flash.size')      || .01,
@@ -222,7 +224,7 @@ elation.extend('space.equipment.gun', function(name, container, hardpoint) {
         radius: 1, 
         mass: 1, 
         position: new THREE.Vector3(0,0,0), 
-        mesh: false,//this.bullet_mesh,
+        mesh: this.bullet_model ? this.bullet_mesh : false,
         material: this.bullet_material
       });
       
@@ -380,8 +382,11 @@ elation.extend('space.equipment.gun', function(name, container, hardpoint) {
     weapon.position.z = this.position[2];
 
     elation.space.geometry.get('/~lazarus/elation/media/space/models/'+this.model+'.js', this);
-    elation.space.geometry.get('/~lazarus/elation/media/space/models/massdriver_bullet.js', this, 'loadMesh2');
-    
+    if (this.bullet_model)
+      elation.space.geometry.get('/~lazarus/elation/media/space/models/'+this.bullet_model+'.js', this, 'loadMesh2');
+    else
+      this.makeBullets();
+
     if (this.flash.duration > 0) {
       this.flash.sprite = flash = this.makeSprite(this.flash.size, this.flash.color, this.flash.image);
       flash.position.x = this.position[0] - this.flash.position.x;

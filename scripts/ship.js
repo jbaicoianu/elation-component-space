@@ -44,7 +44,7 @@ elation.extend("space.meshes.ship", function(args) {
       (function(self, mesh) {
         var loader = new THREE.JSONLoader();
         loader.load(mesh, function(geometry) { 
-         // if (shading == 'smooth') 
+          if (shading == 'smooth') 
             geometry.computeVertexNormals();
           
           self.loadMesh(geometry); 

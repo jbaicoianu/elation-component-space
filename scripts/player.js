@@ -3,8 +3,8 @@ elation.extend("space.meshes.player", function(args) {
   this.strength = 60000;
   this.mass = 2.25;
   this.drag = 0.325;//0.378;
-  this.burner = 4.0;
-  this.booster = 10;
+  this.burner = 2.0;
+  this.booster = 5;
   this.throttle = 0;
   this.throttle_mode = 'Momentary';
   this.throttle_old = 0;
@@ -50,7 +50,7 @@ elation.extend("space.meshes.player", function(args) {
     this.dynamics.mass = this.mass;
     this.dynamics.drag = this.drag;
     
-    this.dynamics.addForce("gravity", [0,0,-105.1]);
+    this.dynamics.addForce("marsgravity", [205.1,0,0]);
     
     this.headlight = new THREE.SpotLight('0xFFFFFF', 0.3,1300000)
     this.add(this.headlight);
@@ -72,12 +72,12 @@ elation.extend("space.meshes.player", function(args) {
   }
   
   this.setWeapons = function() {
-    this.capacitor = new elation.space.equipment.capacitor('standard', this);
+    this.capacitor = new elation.space.equipment.capacitor('small', this);
     
     this.weapons = [
       new elation.space.equipment.gun('Cannon', this, this.hardpoints[0]),
-      new elation.space.equipment.gun('Gatling', this, this.hardpoints[1]),
-      new elation.space.equipment.gun('Gatling', this, this.hardpoints[2]),
+      //new elation.space.equipment.gun('Gatling', this, this.hardpoints[1]),
+      //new elation.space.equipment.gun('Gatling', this, this.hardpoints[2]),
       new elation.space.equipment.gun('Cannon', this, this.hardpoints[3]),
     ];
     
@@ -507,10 +507,10 @@ elation.extend('ui.widgets.ship_status', function(parent, args) {
   this.args = args;
   this.hud = parent.hud;
   this.center = args.center;
-  this.scale = args.scale || .03;
+  this.scale = .004;
   
   this.init = function() {
-    elation.space.geometry.get('/~lazarus/elation/media/space/models/tau.js', this);
+    elation.space.geometry.get('/~lazarus/elation/media/space/models/geodesicator.js', this);
     elation.events.add(null,'renderframe_end',this);
   }
 
@@ -532,7 +532,7 @@ elation.extend('ui.widgets.ship_status', function(parent, args) {
     this.mesh.position.set(this.center[0],this.center[1],this.center[2]);
     //this.mesh.useQuaternion = true;
     //this.mesh.quaternion.copy(this.parent.camera.quaternion);
-    this.mesh.rotation.set(Math.PI/2,0,0);
+    this.mesh.rotation.set(Math.PI/2,Math.PI,Math.PI);
     this.mesh.scale.set(this.scale,this.scale,this.scale);
     this.mesh.renderDepth = -1.1;
     this.mesh.depthTest = -1.1;
@@ -540,20 +540,19 @@ elation.extend('ui.widgets.ship_status', function(parent, args) {
   }
   
   this.renderframe_end = function(event) {
-    var target = elation.ui.hud.target.list.current_target_data,
+    var target = elation.utils.arrayget(elation, 'ui.hud.target.list.current_target_data'),
         parent = this.parent,
-        camera = parent.controller.targetcam
+        camera = parent.controller.targetcam;
     
-    if (target) {
+    if (target && elation.utils.arrayget(target,'mesh.boundRadius')) {
       var a = new THREE.Vector3().copy(parent.position),
           b = new THREE.Vector3().copy(target.position),
-          d = a.distanceTo(b);
           q = new THREE.Vector3().sub(a, b),
           r = target.mesh.boundRadius * target.mesh.boundRadiusScale,
           br = parent.mesh.boundRadius * parent.mesh.boundRadiusScale * 3.333,
-          s = r * 3.333;
-          
-      var s = s > d ? d : s;
+          d = a.distanceTo(b),
+          s = r * 3.333,
+          s = s > d ? d : s;
       
       //console.log(parent);
       camera.far = s + r;

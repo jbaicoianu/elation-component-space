@@ -33,7 +33,7 @@ elation.extend("space.meshes.station", function(args) {
       (function(self, mesh) {
         var loader = new THREE.JSONLoader();
         loader.load(mesh, function(geometry) { 
-          //geometry.computeVertexNormals();
+          geometry.computeVertexNormals();
           self.loadMesh(geometry); 
         });
       })(this, this.properties.render.mesh);

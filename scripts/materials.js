@@ -29,9 +29,9 @@ elation.extend("space.materials", new function() {
       material.map = this.getTexture(material.map);
     }
     
-    this.materials[name] = material;
+    //this.materials[name] = material;
     
-    return this.materials[name];
+    return material;
   }
   
   this.addShader = function(shadername, shader) {
