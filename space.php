@@ -187,7 +187,8 @@ class Component_space extends Component {
     $vars["thing"] = $args["thing"];
     $vars["error"] = $args["error"];
     if (!empty($args["parentthing"])) {
-      $vars["item"]->parentname = $args["parentthing"]->parentname . "/" . $args["parentthing"]->name;;
+      $vars["item"] = new stdClass();
+      $vars["item"]->parentname = $args["parentthing"]->parentname . "/" . $args["parentthing"]->name;
     }
     return $this->GetComponentResponse("./thing_create.tpl", $vars);
   }
@@ -278,11 +279,12 @@ class Component_space extends Component {
     return $this->GetComponentResponse("./fusion.tpl", $vars);
   }
   function controller_enginetest($args) {
-    $cfg->current["page"]["frame"] = "html.frame";
-    $vars["root"] = any($args["root"], "/milky way/solar system/sol/earth/north america/stupidtown");
+    $vars["root"] = any($args["root"], false);
     header("Access-Control-Allow-Origin: http://cdn.supcrit.com");
-    $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $vars["root"]), "data");
-    $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
+    if ($vars["root"]) {
+      $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $vars["root"]), "data");
+      $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
+    }
     return $this->GetComponentResponse("./enginetest.tpl", $vars);
   }
   function controller_starbinger($args) {
@@ -291,6 +293,38 @@ class Component_space extends Component {
     $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $root), "data");
     $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
     return $this->GetComponentResponse("./starbinger.tpl", $vars);
+  }
+  function controller_sync($args) {
+    $method = $this->root->request["method"];
+    $name = $args["name"];
+
+    switch ($method) {
+      case 'POST':
+        $content = $args["content"];
+        print_pre("set $name to '$content'");
+        $this->writeWorldFile($name, $content);
+        break;
+    }
+    return "";
+  }
+
+  public function writeWorldFile($name, $content) {
+    $username = "default"; // TODO - should support users, groups, file permissions, blah blah blah...
+    $dirname = "data/engine/worlds/" . $username;
+    $fname = $name . ".json";
+    $fullname = $dirname . "/" . $fname;
+    $tmpname = $fullname . ".tmp";
+    $bakname = $fullname . ".bak-" . date("YmdGis");
+
+    if (!file_exists($dirname)) {
+      mkdir($dirname, 0777, true);
+    }
+    // write temp file, then swap it into place with a rename for maximum atomicity
+    file_put_contents($tmpname, $content);
+    if (file_exists($fullname)) {
+      rename($fullname, $bakname);
+    }
+    rename($tmpname, $fullname);
   }
 
   function getUniqueThingTypes($thing) {
