@@ -1,24 +1,43 @@
 elation.extend("space.materials", new function() {
   this.shaders = {};
-  this.texturecache = {};
+  this.textures = {};
+  this.materials = {};
 
   this.getTexture = function(url, repeat) {
-    if (!this.texturecache[url]) {
-      this.texturecache[url] = THREE.ImageUtils.loadTexture(url);
+    if (!this.textures[url]) {
+      this.textures[url] = THREE.ImageUtils.loadTexture(url);
     }
     if (repeat) {
-      this.texturecache[url].wrapS = THREE.RepeatWrapping;
-      this.texturecache[url].wrapT = THREE.RepeatWrapping;
+      this.textures[url].wrapS = THREE.RepeatWrapping;
+      this.textures[url].wrapT = THREE.RepeatWrapping;
 
       if (elation.utils.isArray(repeat)) {
-        this.texturecache[url].repeat.set(repeat[0], repeat[1]);
+        this.textures[url].repeat.set(repeat[0], repeat[1]);
       }
     }
-    return this.texturecache[url];
+    return this.textures[url];
   }
+  
+  this.getMaterial = function(name, material) {
+    if (this.materials[name]) {
+      texture = material.map;
+      material = this.materials[name];
+      material.map = texture;
+    }
+    
+    if (typeof material.map == 'string') {
+      material.map = this.getTexture(material.map);
+    }
+    
+    //this.materials[name] = material;
+    
+    return material;
+  }
+  
   this.addShader = function(shadername, shader) {
     this.shaders[shadername] = shader;
   }
+  
   this.getShaderMaterial = function(shadername, uniforms) {
     if (this.shaders[shadername]) {
       var shaderargs = {

@@ -78,16 +78,22 @@ elation.component.add("space.controls", {
   viewport: [],
 
   init: function() {
+    this.cursor = elation.html.create({
+      tag:'img',
+      style: { 'position':'fixed', 'margin-top':'-16px', 'margin-left':'-16px', 'width':'32px', 'height':'32px', 'opacity':.6 },
+      attributes:{src:'/~lazarus/elation/images/space/flight_cursor.png'},
+      append:document.body
+    });
     elation.events.add(this.container, "mousedown,mousemove,mouseup,mousewheel", this);
     elation.events.add(window, "keydown,keyup,WebkitGamepadConnected,WebkitGamepadDisconnected,MozGamepadConnected,MozGamepadDisconnected,gamepadconnected,gamepaddisconnected", this);
   },
   addContext: function(context, actions) {
-    console.log('Add control context ' + context, actions);
+    console.log('-!- Engine.Controls: Add control context ' + context, actions);
     this.contexts[context] = actions;
   },
   activateContext: function(context, target) {
     if (this.activecontexts.indexOf(context) == -1) {
-      console.log('Activate control context ' + context);
+      console.log('-!- Engine.Controls: Activate control context ' + context);
       this.activecontexts.unshift(context);
     }
     if (target) {
@@ -120,13 +126,11 @@ elation.component.add("space.controls", {
       for (var i = 0; i < this.changes.length; i++) {
         for (var j = 0; j < this.activecontexts.length; j++) {
           var context = this.activecontexts[j];
-          console.log('Update context', context, action);
           if (this.bindings[context] && this.bindings[context][this.changes[i]]) {
             var action = this.bindings[context][this.changes[i]];
-            console.log('Update context',context, action);
             if (this.contexts[context][action]) {
               var ev = {timeStamp: now, type: this.changes[i], value: this.state[this.changes[i]]};
-              console.log('call it', context, this.changes[i], this.bindings[context][this.changes[i]], this.state[this.changes[i]]);
+              //console.log('update context', context, this.changes[i], this.bindings[context][this.changes[i]], this.state[this.changes[i]]);
               if (this.contexttargets[context]) {
                 ev.data = this.contexttargets[context];
                 this.contexts[context][action].call(ev.data, ev);
@@ -257,6 +261,29 @@ elation.component.add("space.controls", {
   mousemove: function(ev) {
     var mpos = this.getMousePosition(ev);
     var status = {mouse_pos: false, mouse_x: false, mouse_y: false};
+    
+    if (this.pointerlock) {
+      var w = this.container.offsetWidth / 2,
+          h = this.container.offsetHeight / 2,
+          x = ev && typeof ev.mozMovementX != 'undefined'
+              ? this.state["mouse_x"] + (ev.mozMovementX / w)
+              : this.state["mouse_x"] + (event.webkitMovementX / w),
+          y = ev && typeof ev.mozMovementY != 'undefined'
+              ? this.state["mouse_y"] + (ev.mozMovementY / h)
+              : this.state["mouse_y"] + (event.webkitMovementY / h);
+      
+      mpos[0] = x;
+      mpos[1] = y;
+      
+      if (mpos[0] > 1) mpos[0] = 1;
+      if (mpos[0] < -1) mpos[0] = -1;
+      if (mpos[1] > 1) mpos[1] = 1;
+      if (mpos[1] < -1) mpos[1] = -1;
+      
+      this.cursor.style.left = (x*w+w)+'px';
+      this.cursor.style.top = (y*h+h)+'px';
+    } 
+    
     if (!this.state["mouse_pos"]) {
       status["mouse_pos"] = true;
       status["mouse_x"] = true;
@@ -271,13 +298,15 @@ elation.component.add("space.controls", {
         status["mouse_y"] = true;
       }
     }
+    
+    //console.log('mousemove', mpos[1], mpos[0], w||0, h||0);      
     if (status["mouse_pos"]) {
       if (status["mouse_x"]) {
         this.state["mouse_delta_x"] = this.state["mouse_x"] - mpos[0];
         this.state["mouse_x"] = mpos[0];
         this.changes.push("mouse_x");
         this.changes.push("mouse_delta_x");
-        if (this.state["mouse_button_0"]) {
+        if (this.pointerlock) {
           this.state["mouse_drag_x"] = this.state["mouse_x"];
           this.state["mouse_drag_delta_x"] = this.state["mouse_delta_x"];
           this.changes.push("mouse_drag_x");
@@ -296,7 +325,7 @@ elation.component.add("space.controls", {
         this.state["mouse_y"] = mpos[1];
         this.changes.push("mouse_y");
         this.changes.push("mouse_delta_y");
-        if (this.state["mouse_button_0"]) {
+        if (this.pointerlock) {
           this.state["mouse_drag_y"] = this.state["mouse_y"];
           this.state["mouse_drag_delta_y"] = this.state["mouse_delta_y"];
           this.changes.push("mouse_drag_y");
@@ -306,7 +335,7 @@ elation.component.add("space.controls", {
         this.state["mouse_delta_y"] = 0;
         this.state["mouse_drag_delta_y"] = 0;
       }
-      if (this.state["mouse_button_0"]) {
+      if (this.state["mouse_button_0"] || this.pointerlock) {
         this.state["mouse_drag"] = this.state["mouse_pos"];
         this.state["mouse_drag_delta"] = [this.state["mouse_drag_delta_x"]||0, this.state["mouse_drag_delta_y"]||0];
         this.changes.push("mouse_drag");
@@ -320,7 +349,7 @@ elation.component.add("space.controls", {
       this.state[bindid] = 0;
       this.changes.push(bindid);
 
-      if (bindid = "mouse_button_0") {
+      if (bindid = "mouse_button_0" && !this.pointerlock) {
         this.state['mouse_drag_x'] = 0;
         this.state['mouse_drag_y'] = 0;
         this.changes.push("mouse_drag_x");
@@ -341,6 +370,9 @@ elation.component.add("space.controls", {
     this.changes.push("mousewheel");
   },
   keydown: function(ev) {
+    if (ev.target.tagName.toLowerCase() == 'input')
+      return;
+    
     var keyname = this.getBindingName("keyboard", ev.keyCode);
     //console.log(keyname + ' down', ev.value);
     if (!this.state[keyname]) {
@@ -349,6 +381,9 @@ elation.component.add("space.controls", {
     this.state[keyname] = 1;
   },
   keyup: function(ev) {
+    if (ev.target.tagName.toLowerCase() == 'input')
+      return;
+    
     var keyname = this.getBindingName("keyboard", ev.keyCode);
     //console.log(keyname + ' up');
     this.state[keyname] = 0;

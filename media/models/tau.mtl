@@ -1,0 +1,27 @@
+newmtl Navy_metal
+illum 4
+Kd 0.08 0.08 0.10
+Ka 0.42 0.50 0.79
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl aluminumSG_aluminumSG
+illum 4
+Kd 0.47 0.11 0.08
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.56 0.65 0.67
+Ns 0.00
+newmtl initialShadingGroup
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl lambert2SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.58 0.58 0.58
+Tf 1.00 1.00 1.00
+Ni 1.00

@@ -19,7 +19,7 @@ class Component_space extends Component {
       $vars["view"] = "thinglinks";
     }
 */
-    return $this->GetComponentResponse("./space.tpl", $vars);
+    return '';
   }
   function controller_thingtypes($args) {
     $datatype = any($args["datatype"], "tree");
@@ -287,11 +287,78 @@ class Component_space extends Component {
     }
     return $this->GetComponentResponse("./enginetest.tpl", $vars);
   }
-  function controller_starbinger($args) {
-    $root = any($args["root"], "/Starbinger/Sector 001/Planet");
+  function controller_imperium($args) {
+    $root = any($args["root"], "/Starbinger");
     header("Access-Control-Allow-Origin: http://cdn.supcrit.com");
     $vars["sector"] = ComponentManager::fetch("space.things", array("from" => $root), "data");
     $vars["types"] = $this->getUniqueThingTypes($vars["sector"]);
+    
+    $stars = array(
+     "M"=>array('color'=>'0xbb0000','temp'=>'2600,4300','radius'=>'.15,.72','mass'=>'.06,.67','luminosity'=>'.001,.15','hzone'=>'.03,.39','lifetime'=>'700000,45000'),
+     "K"=>array('color'=>'0xffd575','temp'=>'4300,5700','radius'=>'.72,.92','mass'=>'.67,.92','luminosity'=>'.15,.79','hzone'=>'.39,.89','lifetime'=>'45000,12000'),
+     "G"=>array('color'=>'0xfff7c0','temp'=>'5700,6400','radius'=>'.92,1.3','mass'=>'.92,1.3','luminosity'=>'.79,3.2','hzone'=>'.89,1.8','lifetime'=>'12000,3200'),
+     "F"=>array('color'=>'0xffffa0','temp'=>'6400,8200','radius'=>'1.3,1.7','mass'=>'1.3,2.0','luminosity'=>'3.2,14','hzone'=>'1.8,3.7','lifetime'=>'3200,1000'),
+     "A"=>array('color'=>'0xeeeeff','temp'=>'8200,12000','radius'=>'1.7,3.0','mass'=>'2.0,3.8','luminosity'=>'14,180','hzone'=>'3.7,13','lifetime'=>'1000,150'),
+     "B"=>array('color'=>'0xafeeee','temp'=>'12000,35000','radius'=>'3.0,7','mass'=>'3.8,23','luminosity'=>'180,170000','hzone'=>'13,410','lifetime'=>'150,6'),
+     "O"=>array('color'=>'0xa7eeff','temp'=>'35000,55000','radius'=>'7,12','mass'=>'23,140','luminosity'=>'170000,1600000','hzone'=>'410,1400','lifetime'=>'6,1.5')
+    );
+    
+    $order = array(
+      '30'=>'K',
+      '50'=>'G',
+      '65'=>'F',
+      '80'=>'A',
+      '90'=>'B',
+      '95'=>'O'
+    );
+    
+    $seed = any($args["seed"],rand());
+    srand($seed);
+    $vars["random"] = $rand = 60;//rand(0,100);
+    $vars["type"] = 'M';
+    $star = $stars['M'];
+    
+    foreach ($order as $p=>$type) {
+      if ($rand >= $p) {
+        $vars["type"] = $type;
+        $star = $stars[$type];
+      }
+    }
+    
+    $vars["random2"] = $rand2 = rand(0,100) * .01;
+    
+    $temp = explode(',',$star['temp']);
+    $radius = explode(',',$star['radius']);
+    $mass = explode(',',$star['mass']);
+    $luminosity = explode(',',$star['luminosity']);
+    $hzone = explode(',',$star['hzone']);
+    $lifetime = explode(',',$star['lifetime']);
+    
+    $s = array(
+      'type'=> $vars["type"] . floor($rand2 * 10),
+      'seed'=> $seed,
+      'color'=> $star["color"],
+      'temp'=> ($temp[0] + (($temp[1] - $temp[0]) * $rand2)),
+      'radius'=> (($radius[0] + (($radius[1] - $radius[0]) * $rand2)) * 13920000),
+      'mass'=> ($mass[0] + (($mass[1] - $mass[0]) * $rand2)),
+      'lum'=> ($luminosity[0] + (($luminosity[1] - $luminosity[0]) * $rand2)),
+      'hzone'=> ($hzone[0] + (($hzone[1] - $hzone[0]) * $rand2)),
+      'lifetime'=> ($lifetime[0] + (($lifetime[1] - $lifetime[0]) * $rand2)),
+      'randoms'=> $rand . ', ' . $rand2
+    );
+    
+    $vars["sector"]["things"]["Star"] = array(
+      name=>'Star',
+      type=>'star',
+      parentname=>'/Starbinger/Sector 001',
+      quantity=>1,
+      properties=>array(
+        'generated'=>$s,
+        'physical'=>array("position"=>array(0,0,-11570000),"radius"=>$s['radius']),
+        'render'=>array("color"=>$s['color'])
+      )
+    );
+    
     return $this->GetComponentResponse("./starbinger.tpl", $vars);
   }
   function controller_sync($args) {

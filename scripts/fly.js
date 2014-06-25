@@ -6,9 +6,17 @@ elation.component.add('space.fly', {
   camerapos: new THREE.Vector3(0,50,500),
 
   init: function() {
+    elation.space.controller = this;
     this.viewsize = this.getsize();
     console.log('### SECTOR', this);
+    /*
+    this.scene = this.args.scene || new THREE.Scene();
+    this.scene.fog = new THREE.FogExp2(0xCCE8FF, 0.000008);
 
+    this.camera = new THREE.FirstPersonCamera(50, this.viewsize[0] / this.viewsize[1], 10, 1.5e15);
+    this.camera.position = this.camerapos;
+    this.scene.add(this.camera);
+    */
     var HUD = elation.utils.arrayget(this.args, 'sector.properties.render.hud').split(',');
     
     this.initRenderer(); 
@@ -143,11 +151,11 @@ elation.component.add('space.fly', {
         THREE.SceneUtils.traverseHierarchy( this.scene, function ( node ) { if ( node instanceof elation.space.meshes.terrain2 ) node.updateViewport( camera ) } );
       }
 
+    elation.events.fire('renderframe_end', this);
       this.renderer.render(this.scene, this.camera);
       this.lastupdate = ts;
     }
     
-    elation.events.fire('renderframe_end', this);
 
     this.stats.update();
   },

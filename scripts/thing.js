@@ -1,7 +1,8 @@
-elation.extend("space.thing", function(args) {
+elation.extend("space.thing", function(args, obj) {
   THREE.Object3D.call( this );
 
   this.args = args || {};
+  this.obj = obj;
   this.properties = this.args.properties || {};
   this.autocreategeometry = this.args.autocreategeometry || true;
   this.materials = [];
@@ -9,6 +10,7 @@ elation.extend("space.thing", function(args) {
   this.parts = {};
   this.state = {};
   this.collisionradius = 0;
+  this.controller = elation.space.controller;
 
   this.init = function() {
     this.name = this.args.name;
@@ -42,7 +44,7 @@ elation.extend("space.thing", function(args) {
         this.scale.set(this.properties.render.scale[0], this.properties.render.scale[1], this.properties.render.scale[2]);
       }
       if (this.properties.render.mesh) {
-        this.loadJSON(this.properties.render.mesh, this.properties.render.texturepath);
+        //this.loadJSON(this.properties.render.mesh, this.properties.render.texturepath);
       }
       if (this.properties.render.collada) {
         this.loadCollada(this.properties.render.collada);
@@ -196,7 +198,7 @@ elation.extend("space.thing", function(args) {
     }
   }
   this.createCamera = function(offset, rotation) {
-    var viewsize = elation.space.fly(0).viewsize;
+    var viewsize = this.controller.viewsize;
     this.cameras.push(new THREE.PerspectiveCamera(50, viewsize[0] / viewsize[1], 1, 1.5e15));
     this.camera = this.cameras[this.cameras.length-1];
     if (offset) {
@@ -225,11 +227,14 @@ elation.extend("space.thing", function(args) {
           this.currentcamera = 0;
         }
         this.camera = this.cameras[this.currentcamera];
-        elation.space.fly(0).attachCameraToObject(this.camera, true);
+        this.controller.attachCameraToObject(this.camera, true);
       }
     }
   }
-  this.updateCollisionSize = function() {
+  this.updateCollisionSize = function() { return;
+      //console.log('updateCollisionSize', this, this.collisionradius, this.boundRadius);
+      //var bounds = this.getBoundingBox();
+      //var dist = [(bounds.max.x - bounds.min.x) / 2, (bounds.max.y - bounds.min.y) / 2, (bounds.max.z - bounds.min.z) / 2];
       //console.log(this, this.collisionradius, this.boundRadius);
       //var bounds = this.getBoundingBox();
 /*
@@ -238,8 +243,13 @@ elation.extend("space.thing", function(args) {
       var diameter = Math.max(dims[0], dims[1], dims[2]);
 
       var dist = [dims[0] / 2, dims[1] / 2, dims[2] / 2];
+      
+      
       var center = [(bounds.max.x + bounds.min.x) / 2, (bounds.max.y + bounds.min.y) / 2, (bounds.max.z + bounds.min.z) / 2];
 
+      //this.collisionradius = this.dynamics.radius = radius;
+      
+      //console.log('DYNAMICS',this,this.collisionradius,radius);
       this.collisionradius = this.dynamics.radius = diameter / 2;
 console.log(bounds, dims, center, diameter, this.dynamics.radius);
 */
@@ -250,6 +260,11 @@ console.log(bounds, dims, center, diameter, this.dynamics.radius);
         if (this.collisionmesh) {
           scene.remove(this.collisionmesh);
         }
+        //var collsphere = new THREE.OctahedronGeometry(this.dynamics.radius, 3);
+        //this.collisionmesh = new THREE.Mesh(collsphere, new THREE.MeshBasicMaterial({color: 0x00ff00, blending: THREE.AdditiveAlphaBlending, wireframe: false}));
+        //this.collisionmesh.position.set(center[0], center[1], center[2]);
+        //this.collisionmesh.fuck = true;
+        //this.collisionmesh.doubleSided = true;
         var collisiongeom = new THREE.OctahedronGeometry(this.dynamics.radius, 3);
         //var collisiongeom = new THREE.CubeGeometry(diameter, diameter, diameter);
         //var collisiongeom = new THREE.CubeGeometry(dims[0], dims[1], dims[2]);
@@ -350,8 +365,14 @@ console.log(bounds, dims, center, diameter, this.dynamics.radius);
       if (this.properties.render && this.properties.render.scale) {
         radarcontact.scale = this.properties.render.scale;
       }
-      elation.ui.hud.radar.addContact(radarcontact);
-      this.radarcontact = radarcontact;
+      
+      var exclude = {'sector':1,'roid':1};
+      
+      if (radarcontact.type && !exclude[radarcontact.type]) {
+        elation.ui.hud.radar.addContact(radarcontact);
+        
+        this.radarcontact = radarcontact;
+      }
     }
   }
   this.removeRadarContact = function() {
@@ -365,22 +386,19 @@ console.log(bounds, dims, center, diameter, this.dynamics.radius);
       this[ev.type](ev);
     }
   }
+  this.get = function(obj, path) {
+    return elation.utils.arrayget(obj, path);
+  }
   this.select = function(ev) {
     console.log("Thing selected:", this);
     if (this.controlcontext) {
       elation.space.controls(0).activateContext(this.controlcontext, this);
-    }
-    if (this.camera) {
-      elation.space.fly(0).attachCameraToObject(this.camera);
     }
   }
   this.deselect = function(ev) {
     console.log("Thing deselected:", this);
     if (this.controlcontext) {
       elation.space.controls(0).deactivateContext(this.controlcontext);
-    }
-    if (this.camera) {
-      elation.space.fly(0).attachCameraToObject(false);
     }
   }
   this.bounce = function(ev) {

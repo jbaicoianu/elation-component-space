@@ -3,7 +3,7 @@ elation.extend("space.meshes.planet", function(args, controller) {
   this.texture = elation.utils.arrayget(args, 'properties.render.texture');
   this.heightMap = elation.utils.arrayget(args, 'properties.render.heightmap');
   this.normalMap = elation.utils.arrayget(args, 'properties.render.normalmap');
-  this.radius = 5000;//elation.utils.arrayget(args, 'properties.physical.radius');
+  this.radius = elation.utils.arrayget(args, 'properties.physical.radius');
   this.controller = controller;
   
   this.postinit = function() {
@@ -11,26 +11,45 @@ elation.extend("space.meshes.planet", function(args, controller) {
     
     this.create();
     elation.events.fire('planet', this);
+    elation.events.add(null, 'renderframe_start', this);
+    this.dynamics.radius = 0;
   }
-
+  
   this.create = function() {
     var parameters = {
-      normalMap: THREE.ImageUtils.loadTexture(this.normalMap),
       map: THREE.ImageUtils.loadTexture(this.texture),
-      specular: 0x111111,
-      color: 0xffffff,
-      ambient: 0x222222,
-      shininess: 1,
-      specular: 0x333333,
-      normalScale: 0.5,
-      blending: THREE.AdditiveAlphaBlending
+      transparent: false, 
+      depthWrite: false,
+      depthTest: true,
+      specular: 0x050505,
+      color: 0xFFFFFF,
+      shininess: 100,
+      opacity: 1
     };
     
+    if (this.normalMap)
+      parameters.normalMap = THREE.ImageUtils.loadTexture(this.normalMap);
+    
     var material = new THREE.MeshPhongMaterial(parameters),
-        sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius,108,54),material);
+        sphere = this.sphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius,128,64),material),
+        atmosphere = this.atmosphere = new THREE.Mesh(new THREE.SphereGeometry(this.radius+20000,128,64),new THREE.MeshPhongMaterial({
+          shininess: 20.0,
+          specular: 0x4444FF,
+          transparent: true, 
+          depthWrite: false,
+          depthTest: true,
+          opacity: .25, 
+          color: 0x4444FF,
+          blending: THREE.AdditiveBlending
+        }));
     
     this.add(sphere);
-    
+    sphere.add(atmosphere);
+    sphere.renderDepth = 0;
+    atmosphere.renderDepth = -1;
+    atmosphere.doubleSided = true;
+
+    sphere.rotation.y = 0.5;
     sphere.geometry.computeTangents();
     sphere.geometry.computeVertexNormals();
   }
@@ -53,7 +72,7 @@ elation.extend("space.meshes.planet", function(args, controller) {
       imagein.push(pixel);
     }
     
-    console.log('buh',pixels, i, data.length);
+    //console.log('buh',pixels, i, data.length);
 
     for (j=0; j<image.height; j++) {
       theta = PI * (j - (image.height-1) / 2.0) / (image.height-1);
@@ -83,6 +102,10 @@ elation.extend("space.meshes.planet", function(args, controller) {
     console.log('out',tmp.length);
     
     return bitmap;
+  }
+  
+  this.renderframe_start = function(event) {
+    this.rotation.y += 0.00005;
   }
   
   this.init();
@@ -691,6 +714,6 @@ this.speed = 10;
 
   }
 });
-elation.space.meshes.planet.particlevis.search.prototype = new THREE.Line();
-elation.space.meshes.planet.particlevis.search.prototype.constructor = elation.space.meshes.planet.particlevis.search;
+//elation.space.meshes.planet.particlevis.search.prototype = new THREE.Line();
+//elation.space.meshes.planet.particlevis.search.prototype.constructor = elation.space.meshes.planet.particlevis.search;
 
